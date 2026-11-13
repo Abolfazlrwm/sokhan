@@ -1,0 +1,3 @@
+# Benchmark-only dependencies (the engine itself is in backend/).
+#   pip install -r benchmarks/requirements.txt
+jiwer>=3.0
