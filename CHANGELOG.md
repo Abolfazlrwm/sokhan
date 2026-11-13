@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Added
+
+- Reproducible WER benchmark on 12 real Common Voice (fa) clips, shipped with
+  the audio, references, script and full per-clip results
+- Real end-to-end product demo recorded from the running web dashboard
+  (`docs/assets/demo.gif`)
+- README accuracy section reporting measured WER/CER for tiny/base/small
+
 ## [1.0.0] - 2026-11-13
 
 ### Added

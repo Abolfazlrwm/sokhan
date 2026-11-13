@@ -22,7 +22,8 @@ out/
 .env.*.local
 
 # Runtime data (uploaded audio, generated exports, bot sessions)
-data/
+# Root-anchored: the benchmark fixture audio in benchmarks/data/ is versioned.
+/data/
 
 # Test and coverage artifacts
 .coverage

@@ -11,6 +11,11 @@ per-minute pricing, MIT-licensed.
 
 ![Sokhan web dashboard — landing page](docs/assets/web-landing-fa.png)
 
+Real end-to-end run — upload a Persian voice clip, watch the live progress,
+get the transcript (recorded against the actual app, no mockups):
+
+![Sokhan demo — upload, transcription and archive search](docs/assets/demo.gif)
+
 ## Why
 
 Most speech-to-text tooling treats Persian as an afterthought. Sokhan is
@@ -149,18 +154,22 @@ See [.env.example](.env.example) for the commented list.
 ## Repository layout
 
 ```
-backend/   FastAPI service, Whisper engine, worker pipeline, Alembic
-web/       Next.js dashboard (fa/en, RTL-first)
-bot/       aiogram 3 Telegram bot
-deploy/    docker-compose for one-command self-hosting
-docs/      architecture notes and decision records (ADRs)
+backend/     FastAPI service, Whisper engine, worker pipeline, Alembic
+web/         Next.js dashboard (fa/en, RTL-first)
+bot/         aiogram 3 Telegram bot
+benchmarks/  reproducible WER benchmark on real Common Voice (fa) clips
+deploy/      docker-compose for one-command self-hosting
+docs/        architecture notes and decision records (ADRs)
 ```
 
 ## Project status and honest limits
 
-- Accuracy: no official benchmark has been published for this project yet.
-  Model quality is whatever faster-whisper delivers for the configured model
-  size; run the real-model test locally to see it on your audio.
+- Accuracy: measured on a fixed public sample — 12 real Common Voice (fa)
+  clips, 61 s of audio, human-verified references. With the default `small`
+  engine: **WER 80.5% / CER 26.7%** (`tiny` 93.9%, `base` 90.2%). These are
+  high numbers because Common Voice fa is colloquial and noisy; read speech
+  is far easier. Full methodology and per-clip output:
+  [benchmarks/README.md](benchmarks/README.md).
 - Speaker diarization ships as an interface + stub only (see
   [ADR 0003](docs/adr/0003-diarization-interface.md)); segments have no
   speaker labels yet.
