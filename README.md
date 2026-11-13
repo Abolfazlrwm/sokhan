@@ -1,5 +1,7 @@
 # Sokhan · سخن
 
+[![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
+
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 
 Sokhan runs entirely on your own hardware: a FastAPI service with a
@@ -49,6 +51,16 @@ built for Persian speakers from the first commit:
   `/track`, summary button, and a connect code that links your web account
 - **Summaries (optional)** — any OpenAI-compatible LLM endpoint behind
   `SUMMARY_ENABLED`; without a key everything else keeps working
+
+## Screenshots
+
+Login, registration and connect-code entry (Persian):
+
+![Sokhan web dashboard — login page](docs/assets/web-login-fa.png)
+
+The same dashboard in the English locale:
+
+![Sokhan web dashboard — landing page (English)](docs/assets/web-landing-en.png)
 
 ## Quickstart (self-hosting)
 
