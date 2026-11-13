@@ -1,0 +1,81 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sokhan
+      POSTGRES_PASSWORD: sokhan
+      POSTGRES_DB: sokhan
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sokhan"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../backend
+    environment: &backend-env
+      DATABASE_URL: postgresql+psycopg://sokhan:sokhan@postgres:5432/sokhan
+      REDIS_URL: redis://redis:6379/0
+      CELERY_ENABLED: "true"
+      DATA_DIR: /data
+      WHISPER_MODEL_SIZE: ${WHISPER_MODEL_SIZE:-small}
+      WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
+      WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      FREE_MINUTES_PER_USER_PER_MONTH: ${FREE_MINUTES_PER_USER_PER_MONTH:-30}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
+      SUMMARY_ENABLED: ${SUMMARY_ENABLED:-false}
+      LLM_API_BASE: ${LLM_API_BASE:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+    volumes:
+      - sokhan-data:/data
+    ports:
+      - "${SOKHAN_API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../backend
+    command: celery -A sokhan.worker.celery_app.celery_app worker --loglevel=info --concurrency=1
+    environment: *backend-env
+    volumes:
+      - sokhan-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../web
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+    ports:
+      - "${SOKHAN_WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  sokhan-data:
