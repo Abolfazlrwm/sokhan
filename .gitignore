@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.sqlite3
+*.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Runtime data (uploaded audio, generated exports, bot sessions)
+data/
+
+# Test and coverage artifacts
+.coverage
+htmlcov/
+coverage/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
