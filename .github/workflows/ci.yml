@@ -10,30 +10,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      # backend/ and bot/ land in later PRs; set up caching only when they exist
+      - name: Set up Python with pip cache
+        if: ${{ hashFiles('backend/pyproject.toml') != '' }}
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Set up Python
+        if: ${{ hashFiles('backend/pyproject.toml') == '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: Install backend and bot packages
-        # bot/ lands in a later PR; install what exists.
+        if: ${{ hashFiles('backend/pyproject.toml') != '' || hashFiles('bot/pyproject.toml') != '' }}
         run: |
           python -m pip install --upgrade pip
-          pip install -e "backend[dev]"
+          if [ -f backend/pyproject.toml ]; then pip install -e "backend[dev]"; fi
           if [ -f bot/pyproject.toml ]; then pip install -e "bot[dev]"; fi
       - name: Lint (ruff)
+        if: ${{ hashFiles('backend/**/*.py') != '' || hashFiles('bot/**/*.py') != '' }}
         run: |
           dirs="backend"
           if [ -d bot ]; then dirs="$dirs bot"; fi
           ruff check $dirs
       - name: Type check (mypy)
+        if: ${{ hashFiles('backend/sokhan/**/*.py') != '' }}
         run: mypy --config-file backend/pyproject.toml backend/sokhan
       - name: Tests
+        if: ${{ hashFiles('backend/tests/*.py') != '' || hashFiles('bot/tests/*.py') != '' }}
         env:
           CELERY_ENABLED: "false"
           DATA_DIR: /tmp/sokhan-ci-data
         run: |
-          test_dirs=""
-          if [ -d backend/tests ]; then test_dirs="$test_dirs backend/tests"; fi
+          test_dirs="backend/tests"
           if [ -d bot/tests ]; then test_dirs="$test_dirs bot/tests"; fi
           pytest -m "not gpu_optional" $test_dirs
 
