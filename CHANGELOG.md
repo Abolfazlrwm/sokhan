@@ -16,6 +16,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   preparation, LoRA training script with Persian-normalized WER evaluation and
   CTranslate2 conversion instructions (first training run pending GPU)
 
+### Changed
+
+- Web fonts (Vazirmatn, Inter) are self-hosted now; `next build` no longer
+  needs to reach Google Fonts, removing a flaky network step from CI and
+  enabling offline builds
+
 ## [1.0.0] - 2026-11-13
 
 ### Added
