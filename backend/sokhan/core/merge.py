@@ -54,7 +54,9 @@ def _drop_boundary_duplicate(
     if not _texts_similar(merged[-1].text, first.text):
         return incoming
     if first.avg_logprob > merged[-1].avg_logprob:
+        # The re-heard variant is more confident: replace the original.
         merged.pop()
+        return incoming
     return incoming[1:]
 
 
@@ -72,7 +74,7 @@ def merge_chunks(
         raise ValueError("chunk_segments and chunk_starts must have the same length")
 
     merged: list[Segment] = []
-    for segments, start in zip(chunk_segments, chunk_starts):
+    for segments, start in zip(chunk_segments, chunk_starts, strict=True):
         shifted = offset_segments(segments, start)
         shifted = _drop_boundary_duplicate(merged, shifted, overlap_seconds)
         merged.extend(shifted)
