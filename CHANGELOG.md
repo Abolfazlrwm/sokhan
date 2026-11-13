@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+## [0.2.0] - planned
+
+### Added
+
+- Next.js dashboard with Persian-first (RTL) and English locales
+- Landing page, login/registration and connect-code entry
+- Upload and in-browser recording with language and summary options
+- Archive with Persian-normalized search and status badges
+- Job detail page with live progress and TXT/SRT/DOCX downloads
+
 ## [0.1.0] - planned
 
 ### Added

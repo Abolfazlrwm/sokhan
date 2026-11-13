@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-vazir: var(--font-vazirmatn, Vazirmatn), var(--font-inter, Inter), ui-sans-serif,
+    system-ui, sans-serif;
+}
+
+body {
+  background-color: #fafaf9;
+  color: #1c1917;
+  font-family: var(--font-vazirmatn, Vazirmatn), var(--font-inter, Inter), "Segoe UI", Tahoma,
+    ui-sans-serif, system-ui, sans-serif;
+}
+
+html[lang="en"] body {
+  font-family: var(--font-inter, Inter), var(--font-vazirmatn, Vazirmatn), "Segoe UI",
+    ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background-color: #99f6e4;
+  color: #134e4a;
+}
