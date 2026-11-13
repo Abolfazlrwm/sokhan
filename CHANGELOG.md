@@ -5,7 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
-## [0.2.0] - planned
+## [1.0.0] - 2026-11-13
+
+### Added
+
+- docker compose for one-command self-hosting (api, worker, redis, postgres, web)
+- Dockerfiles for the backend and the web dashboard (standalone build)
+- Alembic initial migration plus a runtime URL override for DATABASE_URL
+- ADR 0003 (diarization interface) and docs/architecture.md
+- README with self-hosting guide, configuration table, API surface and roadmap
+
+## [0.2.0] - 2026-11-13
 
 ### Added
 
@@ -15,7 +25,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - Archive with Persian-normalized search and status badges
 - Job detail page with live progress and TXT/SRT/DOCX downloads
 
-## [0.1.0] - planned
+## [0.1.0] - 2026-11-13
 
 ### Added
 
@@ -26,3 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - OpenAI-compatible POST /v1/audio/transcriptions endpoint
 - Monthly usage tracking and quota enforcement (HTTP 402)
 - Speaker diarization interface with a stub implementation
+
+### Fixed
+
+- PyAV pinned below 14 (newer majors removed an API faster-whisper's decoder uses)
