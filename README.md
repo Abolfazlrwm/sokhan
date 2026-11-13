@@ -56,7 +56,7 @@ Prerequisites: Docker with the compose plugin. Whisper runs on CPU by
 default — a GPU is not required.
 
 ```bash
-git clone https://github.com/<owner>/sokhan.git
+git clone https://github.com/Abolfazlrwm/sokhan.git
 cd sokhan
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
