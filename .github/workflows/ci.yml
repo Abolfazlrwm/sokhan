@@ -15,18 +15,27 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install backend and bot packages
+        # bot/ lands in a later PR; install what exists.
         run: |
           python -m pip install --upgrade pip
-          pip install -e "backend[dev]" -e "bot[dev]"
+          pip install -e "backend[dev]"
+          if [ -f bot/pyproject.toml ]; then pip install -e "bot[dev]"; fi
       - name: Lint (ruff)
-        run: ruff check backend bot
+        run: |
+          dirs="backend"
+          if [ -d bot ]; then dirs="$dirs bot"; fi
+          ruff check $dirs
       - name: Type check (mypy)
         run: mypy --config-file backend/pyproject.toml backend/sokhan
       - name: Tests
         env:
           CELERY_ENABLED: "false"
           DATA_DIR: /tmp/sokhan-ci-data
-        run: pytest -m "not gpu_optional"
+        run: |
+          test_dirs=""
+          if [ -d backend/tests ]; then test_dirs="$test_dirs backend/tests"; fi
+          if [ -d bot/tests ]; then test_dirs="$test_dirs bot/tests"; fi
+          pytest -m "not gpu_optional" $test_dirs
 
   web:
     runs-on: ubuntu-latest
