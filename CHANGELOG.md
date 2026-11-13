@@ -12,6 +12,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - Real end-to-end product demo recorded from the running web dashboard
   (`docs/assets/demo.gif`)
 - README accuracy section reporting measured WER/CER for tiny/base/small
+- Persian Whisper fine-tuning pipeline (`training/`): Common Voice (fa) manifest
+  preparation, LoRA training script with Persian-normalized WER evaluation and
+  CTranslate2 conversion instructions (first training run pending GPU)
 
 ## [1.0.0] - 2026-11-13
 

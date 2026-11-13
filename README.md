@@ -158,6 +158,7 @@ backend/     FastAPI service, Whisper engine, worker pipeline, Alembic
 web/         Next.js dashboard (fa/en, RTL-first)
 bot/         aiogram 3 Telegram bot
 benchmarks/  reproducible WER benchmark on real Common Voice (fa) clips
+training/    Persian Whisper fine-tuning pipeline (LoRA, month-two roadmap)
 deploy/      docker-compose for one-command self-hosting
 docs/        architecture notes and decision records (ADRs)
 ```
@@ -178,8 +179,11 @@ docs/        architecture notes and decision records (ADRs)
 
 ## Roadmap
 
-- Real speaker diarization behind an environment flag
-- Persian Whisper fine-tune + publishing the model on Hugging Face
+- ~~Real speaker diarization behind an environment flag~~ — shipped in v1.1.0
+  (`DIARIZATION_ENGINE=energy|pyannote`, see ADR 0004)
+- Persian Whisper fine-tune — training pipeline started
+  ([training/](training/README.md)); first measured run pending a GPU, model
+  publishing on Hugging Face afterwards
 - Streaming chunk decode to cut worker memory for long recordings
 - Persian punctuation restoration post-pass
 - Webhooks/notifications when a job finishes
