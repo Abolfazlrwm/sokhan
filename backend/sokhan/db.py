@@ -6,8 +6,8 @@ starts. A Postgres connection is expected in real deployments; SQLite keeps
 development and CI simple.
 """
 
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
