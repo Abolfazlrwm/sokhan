@@ -39,10 +39,16 @@ built for Persian speakers from the first commit:
   split into 30-second windows with a 1-second overlap, transcribed with
   faster-whisper on CPU (int8), and merged: boundary duplicates are dropped,
   timestamps are clamped to the file duration
-- **Exports** — TXT, SRT (with accurate timecodes) and DOCX
+- **Exports** — TXT, SRT (with accurate timecodes) and DOCX; optional speaker
+  labels are rendered as `[SPK_1]` prefixes in SRT and DOCX
 - **OpenAI-compatible API** — `POST /v1/audio/transcriptions` works with the
   same multipart contract as the OpenAI API (`json`, `text`, `srt`,
   `verbose_json`), so existing tooling can point at your own instance
+- **Speaker diarization (optional)** — `DIARIZATION_ENGINE=energy` splits
+  voiced regions into acoustic clusters with zero extra dependencies;
+  `DIARIZATION_ENGINE=pyannote` runs the real neural pipeline when you have
+  torch and a Hugging Face token (see
+  [ADR 0004](docs/adr/0004-diarization-engines.md)). Default is off.
 - **Job pipeline** — upload, progress polling, transcript downloads; Celery +
   Redis in production, inline threads (`CELERY_ENABLED=false`) when you don't
   want Redis at all
@@ -126,6 +132,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `WHISPER_MODEL_SIZE` | `small` | tiny/base/small/medium/large-v3 |
 | `WHISPER_DEVICE` | `cpu` | or `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
+| `DIARIZATION_ENGINE` | `stub` | `stub` / `energy` (numpy heuristic) / `pyannote` (neural) |
+| `PYANNOTE_HF_TOKEN` | empty | Hugging Face token for the gated diarization weights |
 | `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | per-user monthly quota |
 | `MAX_UPLOAD_MB` | `200` | upload size limit |
 | `SUMMARY_ENABLED` | `false` | LLM summaries feature flag |
@@ -170,9 +178,10 @@ docs/        architecture notes and decision records (ADRs)
   high numbers because Common Voice fa is colloquial and noisy; read speech
   is far easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).
-- Speaker diarization ships as an interface + stub only (see
-  [ADR 0003](docs/adr/0003-diarization-interface.md)); segments have no
-  speaker labels yet.
+- Speaker diarization: the `energy` engine marks acoustic similarity, not
+  verified identities; the `pyannote` engine needs torch and gated weights
+  (see [ADR 0004](docs/adr/0004-diarization-engines.md)). The default (`stub`)
+  adds no labels at all.
 - The whole file is decoded to memory before chunking; multi-hour recordings
   need RAM in the worker (streaming decode is on the roadmap).
 

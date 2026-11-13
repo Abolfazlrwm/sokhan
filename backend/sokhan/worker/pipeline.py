@@ -18,6 +18,7 @@ from sokhan.core.quota import record_usage
 from sokhan.core.summary import Summarizer, get_summarizer
 from sokhan.core.transcribe import Transcriber, get_transcriber
 from sokhan.db import session_scope
+from sokhan.diarization import Diarizer, SpeakerTurn, get_diarizer, label_segments
 from sokhan.models import Job, JobStatus, Segment, utcnow
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ def process_job(
     job_id: str,
     transcriber: Transcriber | None = None,
     summarizer: Summarizer | None = None,
+    diarizer: Diarizer | None = None,
 ) -> str:
     """Run the full pipeline for one job; returns the final status string."""
     with session_scope() as session:
@@ -43,11 +45,24 @@ def process_job(
 
         engine = transcriber or get_transcriber()
         summarizer = summarizer or get_summarizer()
+        speaker_engine = diarizer or get_diarizer()
 
         try:
             samples = decode_to_mono_16k(job.stored_path)
             total_duration = len(samples) / SAMPLE_RATE
             job.duration_seconds = total_duration
+
+            turns: list[SpeakerTurn] = []
+            try:
+                turns = speaker_engine.diarize(samples, SAMPLE_RATE)
+            except Exception:
+                # Diarization is an enhancement, never a failure reason.
+                logger.warning(
+                    "diarization failed for job %s; continuing without speaker labels",
+                    job_id,
+                    exc_info=True,
+                )
+
             chunks = chunk_samples(
                 samples, SAMPLE_RATE, overlap_seconds=DEFAULT_OVERLAP_SECONDS
             )
@@ -66,6 +81,8 @@ def process_job(
                 DEFAULT_OVERLAP_SECONDS,
                 total_duration,
             )
+            if turns:
+                label_segments(merged, turns)
             job.text = formats.to_txt(merged)
             job.text_normalized = normalize_persian(job.text)
             session.execute(delete(Segment).where(Segment.job_id == job_id))

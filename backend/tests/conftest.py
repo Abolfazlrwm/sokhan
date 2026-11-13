@@ -82,6 +82,14 @@ def wav_bytes():
 
 
 @pytest.fixture()
+def fake_engine(monkeypatch):
+    """Replace the whisper engine with the deterministic fake in all tests that ask for it."""
+    from sokhan.core.transcribe import FakeTranscriber
+
+    monkeypatch.setattr("sokhan.worker.pipeline.get_transcriber", lambda: FakeTranscriber())
+
+
+@pytest.fixture()
 def wait_for_job():
     def _wait(client, headers, job_id, timeout_seconds=20):
         import time

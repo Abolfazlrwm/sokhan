@@ -7,6 +7,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- Speaker diarization engines behind `DIARIZATION_ENGINE`: a dependency-free
+  `energy` clusterer and a `pyannote` neural adapter (falls back gracefully),
+  wired through the transcription pipeline into SRT/DOCX exports (ADR 0004)
 - Reproducible WER benchmark on 12 real Common Voice (fa) clips, shipped with
   the audio, references, script and full per-clip results
 - Real end-to-end product demo recorded from the running web dashboard
