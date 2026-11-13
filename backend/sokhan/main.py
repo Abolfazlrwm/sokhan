@@ -47,8 +47,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    from sokhan.api import routes_openai
+    from sokhan.api import routes_auth, routes_jobs, routes_misc, routes_openai
 
+    app.include_router(routes_auth.router)
+    app.include_router(routes_jobs.router)
+    app.include_router(routes_misc.router)
     app.include_router(routes_openai.router)
 
     @app.get("/")

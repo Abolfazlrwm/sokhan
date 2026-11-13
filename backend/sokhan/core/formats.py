@@ -1,10 +1,19 @@
 """Export formats: plain text, SRT subtitles and DOCX documents."""
 
 import io
+from collections.abc import Sequence
+from typing import Protocol
 
 from docx import Document
 
-from sokhan.core.transcribe import Segment
+
+class TranscriptLike(Protocol):
+    """Anything with segment fields — core segments and DB rows both qualify."""
+
+    start: float
+    end: float
+    text: str
+    speaker: str | None
 
 
 def format_srt_timestamp(seconds: float) -> str:
@@ -20,12 +29,12 @@ def format_srt_timestamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
-def to_txt(segments: list[Segment]) -> str:
+def to_txt(segments: Sequence[TranscriptLike]) -> str:
     """Plain transcript: one segment per line, in order."""
     return "\n".join(segment.text for segment in segments).strip()
 
 
-def to_srt(segments: list[Segment]) -> str:
+def to_srt(segments: Sequence[TranscriptLike]) -> str:
     """SubRip subtitles with one numbered block per segment."""
     blocks: list[str] = []
     for position, segment in enumerate(segments, start=1):
@@ -37,7 +46,7 @@ def to_srt(segments: list[Segment]) -> str:
     return "\n".join(blocks)
 
 
-def to_docx(segments: list[Segment], title: str = "Transcript") -> bytes:
+def to_docx(segments: Sequence[TranscriptLike], title: str = "Transcript") -> bytes:
     """Word document with a heading and one paragraph per segment."""
     document = Document()
     document.add_heading(title, level=1)
