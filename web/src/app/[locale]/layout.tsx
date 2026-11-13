@@ -2,21 +2,27 @@ import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Inter, Vazirmatn } from "next/font/google";
+import localFont from "next/font/local";
 import { routing } from "@/i18n/routing";
 import { SiteHeader } from "@/components/site-header";
 import "../globals.css";
 
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "700"],
+// Fonts are self-hosted (see src/fonts/README.txt): builds must never depend
+// on fetching from Google Fonts at build time — CI runners and air-gapped
+// self-hosting both break otherwise.
+const vazirmatn = localFont({
+  src: [
+    { path: "../../fonts/Vazirmatn-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../fonts/Vazirmatn-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../../fonts/Vazirmatn-Bold.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-vazirmatn",
   display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+const inter = localFont({
+  src: "../../fonts/InterVariable.woff2",
+  weight: "100 900",
   variable: "--font-inter",
   display: "swap",
 });
