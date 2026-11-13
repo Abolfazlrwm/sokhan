@@ -1,4 +1,4 @@
-"""No-op diarizer used until a real speaker model ships."""
+"""No-op diarizer used when no speaker engine is configured."""
 
 import numpy as np
 
@@ -12,7 +12,3 @@ class StubDiarizer:
 
     def diarize(self, samples: np.ndarray, sample_rate: int) -> list[SpeakerTurn]:
         return []
-
-
-def get_diarizer() -> StubDiarizer:
-    return StubDiarizer()

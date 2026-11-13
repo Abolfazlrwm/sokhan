@@ -24,6 +24,12 @@ class Settings(BaseSettings):
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
 
+    # Diarization (optional, behind a feature flag)
+    # stub = no speaker labels | energy = heuristic two-cluster splitter | pyannote = neural
+    diarization_engine: str = "stub"
+    pyannote_hf_token: str = ""
+    pyannote_model: str = "pyannote/speaker-diarization-3.1"
+
     # Quota
     free_minutes_per_user_per_month: int = 30
     max_upload_mb: int = 200
