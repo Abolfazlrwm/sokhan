@@ -3,13 +3,36 @@
 All notable changes to Sokhan are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project versions with [Semantic Versioning](https://semver.org/).
 
-## [1.1.0] - 2026-11-13
+## [Unreleased]
 
 ### Added
 
 - Speaker diarization engines behind `DIARIZATION_ENGINE`: a dependency-free
-  `energy` clusterer and a `pyannote` neural adapter (falls back gracefully),
-  wired through the transcription pipeline into SRT/DOCX exports (ADR 0004)
+  `energy` clusterer and a `pyannote` neural adapter (falls back gracefully
+  to the stub), wired through the transcription pipeline into SRT/DOCX
+  exports (ADR 0004)
+- Fine-tuning pipeline verified end-to-end on CPU: `training/smoke_test.py`
+  proves the whole chain (manifest prep → LoRA train → merge → CTranslate2
+  convert) in about a minute; the three incompatibilities it caught with the
+  current ML stack (TorchCodec-backed `torchaudio.load`, Arrow tensor
+  round-trips, transformers ≥ 5 language name) are fixed
+- `--resume` on the trainer: free-GPU sessions that get preempted continue
+  from the last epoch checkpoint
+- `training/finetune_fa_colab.ipynb` — one-click Colab notebook that runs
+  data → train → convert → serve/download on a free T4 (Kaggle works too)
+- `docs/free-gpu.md` — verified free GPU options for the first real
+  fine-tuning run (Colab T4, Kaggle ~30 GPU-h/week, Lightning AI)
+
+### Fixed
+
+- The diarization tests referenced a `fake_engine` fixture that was defined
+  only in one test module; it now lives in the shared conftest so the full
+  engine/pipeline coverage actually runs
+
+## [1.1.0] - 2026-11-13
+
+### Added
+
 - Reproducible WER benchmark on 12 real Common Voice (fa) clips, shipped with
   the audio, references, script and full per-clip results
 - Real end-to-end product demo recorded from the running web dashboard
