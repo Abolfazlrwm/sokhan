@@ -32,10 +32,9 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "backend"))
 
-from sokhan.core.persian import normalize_persian  # noqa: E402
-
 import jiwer  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
+from sokhan.core.persian import normalize_persian  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 MANIFEST = DATA_DIR / "manifest.csv"
@@ -161,7 +160,8 @@ def main() -> int:
     results = {
         "dataset": "Mozilla Common Voice (fa), clean subset, CC-0",
         "manifest": "benchmarks/data/manifest.csv",
-        "normalization": "sokhan.core.persian.normalize_persian applied to both reference and hypothesis",
+        "normalization":
+        "sokhan.core.persian.normalize_persian applied to both reference and hypothesis",
         "decoding": "beam_size=5, language hint, CPU int8",
         "total_audio_seconds": round(total_audio, 2),
         "runs": [],
@@ -184,7 +184,8 @@ def main() -> int:
     print("| --- | --- | --- | --- |")
     for run in results["runs"]:
         print(
-            f"| {run['model']} | {run['params']} | {run['wer'] * 100:.1f}% | {run['cer'] * 100:.1f}% |"
+            f"| {run['model']} | {run['params']} | {run['wer'] * 100:.1f}% "
+            f"| {run['cer'] * 100:.1f}% |"
         )
     return 0
 
