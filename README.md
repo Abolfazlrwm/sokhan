@@ -56,6 +56,14 @@ built for Persian speakers from the first commit:
   `/track`, summary button, and a connect code that links your web account
 - **Summaries (optional)** — any OpenAI-compatible LLM endpoint behind
   `SUMMARY_ENABLED`; without a key everything else keeps working
+- **Speaker diarization (optional)** — `DIARIZATION_ENGINE=stub|energy|pyannote`:
+  a dependency-free energy heuristic for CPU-only hosts, or real neural
+  diarization via pyannote; speaker labels flow into segments and the SRT
+  export (see [ADR 0004](docs/adr/0004-diarization-engines.md))
+- **Fine-tuning kit** — LoRA pipeline to adapt Whisper to Persian speech and
+  serve the result with faster-whisper; verified end-to-end without a GPU
+  ([training/](training/README.md)), one-click on free GPUs via
+  [docs/free-gpu.md](docs/free-gpu.md)
 
 ## Screenshots
 
@@ -171,9 +179,12 @@ docs/        architecture notes and decision records (ADRs)
   high numbers because Common Voice fa is colloquial and noisy; read speech
   is far easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).
-- Speaker diarization ships as an interface + stub only (see
-  [ADR 0003](docs/adr/0003-diarization-interface.md)); segments have no
-  speaker labels yet.
+- Speaker labels depend on the diarization engine you pick. `energy` is a
+  heuristic: its labels describe acoustic similarity, not verified identity,
+  and it struggles beyond two speakers. `pyannote` is the real thing but
+  needs the gated HF weights plus a token (see
+  [ADR 0004](docs/adr/0004-diarization-engines.md)). With `stub` — the
+  default — segments carry no speaker labels.
 - The whole file is decoded to memory before chunking; multi-hour recordings
   need RAM in the worker (streaming decode is on the roadmap).
 
@@ -181,9 +192,10 @@ docs/        architecture notes and decision records (ADRs)
 
 - ~~Real speaker diarization behind an environment flag~~ — shipped in v1.1.0
   (`DIARIZATION_ENGINE=energy|pyannote`, see ADR 0004)
-- Persian Whisper fine-tune — training pipeline started
-  ([training/](training/README.md)); first measured run pending a GPU, model
-  publishing on Hugging Face afterwards
+- Persian Whisper fine-tune — pipeline verified end-to-end on CPU
+  ([training/](training/README.md)); first measured run happens on free
+  GPUs ([docs/free-gpu.md](docs/free-gpu.md)), measured WER lands in
+  `benchmarks/` afterwards
 - Streaming chunk decode to cut worker memory for long recordings
 - Persian punctuation restoration post-pass
 - Webhooks/notifications when a job finishes
