@@ -50,7 +50,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--base-model", default="openai/whisper-small", help="HF Whisper checkpoint"
     )
-    parser.add_argument("--language", default="farsi", help="language token used by the processor")
+    parser.add_argument(
+        "--language", default="persian", help="language name used by the HF processor"
+    )
     parser.add_argument("--epochs", type=float, default=3.0)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--lora-rank", type=int, default=16)
@@ -60,6 +62,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--max-samples", type=int, default=0, help="0 = use the whole manifest"
+    )
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="continue from the last checkpoint saved in --output "
+        "(free-GPU sessions can be preempted mid-run)",
     )
     return parser.parse_args()
 
@@ -81,8 +89,9 @@ def load_manifest(path: Path, limit: int) -> list[dict]:
 def main() -> int:
     args = parse_args()
 
+    import soundfile as sf
     import torch  # noqa: F401 - confirms the CUDA runtime early
-    import torchaudio
+    import torchaudio.functional  # resample only; loading uses soundfile
     from datasets import Dataset
     from peft import LoraConfig, get_peft_model
     from transformers import (
@@ -118,10 +127,12 @@ def main() -> int:
     model.print_trainable_parameters()
 
     def to_features(row: dict) -> dict:
-        waveform, rate = torchaudio.load(row["audio"])
+        # torchaudio.load now requires TorchCodec; soundfile needs no codec
+        # layer and reads the wav/flac/mp3 headers Common Voice ships.
+        audio, rate = sf.read(row["audio"], dtype="float32", always_2d=True)
+        waveform = torch.from_numpy(audio.mean(axis=1))
         if rate != 16_000:
             waveform = torchaudio.functional.resample(waveform, rate, 16_000)
-        waveform = waveform.mean(dim=0)
         features = processor(
             audio=waveform.numpy(), sampling_rate=16_000, return_tensors="pt"
         )
@@ -135,7 +146,11 @@ def main() -> int:
     eval_dataset = Dataset.from_list(eval_rows).map(to_features, remove_columns=["audio", "text"])
 
     def collate(batch: list[dict]) -> dict:
-        features = torch.stack([item["input_features"] for item in batch])
+        # Dataset.map round-trips tensors through Arrow, so features arrive
+        # as nested lists; rebuild them before stacking.
+        features = torch.stack(
+            [torch.as_tensor(item["input_features"]) for item in batch]
+        )
         labels = processor.tokenizer.pad(
             [{"input_ids": item["labels"]} for item in batch], return_tensors="pt"
         )
@@ -174,7 +189,7 @@ def main() -> int:
         compute_metrics=compute_metrics,
         processing_class=processor,
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=args.resume or None)
     trainer.save_model(str(args.output / "adapter"))
 
     # a merged copy is what the CTranslate2 converter expects
