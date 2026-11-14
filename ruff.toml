@@ -1,6 +1,10 @@
 line-length = 100
 target-version = "py310"
 
+# Jupyter/Colab cells follow notebook conventions (shell magics, #@param
+# pragmas, imports mid-cell), not the repo's Python style.
+extend-exclude = ["*.ipynb"]
+
 [lint]
 select = ["E", "F", "I", "W", "UP", "B"]
 ignore = ["B008"]
