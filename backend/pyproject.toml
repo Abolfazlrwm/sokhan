@@ -27,6 +27,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.4", "mypy>=1.9"]
+# Neural speaker diarization (gated HF weights + a token are also required).
+# Without these extras the pyannote engine falls back to the stub automatically.
+diarize = ["torch>=2.1", "pyannote.audio>=3.1"]
 
 [tool.setuptools.packages.find]
 include = ["sokhan*"]

@@ -1,14 +1,15 @@
-"""Speaker diarization interface.
+"""Speaker diarization contract shared by every engine."""
 
-Sokhan ships only the contract for now: real diarization (pyannote) requires
-gated Hugging Face weights and a much bigger runtime, so v1 keeps it behind
-this interface and a no-op stub. See docs/adr/0003-diarization-interface.md.
-"""
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
+
+
+class DiarizerUnavailableError(RuntimeError):
+    """Raised when a selected engine cannot run in this environment."""
 
 
 @dataclass(frozen=True)
