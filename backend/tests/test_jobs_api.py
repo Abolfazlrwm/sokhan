@@ -1,13 +1,6 @@
 import io
 
-import pytest
 from docx import Document
-from sokhan.core.transcribe import FakeTranscriber
-
-
-@pytest.fixture()
-def fake_engine(monkeypatch):
-    monkeypatch.setattr("sokhan.worker.pipeline.get_transcriber", lambda: FakeTranscriber())
 
 
 def _upload(client, headers, wav_bytes, filename="جلسه-هفته.wav", **fields):

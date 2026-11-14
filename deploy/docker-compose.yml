@@ -40,6 +40,9 @@ services:
       LLM_API_BASE: ${LLM_API_BASE:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
+      DIARIZATION_ENGINE: ${DIARIZATION_ENGINE:-stub}
+      PYANNOTE_MODEL: ${PYANNOTE_MODEL:-pyannote/speaker-diarization-3.1}
+      PYANNOTE_HF_TOKEN: ${PYANNOTE_HF_TOKEN:-}
     volumes:
       - sokhan-data:/data
     ports:
