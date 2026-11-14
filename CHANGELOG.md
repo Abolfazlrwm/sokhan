@@ -7,6 +7,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- The first real fine-tune run, measured end to end on CPU (2026-11-15):
+  LoRA on `whisper-tiny`, 518 Common Voice (fa) clips / 45 minutes from the
+  public CC-0 mirror's train split, 2 epochs — training loss 3.84 → 1.55,
+  held-out WER flat at 94.6%, fixture WER 103.7% vs 92.7% untuned. The
+  converted artifact is published at
+  `hf.co/Abol0pati/whisper-tiny-fa-sokhan` so anyone can re-run its
+  benchmark row; the honest conclusion (no WER gain at CPU scale, GPU-scale
+  `whisper-small` run required) is documented in `benchmarks/README.md`
+- Step-based training checkpoints (every 150 steps, keep 2): preempted
+  free-GPU sessions resume from the last ~3-minute boundary instead of the
+  last epoch
 - Speaker diarization engines behind `DIARIZATION_ENGINE`: a dependency-free
   `energy` clusterer and a `pyannote` neural adapter (falls back gracefully
   to the stub), wired through the transcription pipeline into SRT/DOCX
@@ -17,7 +28,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   current ML stack (TorchCodec-backed `torchaudio.load`, Arrow tensor
   round-trips, transformers ≥ 5 language name) are fixed
 - `--resume` on the trainer: free-GPU sessions that get preempted continue
-  from the last epoch checkpoint
+  from the last checkpoint
 - `training/finetune_fa_colab.ipynb` — one-click Colab notebook that runs
   data → train → convert → serve/download on a free T4 (Kaggle works too)
 - `docs/free-gpu.md` — verified free GPU options for the first real
@@ -25,6 +36,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Fixed
 
+- The Colab notebook's data cell used `mozilla-foundation/common_voice_17_0`,
+  which no longer ships data files (verified 2026-11-15: only README and
+  `.gitattributes` remain in its repo tree) and whose loading script is
+  unsupported since `datasets` 3 — the notebook now streams the public CC-0
+  parquet mirror `pymmdrza/Common-Voice-Speech-26.0-Persian-Clean`, train
+  split only, no token or gating needed
+- `benchmarks/requirements.txt` pins `av<14` (same as the backend):
+  faster-whisper 1.2.1 calls `av.open(..., metadata_errors=...)`, which
+  PyAV ≥ 15 removed, so a fresh benchmark install would crash on every clip
 - The diarization tests referenced a `fake_engine` fixture that was defined
   only in one test module; it now lives in the shared conftest so the full
   engine/pipeline coverage actually runs

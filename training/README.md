@@ -3,11 +3,14 @@
 A complete, runnable pipeline to adapt a Whisper checkpoint to Persian speech
 and convert it back into the faster-whisper format Sokhan actually serves.
 
-**Status: verified end-to-end, no GPU required to validate.** The chain
+**Status: verified end-to-end, with and without a real GPU.** The chain
 `prepare → LoRA train → merge → CTranslate2 convert` runs green on CPU
-(`whisper-tiny`, 8 synthetic clips, a few seconds per epoch) — every script in
-here has actually executed and produced artifacts. Run
-`python training/smoke_test.py` to confirm the same on your machine before
+(`whisper-tiny`, 8 synthetic clips, a few seconds per epoch), and on
+2026-11-15 the same chain executed against *real* Persian data: 518 Common
+Voice (fa) clips / 45 minutes, trained, converted, served through
+faster-whisper and benchmarked (measured rows in `benchmarks/README.md` —
+no WER gain at CPU scale, honestly documented there). Run
+`python training/smoke_test.py` to confirm the chain on your machine before
 starting a real run.
 
 ## What exists today
@@ -43,9 +46,19 @@ the model convertible back to a dense checkpoint. A free T4's 16 GB is enough.
 
 ## The loop, end to end
 
-1. **Data.** Point the notebook (or this script) at a Common Voice Persian
-   release (CC-0). The preparer keeps clips with community consensus (two or
-   more up-votes, no down-votes) and sane durations:
+1. **Data.** The Colab notebook (cell 5) streams the *train* split of
+   `pymmdrza/Common-Voice-Speech-26.0-Persian-Clean` — a public, CC-0,
+   parquet-based Persian Common Voice subset (cv-corpus-26.0), the same
+   release the benchmark fixture comes from. It needs no account, no token,
+   no gating.
+
+   Do **not** use `mozilla-foundation/common_voice_17_0` any more: verified
+   2026-11-15, its repo no longer ships data files, and script-based loaders
+   are unsupported since `datasets` 3.
+
+   For offline Common Voice releases (tsv + clips on disk) the preparer
+   still works and keeps clips with community consensus (two or more
+   up-votes, no down-votes) and sane durations:
 
    ```bash
    python training/prepare_common_voice.py \
@@ -86,22 +99,32 @@ the model convertible back to a dense checkpoint. A free T4's 16 GB is enough.
    against the published baseline table. Measured numbers go into
    `benchmarks/` — never promised ones.
 
-## Bugs found and fixed while verifying (2026-11-14)
+## Bugs found and fixed while verifying (2026-11-14 / 2026-11-15)
 
-The pipeline was executed end to end on CPU; three real incompatibilities
-with the current ML stack surfaced and are fixed:
+The pipeline was executed end to end on CPU; real incompatibilities with the
+current ML stack surfaced and are fixed:
 
 - `torchaudio.load` now requires the TorchCodec layer — audio loading moved
   to `soundfile`, which reads Common Voice formats without a codec backend
 - `Dataset.map` round-trips tensors through Arrow, so the collate function
   rebuilds them with `torch.as_tensor` before stacking
 - transformers ≥ 5 accepts the language name `persian`, not `farsi`
+- `mozilla-foundation/common_voice_17_0` ships no data files any more and
+  script datasets are dead in `datasets` ≥ 3 — the notebook now streams the
+  public CC-0 mirror `pymmdrza/Common-Voice-Speech-26.0-Persian-Clean`
+  (found by actually running the data cell, not by reading docs)
+- faster-whisper 1.2.1 + PyAV ≥ 15 is a broken combination (`av.open` lost
+  `metadata_errors`) — the benchmark pins `av<14`, same as the backend
+- the trainer now checkpoints every 150 steps (not only per epoch), so a
+  preempted session loses at most ~3 minutes of work
 
 ## What is *not* done yet
 
-- No *real* training run has happened: this repo has no GPU runner, so no
-  fine-tuned WER numbers exist yet. When the first run finishes on a free
-  GPU, its measured table goes into `benchmarks/` next to the baseline.
+- No *GPU-scale* training run has happened. The 2026-11-15 CPU run (tiny,
+  45 minutes of data) measured **no WER improvement** — see the fine-tune
+  row in `benchmarks/README.md`. The first GPU run (`whisper-small`, hours
+  of data, free T4) is what can actually move the number; until then no
+  improvement claim exists in this repo.
 - The default eval split (2%) is small; a proper report should freeze a
   larger, speaker-disjoint hold-out.
 - Data augmentation (noise, speed perturbation) is a known next step for

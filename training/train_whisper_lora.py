@@ -175,7 +175,12 @@ def main() -> int:
         per_device_eval_batch_size=args.batch_size,
         eval_strategy="epoch",
         logging_steps=50,
-        save_strategy="epoch",
+        # periodic step checkpoints: preempted sessions (free GPU quotas,
+        # killed shells) resume from the last 150-step boundary, not from
+        # the previous epoch boundary
+        save_strategy="steps",
+        save_steps=150,
+        save_total_limit=2,
         predict_with_generate=True,
         fp16=torch.cuda.is_available(),
         report_to=[],

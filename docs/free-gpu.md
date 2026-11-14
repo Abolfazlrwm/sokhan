@@ -23,11 +23,15 @@ when you close the tab.
 
 1. Open `training/finetune_fa_colab.ipynb` in Colab (or upload the same file
    to Kaggle and switch the accelerator on).
-2. Accept the conditions of the gated Common Voice dataset with a free
-   Hugging Face account and paste a read token (cell 4 does the prompts).
-3. Run the cells top to bottom. The pipeline itself was verified without a
-   GPU first (`python training/smoke_test.py`), so failures are data or quota
-   issues, not script issues.
+2. Run the cells top to bottom. The training data (cell 5) is a public CC-0
+   Persian Common Voice mirror, so no Hugging Face account is needed until
+   you want to push the converted model to the Hub in cell 9 (a write token
+   then, not a read token).
+3. The pipeline itself was verified without a GPU first
+   (`python training/smoke_test.py`) and a real CPU fine-tune of
+   `whisper-tiny` on 518 mirror clips was executed end to end on 2026-11-15
+   (see `benchmarks/README.md`), so failures are data or quota issues, not
+   script issues.
 4. First run small (`MAX_HOURS=5`, `MAX_SAMPLES=3000`) to learn the loop and
    timings on the specific GPU you got, then scale up across sessions.
 
@@ -49,11 +53,14 @@ both options.
 ## Honest notes
 
 - Free tiers are best-effort: you can be preempted mid-run. The training
-  script saves per-epoch checkpoints in `--output`, so a killed session does
-  not necessarily mean lost work; re-run with the same output directory to
-  resume from the last saved checkpoint.
-- No accuracy claim lives in this file. When the first fine-tuned model
-  finishes, run `python benchmarks/benchmark_wer.py --models <dir>` on the
+  script saves a checkpoint every 150 optimizer steps in `--output`, so a
+  killed session loses at most a few minutes; re-run with the same output
+  directory and `--resume` to continue from the last saved checkpoint.
+- No accuracy claim lives in this file. The first CPU-scale fine-tune
+  (2026-11-15, `whisper-tiny`, 45 minutes of data) measured **no WER
+  improvement** — its rows and conclusions live in `benchmarks/README.md`.
+  The GPU-scale run (`whisper-small`, hours of data) is the experiment that
+  can actually move the number; when it finishes, run
+  `python benchmarks/benchmark_wer.py --models <dir-or-repo-id>` on the
   same 12-clip Common Voice fixture and add the measured row next to the
-  baseline in `benchmarks/README.md` — measured numbers only, never promised
-  ones.
+  baseline — measured numbers only, never promised ones.
