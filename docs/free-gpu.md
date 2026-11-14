@@ -39,6 +39,31 @@ Keep artifacts outside the volatile session disk: download the converted
 CT2 folder (cell 9 zip) or push it to the Hugging Face Hub — the notebook has
 both options.
 
+## Colab error: "Failed to assign a backend … restriction in your location"
+
+Colab refuses GPU backends to IPs from sanctioned regions (Iran, Syria, …).
+Nothing is wrong with the notebook — Google blocks the connection before any
+cell runs. Two fixes, in order:
+
+1. **Colab + VPN.** Connect a VPN with an exit outside the blocked regions
+   (e.g. Türkiye, UAE, Germany), then open a fresh incognito window, sign in
+   to Google again, and reload the notebook. The bottom-right badge should
+   turn to "Connected (T4 GPU)". If the error persists, the VPN's exit IP is
+   flagged by Google — switch servers and retry. Some VPN exits work for
+   browsing but not for backend assignment, so try more than one.
+2. **Kaggle, usually without a VPN.** Kaggle is normally reachable from Iran
+   and gives 2× T4 or a P100:
+   1. Sign in at [kaggle.com](https://www.kaggle.com) with a Google account.
+   2. Verify a phone number (Settings → Phone verification); GPU + Internet
+      access is disabled until this passes. If the SMS never arrives for your
+      SIM, this lane is closed — fall back to option 1.
+   3. Code → New Notebook → File → **Import Notebook** → paste the GitHub URL
+      `https://github.com/Abolfazlrwm/sokhan/blob/main/training/finetune_fa_colab.ipynb`.
+   4. Right panel: Accelerator → **GPU T4 x2**, Internet → **On**.
+   5. Run the same cells top to bottom. The save cell is guarded against
+      `google.colab` imports, so zip mode falls back to printing the file
+      path on Kaggle; prefer `SAVE_MODE = "hf_hub"` there anyway.
+
 ## Free hosting for the result
 
 - **Weights:** Hugging Face Hub hosts public model repos for free; the
