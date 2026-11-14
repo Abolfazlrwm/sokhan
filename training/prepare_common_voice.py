@@ -11,9 +11,9 @@ Usage:
         --output training/data/common-voice-fa \
         --max-hours 100
 
-The script performs no transcription or audio processing of its own — it only
-selects rows and measures durations from the TSV's duration column, so it is
-fast enough for the full corpus.
+Durations come from the TSV's ``duration`` column when the release ships one;
+Common Voice releases do not, so the script falls back to reading audio
+headers with soundfile (no full decode - fast enough for the whole corpus).
 """
 
 from __future__ import annotations
@@ -25,6 +25,19 @@ from pathlib import Path
 
 VALIDATED_TSV = "validated.tsv"
 MIN_UPVOTES = 2  # Common Voice convention: two positive votes to trust a clip
+
+
+def probe_duration(audio_path: Path) -> float:
+    """Read the clip duration from the audio header (no full decode)."""
+    try:
+        import soundfile as sf
+    except ImportError as exc:  # pragma: no cover - dependency guard
+        raise SystemExit(
+            "soundfile is required to probe clip durations; "
+            "pip install soundfile"
+        ) from exc
+    info = sf.info(str(audio_path))
+    return info.frames / info.samplerate
 
 
 def parse_args() -> argparse.Namespace:
@@ -71,11 +84,23 @@ def main() -> int:
             if down_votes > 0 or up_votes < MIN_UPVOTES:
                 skipped_votes += 1
                 continue
-            try:
-                duration = float(row.get("duration") or 0.0)
-            except ValueError:
-                skipped_duration += 1
-                continue
+            raw_duration = (row.get("duration") or "").strip()
+            if raw_duration:
+                try:
+                    duration = float(raw_duration)
+                except ValueError:
+                    skipped_duration += 1
+                    continue
+            else:
+                audio_path = args.cv_root / "clips" / (row.get("path") or "")
+                if not audio_path.exists():
+                    skipped_duration += 1
+                    continue
+                try:
+                    duration = probe_duration(audio_path)
+                except Exception:  # noqa: BLE001 - unreadable clip, drop the row
+                    skipped_duration += 1
+                    continue
             if duration < args.min_seconds or duration > args.max_seconds:
                 skipped_duration += 1
                 continue
