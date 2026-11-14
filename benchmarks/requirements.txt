@@ -1,3 +1,6 @@
 # Benchmark-only dependencies (the engine itself is in backend/).
 #   pip install -r benchmarks/requirements.txt
 jiwer>=3.0
+# faster-whisper's decoder relies on PyAV APIs removed in newer majors
+# (same pin as backend/pyproject.toml)
+av>=11,<14

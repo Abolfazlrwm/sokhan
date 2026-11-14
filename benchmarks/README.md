@@ -15,19 +15,48 @@ re-run the exact same evaluation.
   Arabic/Persian look-alike characters and digit forms cannot create
   artificial errors
 
-## Latest results (measured, 2026-11-13)
+## Latest results (measured, 2026-11-15)
 
-Total audio: 61.1 s across 12 clips (3.5–6.9 s each).
+Total audio: 61.1 s across 12 clips (3.5–6.9 s each). All four models were
+measured back to back in one session, same library versions.
 
 | Model | Params | WER | CER |
 | --- | --- | --- | --- |
-| tiny | 39 M | 93.9% | 47.4% |
+| tiny | 39 M | 92.7% | 43.5% |
 | base | 74 M | 90.2% | 37.6% |
 | small | 244 M | 80.5% | 26.7% |
+| Abol0pati/whisper-tiny-fa-sokhan (fine-tuned) | 39 M | 103.7% | 47.4% |
 
-Full per-clip output lives in
-[results/results.json](results/results.json) — every reference and every
-hypothesis of the run is saved there.
+The 2026-11-13 runs (tiny 93.9% / base 90.2% / small 80.5%) are archived in
+[results/results-2026-11-13.json](results/results-2026-11-13.json). tiny
+drifted from 93.9% to 92.7% between the two dates — that is library-version
+noise, not a fixture change; the fixture is identical. Full per-clip output
+of the current run lives in
+[results/results.json](results/results.json).
+
+## First fine-tune run (measured, 2026-11-15)
+
+The project's first real fine-tune ran end to end **on CPU, no GPU**: LoRA
+on `whisper-tiny`, 518 clips / 45.0 minutes from the *train* split of
+`pymmdrza/Common-Voice-Speech-26.0-Persian-Clean` (CC-0), 2 epochs, 508
+optimizer steps. Training loss fell 3.84 → 1.55 and held-out eval loss
+1.646 → 1.545, but **WER did not improve**: 94.6% on the in-training
+hold-out (flat across both epochs) and 103.7% on this fixture versus 92.7%
+for the untuned tiny. The converted model is published anyway, as the
+reproducible artifact of that run:
+[Abol0pati/whisper-tiny-fa-sokhan](https://huggingface.co/Abol0pati/whisper-tiny-fa-sokhan)
+— re-benchmark it yourself:
+
+```bash
+python benchmarks/benchmark_wer.py --models Abol0pati/whisper-tiny-fa-sokhan
+```
+
+The honest conclusion of the run: at CPU scale (`whisper-tiny`, 45 minutes
+of data, 2 epochs) LoRA does not improve Persian WER. Meaningful gains need
+the free-GPU path documented in [docs/free-gpu.md](../docs/free-gpu.md) —
+`whisper-small` (or larger) on hours of data via
+`training/finetune_fa_colab.ipynb`. Until such a run is measured, no
+improvement claim exists in this repo.
 
 ## How to read these numbers
 
