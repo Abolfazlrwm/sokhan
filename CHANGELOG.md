@@ -37,8 +37,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   The chain is `next-intl → @parcel/watcher → picomatch`, exercised only
   by dev-time file watching over globs defined in this repo, not by
   anything attacker-controlled in production. The Dependabot alert is
-  dismissed as `no_fix_available` and gets reopened the day upstream
-  ships a patched picomatch
+  dismissed as `tolerable_risk` with that reasoning recorded on the alert
+  itself, and gets reopened the day upstream ships a patched picomatch
 
 ## [1.2.0] - 2026-11-18
 
