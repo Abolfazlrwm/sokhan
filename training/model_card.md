@@ -79,9 +79,14 @@ segments, info = model.transcribe("audio.wav", language="fa", beam_size=5)
 print(" ".join(s.text.strip() for s in segments))
 ```
 
-A live browser demo (this model vs. the untuned baseline, A/B) runs at
+A free in-browser demo runs at
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
-— app source in [`space/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space).
+— Whisper executes entirely client-side there (transformers.js, ONNX q8,
+nothing uploaded), with the untuned base/small checkpoints selectable.
+Serving **this fine-tuned checkpoint** needs a real engine: the Gradio app
+in [`space/gradio/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio)
+runs it with the same faster-whisper config as production, self-hosted or
+on a PRO Space (HF gates hosted Gradio Spaces behind PRO since 2026).
 
 ## Training & reproduction
 

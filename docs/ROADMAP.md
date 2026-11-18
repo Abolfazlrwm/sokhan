@@ -7,12 +7,20 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 
 ## v1.3 — public face (current work)
 
-- [x] Gradio demo app (`space/`) — A/B radio: fine-tuned checkpoint vs
-      untuned baseline, Persian RTL UI, CPU int8
-- [ ] Publish the Space (`Abol0pati/sokhan-fa-demo`) and link it from the
-      README — notebook cell 10 does it in ~2 minutes
-- [ ] Model card on both fine-tuned repos (notebook cell 10 writes it;
-      `training/model_card.md` is the source of truth for numbers)
+- [x] Demo app (`space/`) — RTL Persian UI, mic + file + bundled sample
+      clip. Shipped in two flavors: the free **Static Space** runs Whisper
+      client-side (transformers.js, ONNX q8, base/small selectable,
+      nothing uploaded), and the **Gradio app** (`space/gradio/`) serves
+      the fine-tuned checkpoint with the production faster-whisper config
+      for self-hosting — HF's 2026 pricing gates hosted Gradio/Docker
+      Spaces behind a PRO subscription, which is what made the split
+      necessary (discovered live: `402 Payment Required` on
+      `create_repo(sdk="gradio")`)
+- [x] Space published and verified end to end: a headless browser loaded
+      it, transcribed a real Common Voice (fa) clip on-device (3.5 s clip,
+      5.0 s wall) — https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo
+- [x] Model card on the whisper-small repo (the tiny repo already had
+      one): measured numbers, honest caveats, usage snippet
 - [ ] **The scaled fine-tune.** The v1.2.0 run (500 clips) beat the
       baseline by 1.2 WER points — at the edge of the fixture's noise
       floor. The same notebook at `MAX_SAMPLES = 0` (~10 h of speech,
@@ -20,6 +28,11 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
       the training kit. After it: re-benchmark, update the model card,
       and publish the new checkpoint — then the 500-clip run becomes the
       ablation row.
+- [ ] **Fine-tuned checkpoint in the browser.** Upload the merged HF
+      weights (notebook cell 11; the merged folder only exists right
+      after a training run), export ONNX, and point the client-side demo
+      at it — the free Static Space would then demo the *fine-tuned*
+      model with zero hosting cost.
 - [ ] A bigger eval fixture (target: 200 clips, stratified by age/gender
       and accent bands) so WER deltas stop being noise-limited
 

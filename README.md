@@ -4,9 +4,13 @@
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 
-**Try it in the browser first:** the fine-tuned Persian checkpoint runs as a
-public demo at [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
-— mic or file upload, A/B against the untuned baseline, nothing to install.
+**Try it in the browser first:** the public demo at
+[hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
+runs Whisper entirely client-side (transformers.js, ONNX q8) — mic or file
+upload, base/small selectable, nothing to install, nothing uploaded. The
+**fine-tuned** checkpoint ships as a self-hostable Gradio app
+([space/gradio/](space/gradio/)); HF's 2026 pricing gates hosted Gradio
+Spaces behind PRO, so the free Space is the static page.
 
 Sokhan runs entirely on your own hardware: a FastAPI service with a
 faster-whisper engine, a Celery worker, a Next.js dashboard written
@@ -19,6 +23,11 @@ Real end-to-end run — upload a Persian voice clip, watch the live progress,
 get the transcript (recorded against the actual app, no mockups):
 
 ![Sokhan demo — upload, transcription and archive search](docs/assets/demo.gif)
+
+The same Space demo, after transcribing a real Common Voice (fa) clip in a
+headless browser (3.5 s clip, 5.0 s on-device):
+
+![Sokhan browser demo on a free Static Space — Whisper runs on the visitor's machine](docs/assets/demo-space.png)
 
 ## Why
 

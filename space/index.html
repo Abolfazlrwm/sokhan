@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سخن · تبدیل گفتار فارسی به نوشتار</title>
+<meta name="description" content="دموی زنده‌ی Sokhan — مدل Whisper کاملاً داخل مرورگر شما اجرا می‌شود؛ هیچ صدایی به هیچ سروری فرستاده نمی‌شود.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1c2333; --muted: #5b6472; --line: #e3e7ee;
+    --bg: #f6f7fa; --card: #ffffff; --accent: #4f46e5; --accent-2: #7c3aed;
+    --ok: #0e9f6e; --err: #cf2440;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: 'Vazirmatn', 'Noto Sans Arabic', sans-serif;
+    line-height: 1.9;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; }
+  header h1 { font-size: 1.7rem; font-weight: 800; margin: 8px 0 2px; }
+  header h1 .brand { color: var(--accent); }
+  header p.sub { margin: 0 0 18px; color: var(--muted); font-size: 0.95rem; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(16,24,40,.04);
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  label.field { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  select {
+    font-family: inherit; font-size: 0.95rem; padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+  }
+  button {
+    font-family: inherit; font-size: 1rem; font-weight: 600; padding: 10px 18px;
+    border-radius: 10px; border: 1px solid var(--line); background: #fff;
+    color: var(--ink); cursor: pointer; transition: all .15s ease;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: none; color: #fff; font-size: 1.05rem;
+  }
+  button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.07); }
+  button.recording { background: var(--err); border: none; color: #fff; }
+  #status { font-size: 0.92rem; color: var(--muted); min-height: 1.6em; margin: 14px 0 6px; }
+  .bar { height: 8px; background: #eef0f5; border-radius: 99px; overflow: hidden; display: none; }
+  .bar > div { height: 100%; width: 0%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s ease; }
+  #transcript {
+    min-height: 120px; font-size: 1.08rem; padding: 12px 14px; border-radius: 10px;
+    border: 1px dashed var(--line); background: #fcfcfd; white-space: pre-wrap;
+  }
+  #meta { font-size: 0.85rem; color: var(--muted); margin-top: 8px; min-height: 1.4em; }
+  #ref { font-size: 0.85rem; color: var(--muted); margin-top: 6px; display: none; }
+  #ref b { color: var(--ok); font-weight: 600; }
+  .note { font-size: 0.88rem; color: var(--muted); }
+  .note a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .privacy { display: flex; gap: 8px; align-items: center; font-size: 0.9rem;
+    color: var(--ok); background: #ecfdf5; border: 1px solid #a7f3d0;
+    border-radius: 10px; padding: 8px 12px; margin-bottom: 16px; }
+  footer { margin-top: 26px; font-size: 0.85rem; color: var(--muted); text-align: center; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>سخن <span class="brand">·</span> تبدیل گفتار فارسی به نوشتار</h1>
+    <p class="sub">دموی زنده‌ی موتور Sokhan — مدل Whisper روی دستگاهِ خودِ شما اجرا می‌شود.</p>
+  </header>
+
+  <div class="privacy">🔒 حریم خصوصی کامل: صدا فقط در مرورگر شما پردازش می‌شود — به هیچ سروری ارسال نمی‌شود.</div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <label class="field" for="model">کدام مدل؟ (اولین بار دانلود می‌شود)</label>
+        <select id="model">
+          <option value="Xenova/whisper-base" selected>پایه (base) — سریع، دانلود ~۷۵ مگابایت</option>
+          <option value="Xenova/whisper-small">کوچک (small) — دقیق‌تر اما کندتر</option>
+        </select>
+      </div>
+      <div style="flex:1"></div>
+      <button id="sample">نمونه‌ی آماده</button>
+      <button id="mic">ضبط با میکروفن</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <input type="file" id="file" accept="audio/*,.wav,.mp3,.m4a,.ogg,.webm"
+             style="font-family:inherit;font-size:.9rem;color:var(--muted)">
+    </div>
+
+    <div id="status">برای شروع، «نمونه‌ی آماده» را بزنید یا صدا ضبط/انتخاب کنید.</div>
+    <div class="bar" id="bar"><div></div></div>
+  </div>
+
+  <div class="card">
+    <label class="field">متن پیاده‌شده</label>
+    <div id="transcript" dir="rtl">(اینجا نوشته می‌شود…)</div>
+    <div id="meta"></div>
+    <div id="ref"></div>
+  </div>
+
+  <p class="note">
+    صادقانه: این دمو چک‌پوینت‌های <b>پایه‌ی</b> Whisper را در مرورگر اجرا می‌کند
+    (Common Voice فارسی محاوره‌ای و پرنویز است؛ انتظار خطا داشته باشید).
+    چک‌پوینت ریزتنظیم‌شده‌ی Sokhan روی <a href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan">Hub</a>
+    موجود است و اپ Gradio آن برای اجرای روی سرور خودتان در
+    <a href="https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio">space/gradio/</a>
+    قرار دارد — HF از ۲۰۲۶ میزبانی Spaceهای Gradio را پشت اشتراک PRO گذاشته و
+    Spaceهای Static مثل همین صفحه رایگان مانده‌اند.
+  </p>
+
+  <footer>
+    کد کامل: <a href="https://github.com/Abolfazlrwm/sokhan">github.com/Abolfazlrwm/sokhan</a>
+    · اندازه‌گیری‌ها: <a href="https://github.com/Abolfazlrwm/sokhan/tree/main/benchmarks">benchmarks/</a>
+    · اجرا با <a href="https://huggingface.co/docs/transformers.js">transformers.js</a>
+  </footer>
+</div>
+
+<script type="module" src="demo.js?v=2"></script>
+</body>
+</html>
