@@ -34,7 +34,7 @@ jobs:
         run: |
           dirs="backend"
           if [ -d bot ]; then dirs="$dirs bot"; fi
-          for extra in training benchmarks; do
+          for extra in training benchmarks space; do
             if [ -d "$extra" ]; then dirs="$dirs $extra"; fi
           done
           ruff check $dirs

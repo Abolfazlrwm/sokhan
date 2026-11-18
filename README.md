@@ -4,6 +4,10 @@
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 
+**Try it in the browser first:** the fine-tuned Persian checkpoint runs as a
+public demo at [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
+— mic or file upload, A/B against the untuned baseline, nothing to install.
+
 Sokhan runs entirely on your own hardware: a FastAPI service with a
 faster-whisper engine, a Celery worker, a Next.js dashboard written
 Persian-first (RTL), and an optional Telegram bot. No cloud account, no
@@ -204,6 +208,9 @@ docs/        architecture notes and decision records (ADRs)
 - Streaming chunk decode to cut worker memory for long recordings
 - Persian punctuation restoration post-pass
 - Webhooks/notifications when a job finishes
+
+Full versioned roadmap with acceptance criteria (and the measurement-first
+rule everything is held to): [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## License
 

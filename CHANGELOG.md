@@ -3,6 +3,25 @@
 All notable changes to Sokhan are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project versions with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- A public **browser demo** (`space/`): a Gradio Space that serves the
+  fine-tuned checkpoint with the production engine (faster-whisper, CPU
+  int8) and lets anyone A/B the same clip against the untuned `small`
+  baseline; publishable from the Colab notebook in one cell (cell 10) with
+  the Space and its RTL Persian UI, plus a note that first inference
+  downloads the model
+- A proper **Hugging Face model card** (`training/model_card.md`) with the
+  measured WER/CER, honest caveats (12-clip fixture, 500-clip training
+  set), usage snippet and full reproduction instructions — cell 10 writes
+  it onto the model repo as `README.md`
+- `docs/ROADMAP.md` — versioned phases (v1.3 public face, v1.4 engine
+  quality, v1.5 product surface, v2.0 candidates) under the
+  measurement-first rule
+- `.pre-commit-config.yaml` for contributors (ruff + hygiene hooks)
+
 ## [1.2.0] - 2026-11-18
 
 ### Added
