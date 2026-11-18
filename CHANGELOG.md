@@ -22,6 +22,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   measurement-first rule
 - `.pre-commit-config.yaml` for contributors (ruff + hygiene hooks)
 
+### Security
+
+- Patched the four PostCSS advisories flagged by Dependabot (arbitrary
+  file read via attacker-controlled `sourceMappingURL`, path traversal in
+  source-map auto-loading, the incomplete-fix follow-up, XSS via unescaped
+  `</style>` in stringify output) by forcing `postcss ^8.5.23` under
+  `next` through npm `overrides` and refreshing the lockfile; verified
+  with a clean `next build` (all routes compile, Tailwind pipeline
+  unaffected). `next` stays on 15.5 — the audit's `--force` path would
+  have been a major-version upgrade
+- picomatch ReDoS (GHSA-fc5q-39xc-vjpf) currently has **no upstream fix**:
+  the vulnerable range `<= 4.0.7` includes the latest published release.
+  The chain is `next-intl → @parcel/watcher → picomatch`, exercised only
+  by dev-time file watching over globs defined in this repo, not by
+  anything attacker-controlled in production. The Dependabot alert is
+  dismissed as `no_fix_available` and gets reopened the day upstream
+  ships a patched picomatch
+
 ## [1.2.0] - 2026-11-18
 
 ### Added
