@@ -3,10 +3,21 @@
 All notable changes to Sokhan are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project versions with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-18
 
 ### Added
 
+- The first **GPU-scale** fine-tune, measured and published (2026-11-18):
+  LoRA on `whisper-small`, 500 Common Voice (fa) clips / ≈45 minutes of
+  speech, 3 epochs in ~7 minutes on a free Colab T4 — training loss
+  3.63 → 1.75, held-out eval WER 85.1% → 81.6%, and on the 12-clip fixture
+  **WER 80.5% → 79.3% / CER 26.7% → 24.9%** — the first fine-tune to beat
+  its own baseline. Artifact:
+  `hf.co/Abol0pati/whisper-small-fa-sokhan`; the benchmark row and its
+  honest caveats live in `benchmarks/README.md`
+- The benchmark table now carries all five models (three baselines + two
+  fine-tuned checkpoints) measured back to back in one session, with the
+  2026-11-13 and 2026-11-15 sessions archived in `benchmarks/results/`
 - The first real fine-tune run, measured end to end on CPU (2026-11-15):
   LoRA on `whisper-tiny`, 518 Common Voice (fa) clips / 45 minutes from the
   public CC-0 mirror's train split, 2 epochs — training loss 3.84 → 1.55,
@@ -33,8 +44,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   data → train → convert → serve/download on a free T4 (Kaggle works too)
 - `docs/free-gpu.md` — verified free GPU options for the first real
   fine-tuning run (Colab T4, Kaggle ~30 GPU-h/week, Lightning AI)
+- `docs/free-gpu.md` documents the "Failed to assign a backend —
+  restriction in your location" Colab error (sanctioned-region IPs) with
+  the VPN-reload and Kaggle-import fixes, so users in Iran can actually
+  reach a free GPU
+- `SECURITY.md` with a private vulnerability-reporting channel
 
 ### Fixed
+
+- The Colab install cell uninstalls Colab's preinstalled `torchao` 0.10,
+  which made `peft` hard-fail LoRA injection even though the pipeline
+  never imports torchao ("only versions above 0.16.0 are supported")
+- The install cell prints `training deps OK` after installing: the smoke
+  test skips its ct2/faster-whisper leg when a package is missing, so a
+  silently failed `pip install faster-whisper` used to surface only later
+  as `ModuleNotFoundError` in the serving cell
+- The serving-test cell fails with a readable message when the converted
+  folder is absent (faster-whisper otherwise raises a cryptic "Invalid
+  model size" ValueError), and falls back to CPU int8 when a VM ships
+  incomplete CUDA 12 user-space libraries ("libcublas.so.12 is not
+  found") — the configuration the backend deploys anyway
+- The notebook's save cell guards the `google.colab` import, so the same
+  notebook runs on Kaggle (zip mode prints the file path instead of
+  crashing)
 
 - The Colab notebook's data cell used `mozilla-foundation/common_voice_17_0`,
   which no longer ships data files (verified 2026-11-15: only README and

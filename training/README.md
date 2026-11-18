@@ -120,11 +120,13 @@ current ML stack surfaced and are fixed:
 
 ## What is *not* done yet
 
-- No *GPU-scale* training run has happened. The 2026-11-15 CPU run (tiny,
-  45 minutes of data) measured **no WER improvement** — see the fine-tune
-  row in `benchmarks/README.md`. The first GPU run (`whisper-small`, hours
-  of data, free T4) is what can actually move the number; until then no
-  improvement claim exists in this repo.
+- The GPU-scale run exists (2026-11-18, free Colab T4): `whisper-small` +
+  LoRA on 500 clips / ≈45 minutes of speech, 3 epochs in ~7 minutes —
+  fixture WER 80.5% → 79.3% (see the fine-tune row in
+  `benchmarks/README.md`). Real, but small; the same notebook at
+  `MAX_SAMPLES = 0` (the full 10-hour manifest, ~1.5–2 h on a T4) is the
+  next run, ideally paired with a larger speaker-disjoint hold-out than
+  the default 2% eval split.
 - The default eval split (2%) is small; a proper report should freeze a
   larger, speaker-disjoint hold-out.
 - Data augmentation (noise, speed perturbation) is a known next step for

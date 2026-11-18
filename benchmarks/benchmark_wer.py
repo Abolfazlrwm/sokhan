@@ -49,6 +49,7 @@ MODEL_PARAMS = {
     "large-v3": "1.55 B",
     # Sokhan fine-tuned checkpoints published on the Hub
     "Abol0pati/whisper-tiny-fa-sokhan": "39 M",
+    "Abol0pati/whisper-small-fa-sokhan": "244 M",
 }
 
 

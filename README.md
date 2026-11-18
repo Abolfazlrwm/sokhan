@@ -175,9 +175,13 @@ docs/        architecture notes and decision records (ADRs)
 
 - Accuracy: measured on a fixed public sample — 12 real Common Voice (fa)
   clips, 61 s of audio, human-verified references. With the default `small`
-  engine: **WER 80.5% / CER 26.7%** (`tiny` 93.9%, `base` 90.2%). These are
-  high numbers because Common Voice fa is colloquial and noisy; read speech
-  is far easier. Full methodology and per-clip output:
+  engine: **WER 80.5% / CER 26.7%** (`tiny` 92.7%, `base` 90.2%). The first
+  GPU fine-tune — LoRA on `whisper-small`, 500 clips, free Colab T4 —
+  measures **WER 79.3% / CER 24.9%**
+  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)):
+  a small, real gain that data scaling should grow. These numbers are high
+  because Common Voice fa is colloquial and noisy; read speech is far
+  easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).
 - Speaker labels depend on the diarization engine you pick. `energy` is a
   heuristic: its labels describe acoustic similarity, not verified identity,
@@ -192,10 +196,11 @@ docs/        architecture notes and decision records (ADRs)
 
 - ~~Real speaker diarization behind an environment flag~~ — shipped in v1.1.0
   (`DIARIZATION_ENGINE=energy|pyannote`, see ADR 0004)
-- Persian Whisper fine-tune — pipeline verified end-to-end on CPU
-  ([training/](training/README.md)); first measured run happens on free
-  GPUs ([docs/free-gpu.md](docs/free-gpu.md)), measured WER lands in
-  `benchmarks/` afterwards
+- Persian Whisper fine-tune — the first **GPU-scale** run is measured and
+  published (v1.2.0): fixture WER 80.5% → 79.3% with only 500 training
+  clips ([training/](training/README.md)); next step is the same notebook
+  at `MAX_SAMPLES = 0` (full 10-hour manifest, ~2 h on a free T4,
+  [docs/free-gpu.md](docs/free-gpu.md))
 - Streaming chunk decode to cut worker memory for long recordings
 - Persian punctuation restoration post-pass
 - Webhooks/notifications when a job finishes
