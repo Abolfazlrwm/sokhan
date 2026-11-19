@@ -1,0 +1,36 @@
+name: Sync demo Space
+
+# Publishes space/ (the static browser demo) to the Hugging Face Space on
+# every push to main that touches it, so the live demo stays in lockstep
+# with the repository. The HF token lives in the repo secret HF_TOKEN.
+on:
+  push:
+    branches: [main]
+    paths:
+      - space/**
+      - deploy/sync_space.py
+      - .github/workflows/sync-space.yml
+  workflow_dispatch:
+
+concurrency:
+  group: sync-demo-space
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install huggingface_hub
+        run: python -m pip install --quiet "huggingface_hub>=0.26,<1.0"
+
+      - name: Publish to hf.co/spaces/Abol0pati/sokhan-fa-demo
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python deploy/sync_space.py

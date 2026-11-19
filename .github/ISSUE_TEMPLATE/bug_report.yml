@@ -1,0 +1,44 @@
+name: Bug report
+description: Something is broken - engine, dashboard, bot or the browser demo.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: the browser demo runs Whisper entirely client-side at
+        https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo - if the bug
+        reproduces there, note which model (base/small) and browser you used.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us what you expected to happen instead.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - backend (FastAPI / transcription engine)
+        - worker (Celery)
+        - web dashboard (Next.js)
+        - Telegram bot
+        - browser demo (Space)
+        - fine-tune / benchmarks
+        - deployment (docker-compose)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste the stack trace or logs, wrapped in code fences.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The tag (v1.2.0) or commit sha you are running.
+    validations:
+      required: true

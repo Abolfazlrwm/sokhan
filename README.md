@@ -1,6 +1,7 @@
 # Sokhan · سخن
 
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
+[![Sync demo Space](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml)
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 

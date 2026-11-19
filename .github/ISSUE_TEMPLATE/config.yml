@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Live browser demo
+    url: https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo
+    about: Try Sokhan's speech engine client-side before filing an issue.
+  - name: Security vulnerabilities
+    url: https://github.com/Abolfazlrwm/sokhan/blob/main/SECURITY.md
+    about: Please report vulnerabilities privately, not as public issues.

@@ -23,6 +23,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   quality, v1.5 product surface, v2.0 candidates) under the
   measurement-first rule
 - `.pre-commit-config.yaml` for contributors (ruff + hygiene hooks)
+- A `Sync demo Space` workflow: pushes that touch `space/` are
+  auto-published to the live Space by `deploy/sync_space.py` (HF token
+  kept in the repo's `HF_TOKEN` Actions secret), so the public demo can
+  never drift from `main`; CONTRIBUTING.md and issue templates round out
+  the contributor surface
 
 ### Security
 
