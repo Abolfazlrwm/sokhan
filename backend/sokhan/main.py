@@ -6,6 +6,7 @@ lazily on first use.
 """
 
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -39,9 +40,17 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
     )
+    # Browsers only hit the API from the web app, so the default is the
+    # local dev front-end instead of a wildcard. Deployments set
+    # SOKHAN_CORS_ORIGINS (comma-separated) to the real public origins.
+    cors_origins = [
+        origin.strip()
+        for origin in os.getenv("SOKHAN_CORS_ORIGINS", "").split(",")
+        if origin.strip()
+    ] or ["http://localhost:3000", "http://127.0.0.1:3000"]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
