@@ -20,6 +20,10 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 
+# Next.js standalone ships a stock `node` user (uid 1000); the server binds
+# 3000 and writes nothing at runtime.
+USER node
+
 EXPOSE 3000
 
 CMD ["node", "server.js"]
