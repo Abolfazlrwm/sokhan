@@ -51,6 +51,26 @@
 - Uploaded audio lives on the `sokhan-data` docker volume; exports are
   generated on the fly from segments.
 
+## Speaker diarization
+
+Before chunking, the pipeline runs the configured `DIARIZATION_ENGINE` on the
+decoded mono PCM and labels segments by temporal overlap (ADR 0003 defines the
+`Diarizer` protocol, ADR 0004 the engines):
+
+| Value | Engine | Labels |
+| --- | --- | --- |
+| `stub` (default) | no-op | none — speaker stays empty, exactly the v1 behaviour |
+| `energy` | short-time energy VAD plus a two-cluster k-means over log-band features, numpy only | `SPK_1`/`SPK_2` — **acoustic similarity, not verified speaker identity** |
+| `pyannote` | `pyannote/speaker-diarization-3.1` pipeline | model-assigned speaker identities |
+
+Diarization is an enhancement, never a dependency: if the selected engine
+cannot run (extra not installed, `PYANNOTE_HF_TOKEN` missing, model load or
+inference error) the job completes without speaker labels and the reason is
+logged. The pyannote engine is gated behind the optional `diarize` extra
+(`pip install "backend[diarize]"`), the gated Hugging Face weights and an
+operator token; the model is downloaded lazily on first use, so the default
+`stub` deployment never touches it.
+
 ## Search
 
 `text_normalized` stores `normalize_persian(text)` (Arabic ي/ك variants
@@ -71,3 +91,4 @@ remaining minutes in the body. Rejections are transparent, not silent.
 | --- | --- | --- |
 | `CELERY_ENABLED` | `true` | Jobs run inline in a daemon thread; no Redis needed |
 | `SUMMARY_ENABLED` | `false` | Jobs complete without a summary; no LLM calls |
+| `DIARIZATION_ENGINE` | `stub` | Jobs complete without speaker labels; `energy`/`pyannote` opt in (see above) |

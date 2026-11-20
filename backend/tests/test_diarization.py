@@ -1,6 +1,16 @@
-"""Tests for the diarization engines, factory and segment labelling."""
+"""Tests for the diarization engines, factory and segment labelling.
+
+Everything here runs offline: the pyannote provider is exercised through
+fakes (no ``pyannote.audio`` install, no Hugging Face download, no torch).
+"""
+
+import sys
+import types
+from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
+import pytest
 from sokhan.core.transcribe import Segment
 from sokhan.diarization import (
     EnergyClusterDiarizer,
@@ -8,7 +18,8 @@ from sokhan.diarization import (
     get_diarizer,
     label_segments,
 )
-from sokhan.diarization.base import SpeakerTurn
+from sokhan.diarization.base import DiarizerUnavailableError, SpeakerTurn
+from sokhan.diarization.pyannote import PyannoteDiarizer
 
 RATE = 16_000
 
@@ -99,6 +110,87 @@ def test_factory_falls_back_when_pyannote_missing(monkeypatch) -> None:
         assert isinstance(engine, StubDiarizer), "no torch/token must fall back to stub"
     finally:
         get_settings.cache_clear()
+
+
+def test_factory_returns_pyannote_when_importable_and_token_set(monkeypatch) -> None:
+    """The success path: fake pyannote.audio in sys.modules plus a token."""
+    monkeypatch.setitem(sys.modules, "pyannote", types.ModuleType("pyannote"))
+    monkeypatch.setitem(sys.modules, "pyannote.audio", types.ModuleType("pyannote.audio"))
+    monkeypatch.setenv("DIARIZATION_ENGINE", "pyannote")
+    monkeypatch.setenv("PYANNOTE_HF_TOKEN", "hf_test_token")
+    monkeypatch.setenv("PYANNOTE_MODEL", "pyannote/speaker-diarization-fake")
+    from sokhan.config import get_settings
+
+    get_settings.cache_clear()
+    try:
+        engine = get_diarizer()
+        assert isinstance(engine, PyannoteDiarizer)
+        assert engine.hf_token == "hf_test_token"
+        assert engine.model_name == "pyannote/speaker-diarization-fake"
+        # nothing is downloaded at construction time; the model loads lazily
+        assert engine._pipeline is None
+    finally:
+        get_settings.cache_clear()
+
+
+def test_factory_unknown_engine_is_stub(monkeypatch) -> None:
+    monkeypatch.setenv("DIARIZATION_ENGINE", "nonsense")
+    from sokhan.config import get_settings
+
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_diarizer(), StubDiarizer)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_pyannote_engine_rejects_missing_token() -> None:
+    engine = PyannoteDiarizer(hf_token="", model_name="pyannote/speaker-diarization-3.1")
+    with pytest.raises(DiarizerUnavailableError, match="no HF token"):
+        engine.diarize(_tone(0.5, 220.0), RATE)
+    assert engine._pipeline is None, "no load attempt may happen without a token"
+
+
+@dataclass(frozen=True)
+class _FakeTurn:
+    start: float
+    end: float
+
+
+class _FakeAnnotation:
+    def itertracks(self, yield_label: bool):  # noqa: N802 - mirrors pyannote's API
+        assert yield_label is True
+        yield _FakeTurn(0.0, 2.0), None, "SPEAKER_00"
+        yield _FakeTurn(2.5, 4.0), None, "SPEAKER_01"
+
+
+class _FakePipeline:
+    def __init__(self) -> None:
+        self.paths: list[str] = []
+
+    def __call__(self, path: str) -> _FakeAnnotation:
+        self.paths.append(path)
+        return _FakeAnnotation()
+
+
+def test_pyannote_engine_converts_annotation_to_turns(monkeypatch) -> None:
+    """Turns, WAV plumbing and temp-file cleanup, all through a fake pipeline."""
+    engine = PyannoteDiarizer(
+        hf_token="hf_test_token", model_name="pyannote/speaker-diarization-3.1"
+    )
+    pipeline = _FakePipeline()
+    monkeypatch.setattr(engine, "_load", lambda: pipeline)
+
+    turns = engine.diarize(_tone(4.0, 220.0), RATE)
+
+    assert [(turn.start, turn.end, turn.speaker) for turn in turns] == [
+        (0.0, 2.0, "SPEAKER_00"),
+        (2.5, 4.0, "SPEAKER_01"),
+    ]
+    assert len(pipeline.paths) == 1, "exactly one temporary WAV per call"
+    wav_path = Path(pipeline.paths[0])
+    assert wav_path.suffix == ".wav"
+    assert not wav_path.exists(), "the temporary WAV must be removed afterwards"
 
 
 def test_pipeline_labels_segments_when_diarizer_present(
