@@ -1,0 +1,45 @@
+name: Benchmark gate (weekly)
+
+# Re-runs the fixed Common Voice (fa) fixture against the recorded baseline
+# (benchmarks/results/baseline.json) and fails if the `small` engine loses
+# more than one WER point — guards engine/dependency upgrades (roadmap v1.4).
+on:
+  schedule:
+    # Mondays 03:17 UTC — deliberately off the hour.
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the engine and benchmark dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e backend
+          python -m pip install -r benchmarks/requirements.txt
+
+      - name: Run the fixture benchmark with the regression gate
+        run: |
+          python benchmarks/benchmark_wer.py \
+            --models small \
+            --baseline benchmarks/results/baseline.json \
+            --max-regression 1.0 \
+            --archive
+
+      - name: Upload the archived session
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-session
+          path: benchmarks/results
+          retention-days: 90

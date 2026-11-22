@@ -28,6 +28,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   kept in the repo's `HF_TOKEN` Actions secret), so the public demo can
   never drift from `main`; CONTRIBUTING.md and issue templates round out
   the contributor surface
+- The **segments timeline** in the API: `GET /jobs/{id}` now returns the
+  per-segment transcript (start / end / speaker / text, 1-based position)
+  the database always stored but never exposed, and the dashboard renders
+  it as a timestamped, speaker-labelled transcript view instead of a flat
+  paragraph
+- Two more **transcript exports**: WebVTT (also on the OpenAI-compatible
+  endpoint, completing its `response_format` set: json / text / srt / vtt /
+  verbose_json) and structured JSON with the full segment list
+- Dashboard **actions**: copy the transcript to the clipboard and delete a
+  transcription with a confirmation — the `DELETE /jobs/{id}` endpoint
+  existed and was tested, but no UI button called it
+- Engine **decoding knobs**: `WHISPER_BEAM_SIZE` (default 5, matching the
+  benchmark and demo config) and `WHISPER_INITIAL_PROMPT` for a domain
+  lexicon so names and technical terms survive (v1.4 roadmap item)
+- The Telegram bot **keeps its promise now**: a completion notifier
+  (`sokhan_bot.notify`) watches every job the bot submits — persisted
+  across restarts — and pushes the transcript in Telegram-sized chunks
+  (or a failure notice) the moment the backend finishes; jobs stuck over
+  six hours are released with a note instead of leaking
+- A **weekly benchmark gate**: the fixture runs every Monday against the
+  recorded baseline (`benchmarks/results/baseline.json`) and fails CI if
+  the `small` engine loses more than one WER point; the script gained
+  `--archive`, `--baseline` and `--max-regression` flags (gate logic in
+  `benchmarks/regression.py`, no heavy imports, fully unit-tested)
+
+### Fixed
+
+- The bot's welcome text and upload reply always said the transcript
+  would be sent "as soon as it is ready" — but nothing ever sent it;
+  the completion notifier above actually delivers it now
 
 ### Security
 

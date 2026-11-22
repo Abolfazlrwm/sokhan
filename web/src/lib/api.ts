@@ -7,7 +7,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 export const TOKEN_STORAGE_KEY = "sokhan_token";
 
 export type JobStatus = "queued" | "processing" | "completed" | "failed";
-export type TranscriptFormat = "txt" | "srt" | "docx";
+export type TranscriptFormat = "txt" | "srt" | "vtt" | "json" | "docx";
 
 export interface AuthResponse {
   id: string;
@@ -42,6 +42,14 @@ export interface JobListResponse {
   total: number;
 }
 
+export interface TranscriptSegment {
+  position: number;
+  start: number;
+  end: number;
+  speaker: string | null;
+  text: string;
+}
+
 export interface JobDetail {
   id: string;
   filename: string;
@@ -55,6 +63,7 @@ export interface JobDetail {
   has_summary: boolean;
   summary: string | null;
   text: string | null;
+  segments?: TranscriptSegment[];
 }
 
 export class ApiError extends Error {
@@ -179,6 +188,25 @@ export async function getJob(id: string): Promise<JobDetail> {
 
 export async function searchJobs(query: string): Promise<JobListResponse> {
   return requestJson(`/search?q=${encodeURIComponent(query)}`, { authenticated: true });
+}
+
+export async function deleteJob(id: string): Promise<void> {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers,
+    });
+  } catch {
+    throw new ApiError(0, "network error");
+  }
+
+  handleAuthFailure(response);
+  if (!response.ok) throw new ApiError(response.status);
 }
 
 export async function downloadTranscript(id: string, format: TranscriptFormat): Promise<Blob> {

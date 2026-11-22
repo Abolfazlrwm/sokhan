@@ -12,7 +12,7 @@ from sokhan.api.deps import get_current_user
 from sokhan.api.serializers import job_to_detail, job_to_out
 from sokhan.config import get_settings
 from sokhan.core.audio import delete_audio, probe_duration_seconds, save_upload
-from sokhan.core.formats import to_docx, to_srt, to_txt
+from sokhan.core.formats import to_docx, to_json_transcript, to_srt, to_txt, to_vtt
 from sokhan.core.quota import QuotaExceededError, ensure_quota
 from sokhan.db import get_db
 from sokhan.models import Job, JobStatus, Segment, User, utcnow
@@ -165,6 +165,23 @@ def get_job_transcript(
             media_type="application/x-subrip; charset=utf-8",
             headers={"Content-Disposition": _content_disposition(filename_base, "srt")},
         )
+    if format == "vtt":
+        return Response(
+            to_vtt(list(segments)),
+            media_type="text/vtt; charset=utf-8",
+            headers={"Content-Disposition": _content_disposition(filename_base, "vtt")},
+        )
+    if format == "json":
+        return Response(
+            to_json_transcript(
+                list(segments),
+                filename=job.filename,
+                language=job.language,
+                duration_seconds=job.duration_seconds,
+            ),
+            media_type="application/json; charset=utf-8",
+            headers={"Content-Disposition": _content_disposition(filename_base, "json")},
+        )
     if format == "docx":
         document = to_docx(list(segments), title=job.filename.rsplit(".", 1)[0] or "Transcript")
         return Response(
@@ -174,7 +191,10 @@ def get_job_transcript(
             ),
             headers={"Content-Disposition": _content_disposition(filename_base, "docx")},
         )
-    raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "format must be txt, srt or docx")
+    raise HTTPException(
+        status.HTTP_422_UNPROCESSABLE_ENTITY,
+        "format must be txt, srt, vtt, json or docx",
+    )
 
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)

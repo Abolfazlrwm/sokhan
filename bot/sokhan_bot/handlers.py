@@ -164,6 +164,7 @@ class Handlers:
             return
 
         await message.answer(texts.VOICE_RECEIVED)
+        self.store.track(job_id, message.chat.id)
         await message.answer(
             f"شناسهٔ پردازش: {job_id}\nبا /track {job_id} وضعیت را دنبال کن.",
             reply_markup=_job_keyboard(job_id, self.client.settings.web_base_url),

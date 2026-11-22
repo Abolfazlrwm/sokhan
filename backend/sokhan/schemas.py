@@ -26,6 +26,19 @@ class JobOut(BaseModel):
     has_summary: bool
 
 
+class SegmentOut(BaseModel):
+    """One transcript span with absolute timestamps (seconds).
+
+    `position` is a 1-based ordinal matching the SRT block numbering.
+    """
+
+    position: int
+    start: float
+    end: float
+    speaker: str | None = None
+    text: str
+
+
 class JobDetailOut(JobOut):
     language: str
     want_summary: bool
@@ -33,6 +46,7 @@ class JobDetailOut(JobOut):
     error: str | None = None
     summary: str | None = None
     text: str | None = None
+    segments: list[SegmentOut] = []
 
 
 class JobListResponse(BaseModel):

@@ -1,7 +1,7 @@
 """OpenAI-compatible transcription endpoint.
 
 Drop-in replacement for POST /v1/audio/transcriptions: accepts multipart
-`file` with optional `language` and `response_format` (json | text | srt |
+`file` with optional `language` and `response_format` (json | text | srt | vtt |
 verbose_json), authenticates with the same bearer token, runs inline in the
 request threadpool and records usage against the monthly quota. For long
 recordings prefer POST /jobs, which queues the work instead of blocking.
@@ -17,7 +17,7 @@ from sokhan.api.deps import get_current_user
 from sokhan.config import get_settings
 from sokhan.core.audio import SAMPLE_RATE, decode_to_mono_16k, delete_audio, save_upload
 from sokhan.core.chunking import DEFAULT_OVERLAP_SECONDS, chunk_samples
-from sokhan.core.formats import to_srt, to_txt
+from sokhan.core.formats import to_srt, to_txt, to_vtt
 from sokhan.core.merge import merge_chunks
 from sokhan.core.quota import QuotaExceededError, ensure_quota, record_usage
 from sokhan.core.transcribe import get_transcriber
@@ -26,7 +26,7 @@ from sokhan.models import User, utcnow
 
 router = APIRouter(prefix="/v1", tags=["openai-compatible"])
 
-_FORMATS = ("json", "text", "srt", "verbose_json")
+_FORMATS = ("json", "text", "srt", "vtt", "verbose_json")
 
 
 @router.post("/audio/transcriptions")
@@ -91,6 +91,8 @@ def transcribe_audio(
         return Response(text, media_type="text/plain; charset=utf-8")
     if response_format == "srt":
         return Response(to_srt(merged), media_type="application/x-subrip; charset=utf-8")
+    if response_format == "vtt":
+        return Response(to_vtt(merged), media_type="text/vtt; charset=utf-8")
 
     segments_payload = [
         {"id": index, "start": segment.start, "end": segment.end, "text": segment.text}

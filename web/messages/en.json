@@ -122,9 +122,18 @@
     "downloadTitle": "Downloads",
     "downloadTxt": "Plain text (TXT)",
     "downloadSrt": "Subtitles (SRT)",
+    "downloadVtt": "WebVTT subtitles (VTT)",
+    "downloadJson": "Structured data (JSON)",
     "downloadDocx": "Word document (DOCX)",
     "downloadPending": "Preparing…",
-    "downloadError": "The download didn't work. Please try again."
+    "downloadError": "The download didn't work. Please try again.",
+    "copyTranscript": "Copy text",
+    "copied": "Copied!",
+    "copyFailed": "Copy failed.",
+    "deleteJob": "Delete",
+    "deletePending": "Deleting…",
+    "deleteConfirm": "This transcription and its audio will be deleted permanently. Are you sure?",
+    "deleteError": "Delete failed. Please try again."
   },
   "errors": {
     "invalidCredentials": "The email or password is incorrect.",

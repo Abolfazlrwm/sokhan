@@ -1,6 +1,7 @@
-"""Export formats: plain text, SRT subtitles and DOCX documents."""
+"""Export formats: plain text, SRT/VTT subtitles, JSON and DOCX documents."""
 
 import io
+import json
 from collections.abc import Sequence
 from typing import Protocol
 
@@ -44,6 +45,52 @@ def to_srt(segments: Sequence[TranscriptLike]) -> str:
         speaker_prefix = f"[{segment.speaker}] " if segment.speaker else ""
         blocks.append(f"{position}\n{start} --> {end}\n{speaker_prefix}{text}\n")
     return "\n".join(blocks)
+
+
+def format_vtt_timestamp(seconds: float) -> str:
+    """Render seconds as a WebVTT timecode (HH:MM:SS.mmm — dot milliseconds)."""
+    return format_srt_timestamp(seconds).replace(",", ".")
+
+
+def to_vtt(segments: Sequence[TranscriptLike]) -> str:
+    """WebVTT subtitles; speakers use the VTT voice tag."""
+    lines = ["WEBVTT", ""]
+    for segment in segments:
+        start = format_vtt_timestamp(segment.start)
+        end = format_vtt_timestamp(segment.end)
+        text = segment.text.replace("\r", " ").strip() or "..."
+        voice = f"<v {segment.speaker}> " if segment.speaker else ""
+        lines.append(f"{start} --> {end}")
+        lines.append(f"{voice}{text}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def to_json_transcript(
+    segments: Sequence[TranscriptLike],
+    *,
+    filename: str = "",
+    language: str = "",
+    duration_seconds: float = 0.0,
+) -> str:
+    """Machine-readable transcript: metadata plus one object per segment."""
+    payload = {
+        "filename": filename,
+        "language": language,
+        "duration_seconds": round(max(0.0, duration_seconds), 3),
+        "text": to_txt(segments),
+        "segments": [
+            {
+                "position": position,
+                "start": segment.start,
+                "end": segment.end,
+                "speaker": segment.speaker,
+                "text": segment.text,
+            }
+            for position, segment in enumerate(segments, start=1)
+        ],
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
 def to_docx(segments: Sequence[TranscriptLike], title: str = "Transcript") -> bytes:

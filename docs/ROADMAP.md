@@ -43,16 +43,21 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
   RAM proportional to file size
 - Persian punctuation restoration as a post-pass (rule-based first, LLM
   behind `SUMMARY_ENABLED` as the optional upgrade)
-- Initial-prompt lexicon: pass project/domain vocab to the engine so
-  names and technical terms survive
-- Benchmark regression gate in CI: nightly run over the fixture, fail if
+- [x] Initial-prompt lexicon: `WHISPER_INITIAL_PROMPT` (plus
+  `WHISPER_BEAM_SIZE`) passes a domain vocab to the decoder so names and
+  technical terms survive
+- [x] Benchmark regression gate: the weekly `benchmark.yml` workflow runs
+  the fixture against `benchmarks/results/baseline.json` and fails if
   `small` WER degrades > 1 point (guards engine/dependency upgrades)
 
 ## v1.5 — product surface
 
-- Webhooks / notification when a job finishes (plus the Telegram bot
-  notifying on completion of long files)
+- [x] Notify when a job finishes — the Telegram bot now pushes the
+  transcript (or a failure notice) the moment the backend completes;
+  signed HTTP webhooks for external callers remain open
 - Confidence-aware SRT: low-confidence segments flagged for human review
+  (the segments timeline API and UI shipped first; confidence values are
+  still not persisted per segment)
 - Speaker identification on top of diarization (ADR 0003/0004 define the
   interface; pyannote is the default neural engine today)
 - Docker image publish to GHCR so self-hosting skips the build step

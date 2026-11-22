@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { ArrowRight, Download, FileText } from "lucide-react";
+import { ArrowRight, Check, Copy, Download, FileText, Trash2 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import {
   ApiError,
+  deleteJob,
   downloadTranscript,
   getJob,
   getToken,
@@ -16,6 +17,18 @@ import {
 import { ProgressBar, StatusBadge } from "@/components/job-bits";
 
 const POLL_INTERVAL_MS = 3000;
+
+const DOWNLOAD_FORMATS: TranscriptFormat[] = ["txt", "srt", "vtt", "json", "docx"];
+
+function formatTimestamp(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  const mm = String(minutes).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
+}
 
 function formatSeconds(total: number, locale: string): string {
   const minutes = Math.round(total / 60);
@@ -38,6 +51,14 @@ function formatDate(iso: string | null, locale: string): string {
   }
 }
 
+function formatTimestampLabel(format: TranscriptFormat, t: (key: string) => string): string {
+  if (format === "txt") return t("downloadTxt");
+  if (format === "srt") return t("downloadSrt");
+  if (format === "vtt") return t("downloadVtt");
+  if (format === "json") return t("downloadJson");
+  return t("downloadDocx");
+}
+
 export default function JobDetailPage() {
   const { id: jobId } = useParams<{ id: string }>();
   const locale = useLocale();
@@ -51,6 +72,9 @@ export default function JobDetailPage() {
   const [missing, setMissing] = useState(false);
   const [pendingFormat, setPendingFormat] = useState<TranscriptFormat | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -114,6 +138,30 @@ export default function JobDetailPage() {
     }
   }
 
+  async function handleCopy() {
+    if (!job?.text) return;
+    try {
+      await navigator.clipboard.writeText(job.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setDownloadError(t("copyFailed"));
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(t("deleteConfirm"))) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteJob(jobId);
+      router.push("/jobs");
+    } catch {
+      setDeleteError(t("deleteError"));
+      setDeleting(false);
+    }
+  }
+
   function languageLabel(language: string): string {
     if (language === "fa") return t("languageFa");
     if (language === "en") return t("languageEn");
@@ -172,7 +220,18 @@ export default function JobDetailPage() {
                   </h1>
                 </div>
               </div>
-              <StatusBadge status={job.status} />
+              <div className="flex items-center gap-3">
+                <StatusBadge status={job.status} />
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-red-200 px-3 text-xs font-bold text-red-700 transition-colors hover:border-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  {deleting ? t("deletePending") : t("deleteJob")}
+                </button>
+              </div>
             </div>
             <dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
               <div>
@@ -200,6 +259,11 @@ export default function JobDetailPage() {
                 </dd>
               </div>
             </dl>
+            {deleteError ? (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                {deleteError}
+              </p>
+            ) : null}
           </div>
 
           {isPending ? (
@@ -242,13 +306,56 @@ export default function JobDetailPage() {
 
           {job.status === "completed" && job.text ? (
             <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
-              <h2 className="font-bold text-stone-900">{t("transcriptTitle")}</h2>
-              <p
-                dir="auto"
-                className="mt-3 whitespace-pre-wrap text-[15px] leading-9 text-stone-800"
-              >
-                {job.text}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-bold text-stone-900">{t("transcriptTitle")}</h2>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-stone-300 px-3 text-xs font-bold text-stone-700 transition-colors hover:border-teal-700 hover:text-teal-800"
+                >
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                  )}
+                  {copied ? t("copied") : t("copyTranscript")}
+                </button>
+              </div>
+              {job.segments && job.segments.length > 0 ? (
+                <ol className="mt-4 space-y-2.5">
+                  {job.segments.map((segment) => (
+                    <li
+                      key={segment.position}
+                      className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg bg-stone-50 px-3 py-2.5"
+                    >
+                      <span
+                        dir="ltr"
+                        className="shrink-0 rounded-md bg-stone-200 px-2 py-0.5 font-mono text-xs text-stone-700"
+                      >
+                        {formatTimestamp(segment.start)} → {formatTimestamp(segment.end)}
+                      </span>
+                      {segment.speaker ? (
+                        <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-800">
+                          {segment.speaker}
+                        </span>
+                      ) : null}
+                      <p
+                        dir="auto"
+                        className="min-w-0 flex-1 text-[15px] leading-8 text-stone-800"
+                      >
+                        {segment.text}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p
+                  dir="auto"
+                  className="mt-3 whitespace-pre-wrap text-[15px] leading-9 text-stone-800"
+                >
+                  {job.text}
+                </p>
+              )}
             </div>
           ) : null}
 
@@ -256,7 +363,7 @@ export default function JobDetailPage() {
             <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
               <h2 className="font-bold text-stone-900">{t("downloadTitle")}</h2>
               <div className="mt-4 flex flex-wrap gap-3">
-                {(["txt", "srt", "docx"] as TranscriptFormat[]).map((format) => (
+                {DOWNLOAD_FORMATS.map((format) => (
                   <button
                     key={format}
                     type="button"
@@ -275,11 +382,7 @@ export default function JobDetailPage() {
                     ) : (
                       <>
                         <Download className="h-4 w-4" aria-hidden="true" />
-                        {format === "txt"
-                          ? t("downloadTxt")
-                          : format === "srt"
-                            ? t("downloadSrt")
-                            : t("downloadDocx")}
+                        {formatTimestampLabel(format, t)}
                       </>
                     )}
                   </button>

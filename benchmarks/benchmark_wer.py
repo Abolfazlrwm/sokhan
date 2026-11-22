@@ -13,6 +13,12 @@ Usage (from the repository root):
 
     python benchmarks/benchmark_wer.py --models tiny base small
 
+With the CI regression gate and an archived session (what the weekly
+benchmark workflow runs):
+
+    python benchmarks/benchmark_wer.py --models small \
+        --baseline benchmarks/results/baseline.json --max-regression 1.0 --archive
+
 Requirements: the backend package must be importable (``pip install -e
 "backend[dev]"``), plus ``jiwer`` (in benchmarks/requirements.txt) and the
 faster-whisper models themselves, which are downloaded automatically on
@@ -33,6 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "backend"))
 
 import jiwer  # noqa: E402
+import regression  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
 from sokhan.core.persian import normalize_persian  # noqa: E402
 
@@ -141,6 +148,23 @@ def main() -> int:
         help="faster-whisper model sizes to benchmark (default: tiny base small)",
     )
     parser.add_argument("--language", default="fa", help="language hint passed to the engine")
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="also write a timestamped copy of this session under results/archive/",
+    )
+    parser.add_argument(
+        "--baseline",
+        type=Path,
+        default=None,
+        help="baseline JSON; the WER gate compares runs against it",
+    )
+    parser.add_argument(
+        "--max-regression",
+        type=float,
+        default=1.0,
+        help="tolerated WER increase in percentage points before the gate fails (default: 1.0)",
+    )
     args = parser.parse_args()
 
     entries = load_manifest()
@@ -182,6 +206,27 @@ def main() -> int:
     out_path = RESULTS_DIR / "results.json"
     out_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nsaved: {out_path}")
+
+    if args.archive:
+        archive_dir = RESULTS_DIR / "archive"
+        archive_dir.mkdir(exist_ok=True)
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        safe_models = "-".join(name.replace("/", "_") for name in args.models)
+        archive_path = archive_dir / f"{stamp}-{safe_models}.json"
+        archive_path.write_text(
+            json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"archived: {archive_path}")
+
+    if args.baseline:
+        problems = regression.check_regression(
+            results["runs"], regression.load_baseline(args.baseline), args.max_regression
+        )
+        if problems:
+            for problem in problems:
+                print(f"REGRESSION: {problem}", file=sys.stderr)
+            return 2
+        print("regression gate passed")
 
     print("\n| Model | Params | WER | CER |")
     print("| --- | --- | --- | --- |")

@@ -53,9 +53,11 @@ built for Persian speakers from the first commit:
   split into 30-second windows with a 1-second overlap, transcribed with
   faster-whisper on CPU (int8), and merged: boundary duplicates are dropped,
   timestamps are clamped to the file duration
-- **Exports** — TXT, SRT (with accurate timecodes) and DOCX
+- **Exports** — TXT, SRT, WebVTT (all with accurate timecodes), structured
+  JSON and DOCX; the dashboard also shows the per-segment timeline with
+  speaker labels and a copy-to-clipboard button
 - **OpenAI-compatible API** — `POST /v1/audio/transcriptions` works with the
-  same multipart contract as the OpenAI API (`json`, `text`, `srt`,
+  same multipart contract as the OpenAI API (`json`, `text`, `srt`, `vtt`,
   `verbose_json`), so existing tooling can point at your own instance
 - **Job pipeline** — upload, progress polling, transcript downloads; Celery +
   Redis in production, inline threads (`CELERY_ENABLED=false`) when you don't
@@ -166,8 +168,8 @@ See [.env.example](.env.example) for the commented list.
 | `POST /auth/register`, `POST /auth/login` | email accounts |
 | `POST /auth/token-login`, `POST /auth/telegram` | connect codes / bot linking |
 | `POST /jobs` | upload audio, returns a queued job |
-| `GET /jobs` / `GET /jobs/{id}` | list and status with progress |
-| `GET /jobs/{id}/transcript?format=txt\|srt\|docx` | exports |
+| `GET /jobs` / `GET /jobs/{id}` | list, and detail with progress + segments |
+| `GET /jobs/{id}/transcript?format=txt\|srt\|vtt\|json\|docx` | exports |
 | `GET /jobs/{id}/summary` | LLM summary when enabled |
 | `GET /search?q=…` | Persian-normalized archive search |
 | `GET /quota` | monthly usage |

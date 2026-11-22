@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     whisper_model_size: str = "small"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
+    # Decoding knobs: beam width, and a domain lexicon whispered to the
+    # decoder up front so names and technical terms survive transcription.
+    whisper_beam_size: int = 5
+    whisper_initial_prompt: str = ""
 
     # Diarization (optional, behind a feature flag)
     # stub = no speaker labels | energy = heuristic two-cluster splitter | pyannote = neural

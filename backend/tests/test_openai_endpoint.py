@@ -50,6 +50,18 @@ def test_transcriptions_srt_format(client, seeded_user, wav_bytes, monkeypatch):
     assert "سلام بر تو" in response.text
 
 
+def test_transcriptions_vtt_format(client, seeded_user, wav_bytes, monkeypatch):
+    monkeypatch.setattr("sokhan.api.routes_openai.get_transcriber", lambda: FakeTranscriber())
+
+    response = _post(client, seeded_user, wav_bytes, response_format="vtt")
+
+    assert response.status_code == 200
+    assert "text/vtt" in response.headers["content-type"]
+    assert response.text.startswith("WEBVTT")
+    assert "00:00:00.000 --> " in response.text
+    assert "سلام بر تو" in response.text
+
+
 def test_transcriptions_verbose_json(client, seeded_user, wav_bytes, monkeypatch):
     monkeypatch.setattr("sokhan.api.routes_openai.get_transcriber", lambda: FakeTranscriber())
 

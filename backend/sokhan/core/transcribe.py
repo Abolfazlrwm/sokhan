@@ -70,7 +70,13 @@ class FasterWhisperTranscriber:
         self, samples: np.ndarray, sample_rate: int, language: str
     ) -> list[Segment]:
         model = self._load()
-        options: dict[str, object] = {"vad_filter": True}
+        settings = get_settings()
+        options: dict[str, object] = {
+            "vad_filter": True,
+            "beam_size": settings.whisper_beam_size,
+        }
+        if settings.whisper_initial_prompt:
+            options["initial_prompt"] = settings.whisper_initial_prompt
         if language and language != "auto":
             options["language"] = language
         segments_iter, _info = model.transcribe(samples, **options)  # type: ignore[arg-type]

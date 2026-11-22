@@ -122,9 +122,18 @@
     "downloadTitle": "دانلود خروجی",
     "downloadTxt": "متن ساده (TXT)",
     "downloadSrt": "زیرنویس (SRT)",
+    "downloadVtt": "زیرنویس وب (VTT)",
+    "downloadJson": "دادهٔ ساخت‌یافته (JSON)",
     "downloadDocx": "سند ورد (DOCX)",
     "downloadPending": "در حال آماده‌سازی…",
-    "downloadError": "دانلود ممکن نشد؛ دوباره تلاش کن."
+    "downloadError": "دانلود ممکن نشد؛ دوباره تلاش کن.",
+    "copyTranscript": "رونوشت متن",
+    "copied": "کپی شد!",
+    "copyFailed": "کپی ممکن نشد.",
+    "deleteJob": "حذف",
+    "deletePending": "در حال حذف…",
+    "deleteConfirm": "این رونویسی و فایل صوتی‌اش برای همیشه حذف می‌شود. مطمئنی؟",
+    "deleteError": "حذف ممکن نشد؛ دوباره تلاش کن."
   },
   "errors": {
     "invalidCredentials": "ایمیل یا رمز عبور درست نیست.",

@@ -53,6 +53,39 @@ def test_transcript_before_completion_conflicts(client, auth, wav_bytes, fake_en
     assert listed["items"][0]["id"] == job_id
 
 
+def test_segments_and_new_exports_expose_timestamps(
+    client, auth, wav_bytes, wait_for_job, fake_engine
+):
+    response = _upload(client, auth, wav_bytes)
+    job_id = response.json()["id"]
+    detail = wait_for_job(client, auth, job_id)
+
+    assert detail["status"] == "completed"
+    segments = detail["segments"]
+    assert len(segments) >= 1
+    assert segments[0]["position"] == 1
+    assert segments[0]["start"] == 0.0
+    assert "سلام بر تو" in segments[0]["text"]
+
+    vtt = client.get(f"/jobs/{job_id}/transcript?format=vtt", headers=auth)
+    assert vtt.status_code == 200
+    assert "text/vtt" in vtt.headers["content-type"]
+    assert vtt.text.startswith("WEBVTT")
+    assert "00:00:00.000 --> " in vtt.text
+
+    payload = client.get(f"/jobs/{job_id}/transcript?format=json", headers=auth)
+    assert payload.status_code == 200
+    body = payload.json()
+    assert body["filename"].endswith(".wav")
+    assert body["language"] == "fa"
+    assert len(body["segments"]) == len(segments)
+    assert body["segments"][0]["start"] == 0.0
+    assert "سلام بر تو" in body["text"]
+
+    bad = client.get(f"/jobs/{job_id}/transcript?format=yaml", headers=auth)
+    assert bad.status_code == 422
+
+
 def test_upload_rejects_corrupt_file(client, auth):
     response = client.post(
         "/jobs",

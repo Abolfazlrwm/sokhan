@@ -4,6 +4,7 @@ The import is always safe without a token (handy for tests and lint); only
 `main()` requires TELEGRAM_BOT_TOKEN to be set.
 """
 
+import asyncio
 import logging
 import sys
 
@@ -12,6 +13,7 @@ from aiogram import Bot, Dispatcher
 from sokhan_bot.client import SokhanClient
 from sokhan_bot.config import load_settings
 from sokhan_bot.handlers import Handlers
+from sokhan_bot.notify import CompletionNotifier
 from sokhan_bot.store import TokenStore
 
 logger = logging.getLogger("sokhan-bot")
@@ -35,6 +37,16 @@ def main() -> None:
     store = TokenStore("data/bot-tokens.json")
     dispatcher.include_router(Handlers(client, store).router)
 
+    notifier = CompletionNotifier(bot, client, store)
+
+    async def on_startup() -> None:
+        # The task is kept alive on the dispatcher so it cannot be
+        # garbage-collected while polling runs.
+        dispatcher["notifier_task"] = asyncio.create_task(notifier.run_forever())
+        logger.info("completion notifier started")
+
+    dispatcher.startup.register(on_startup)
+
     logger.info(
         "sokhan bot starting (api=%s, web=%s)",
         settings.api_base_url,
@@ -44,6 +56,9 @@ def main() -> None:
         dispatcher.run_polling(bot)
     finally:
         client.close()
+        task = dispatcher.get("notifier_task")
+        if task is not None:
+            task.cancel()
 
 
 if __name__ == "__main__":
