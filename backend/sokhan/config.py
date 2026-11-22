@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     whisper_beam_size: int = 5
     whisper_initial_prompt: str = ""
 
+    # Transcript post-processing: rule-based Persian punctuation restoration
+    # (v1.4) and the confidence threshold under which a segment is flagged
+    # for human review in the exports and the dashboard.
+    punctuation_enabled: bool = True
+    low_confidence_threshold: float = 0.5
+
     # Diarization (optional, behind a feature flag)
     # stub = no speaker labels | energy = heuristic two-cluster splitter | pyannote = neural
     diarization_engine: str = "stub"

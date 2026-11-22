@@ -38,8 +38,20 @@
    segments: chunk-local timestamps become file-global, duplicate boundary
    phrases are dropped (higher-confidence variant wins), and timestamps are
    clamped to `[0, duration]`.
-3. **Persist** — merged segments, plain text and a normalized copy of the
-   text (`normalize_persian`) go to Postgres; usage seconds are appended.
+3. **Post-process** — when `PUNCTUATION_ENABLED` (default), each merged
+   segment passes the rule-based Persian punctuation restoration
+   (`core/punctuation.py`): terminal `؟` on question sentences, `.` on
+   declaratives, Latin `,`/`;`/`?` mapped to their Persian counterparts and
+   spacing fixed around every mark. The pass is deterministic and the WER
+   benchmark path bypasses it, so measured numbers stay comparable.
+4. **Persist** — merged segments (including the engine's confidence,
+   exp(avg_logprob)), plain text and a search-normalized copy of the text
+   (`normalize_for_search`: `normalize_persian` plus punctuation stripping)
+   go to Postgres; usage seconds are appended.
+5. **Consume** — clients poll `GET /jobs/{id}` for progress and fetch
+   `GET /jobs/{id}/transcript?format=txt|srt|vtt|json|docx` when done.
+   Segments below `LOW_CONFIDENCE_THRESHOLD` are flagged for human review
+   in the exports (`⚠` prefix) and the dashboard ("needs review" badge).
 4. **Consume** — clients poll `GET /jobs/{id}` for progress and fetch
    `GET /jobs/{id}/transcript?format=txt|srt|docx` when done.
 
@@ -73,8 +85,9 @@ operator token; the model is downloaded lazily on first use, so the default
 
 ## Search
 
-`text_normalized` stores `normalize_persian(text)` (Arabic ي/ك variants
-mapped to Persian ی/ک, ZWNJ and tatweel removed). SQLite falls back to
+`text_normalized` stores `normalize_for_search(text)` (Arabic ي/ك variants
+mapped to Persian ی/ک, ZWNJ and tatweel removed, punctuation marks replaced
+by spaces so phrase queries match the punctuated transcripts). SQLite falls back to
 `ILIKE`; Postgres adds a `pg_trgm` GIN index plus similarity scoring, created
 idempotently at startup (`ensure_postgres_search_objects`).
 

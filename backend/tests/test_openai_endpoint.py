@@ -26,7 +26,9 @@ def test_transcriptions_json_with_fake_engine(client, seeded_user, wav_bytes, mo
 
     assert response.status_code == 200
     body = response.json()
-    assert body["text"] == "سلام بر تو"
+    # Punctuation restoration applies to every product surface, including
+    # the OpenAI-compatible endpoint.
+    assert body["text"] == "سلام بر تو."
     assert body["model"].startswith("whisper-")
 
 
@@ -37,7 +39,7 @@ def test_transcriptions_text_format(client, seeded_user, wav_bytes, monkeypatch)
 
     assert response.status_code == 200
     assert "text/plain" in response.headers["content-type"]
-    assert response.text == "سلام بر تو"
+    assert response.text == "سلام بر تو."
 
 
 def test_transcriptions_srt_format(client, seeded_user, wav_bytes, monkeypatch):
@@ -71,7 +73,8 @@ def test_transcriptions_verbose_json(client, seeded_user, wav_bytes, monkeypatch
     assert body["language"] == "fa"
     assert body["duration"] == pytest.approx(2.0, abs=0.2)
     assert len(body["segments"]) == 1
-    assert body["segments"][0]["text"] == "سلام بر تو"
+    assert body["segments"][0]["text"] == "سلام بر تو."
+    assert body["segments"][0]["confidence"] == 0.819
 
 
 def test_transcriptions_requires_token(client, wav_bytes):

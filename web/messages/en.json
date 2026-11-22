@@ -119,6 +119,8 @@
     "failedDesc": "Something went wrong during processing; you can upload the file again.",
     "summaryTitle": "Summary",
     "transcriptTitle": "Transcript",
+    "lowConfidence": "Needs review",
+    "confidencePercent": "Model confidence: {percent}%",
     "downloadTitle": "Downloads",
     "downloadTxt": "Plain text (TXT)",
     "downloadSrt": "Subtitles (SRT)",

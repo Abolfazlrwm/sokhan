@@ -1,19 +1,23 @@
 """Transcription pipeline executed by the worker (or inline when Celery is off).
 
-decode -> chunk -> transcribe per chunk -> merge -> persist segments and text
--> optional summary -> usage record. Any error flips the job to `failed` with
-the message stored on the row; a job never dies silently.
+decode -> chunk -> transcribe per chunk -> merge -> punctuation post-pass
+-> persist segments and text -> optional summary -> usage record. Any error
+flips the job to `failed` with the message stored on the row; a job never
+dies silently.
 """
 
 import logging
+from dataclasses import replace
 
 from sqlalchemy import delete
 
+from sokhan.config import get_settings
 from sokhan.core import formats
 from sokhan.core.audio import SAMPLE_RATE, decode_to_mono_16k
 from sokhan.core.chunking import DEFAULT_OVERLAP_SECONDS, chunk_samples
 from sokhan.core.merge import merge_chunks
-from sokhan.core.persian import normalize_persian
+from sokhan.core.persian import normalize_for_search
+from sokhan.core.punctuation import restore_punctuation
 from sokhan.core.quota import record_usage
 from sokhan.core.summary import Summarizer, get_summarizer
 from sokhan.core.transcribe import Transcriber, get_transcriber
@@ -83,8 +87,13 @@ def process_job(
             )
             if turns:
                 label_segments(merged, turns)
+            if get_settings().punctuation_enabled:
+                merged = [
+                    replace(segment, text=restore_punctuation(segment.text))
+                    for segment in merged
+                ]
             job.text = formats.to_txt(merged)
-            job.text_normalized = normalize_persian(job.text)
+            job.text_normalized = normalize_for_search(job.text)
             session.execute(delete(Segment).where(Segment.job_id == job_id))
             for position, segment in enumerate(merged):
                 session.add(
@@ -95,6 +104,7 @@ def process_job(
                         end=segment.end,
                         text=segment.text,
                         speaker=segment.speaker,
+                        confidence=segment.confidence,
                     )
                 )
 

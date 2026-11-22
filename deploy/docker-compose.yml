@@ -26,6 +26,10 @@ services:
     restart: unless-stopped
 
   api:
+    # Published to GHCR by the Docker workflow (pushes to main, version
+    # tags): `docker compose pull api worker` runs the prebuilt image
+    # without building; `up -d --build` keeps building locally.
+    image: ghcr.io/abolfazlrwm/sokhan-api:latest
     build:
       context: ../backend
     environment: &backend-env
@@ -37,6 +41,10 @@ services:
       WHISPER_MODEL_SIZE: ${WHISPER_MODEL_SIZE:-small}
       WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
       WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      WHISPER_BEAM_SIZE: ${WHISPER_BEAM_SIZE:-5}
+      WHISPER_INITIAL_PROMPT: ${WHISPER_INITIAL_PROMPT:-}
+      PUNCTUATION_ENABLED: ${PUNCTUATION_ENABLED:-true}
+      LOW_CONFIDENCE_THRESHOLD: ${LOW_CONFIDENCE_THRESHOLD:-0.5}
       FREE_MINUTES_PER_USER_PER_MONTH: ${FREE_MINUTES_PER_USER_PER_MONTH:-30}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
       SUMMARY_ENABLED: ${SUMMARY_ENABLED:-false}
@@ -58,6 +66,7 @@ services:
     restart: unless-stopped
 
   worker:
+    image: ghcr.io/abolfazlrwm/sokhan-api:latest
     build:
       context: ../backend
     command: celery -A sokhan.worker.celery_app.celery_app worker --loglevel=info --concurrency=1
@@ -72,6 +81,7 @@ services:
     restart: unless-stopped
 
   web:
+    image: ghcr.io/abolfazlrwm/sokhan-web:latest
     build:
       context: ../web
       args:

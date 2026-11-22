@@ -8,6 +8,7 @@ recordings prefer POST /jobs, which queues the work instead of blocking.
 """
 
 import uuid
+from dataclasses import replace
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -19,6 +20,7 @@ from sokhan.core.audio import SAMPLE_RATE, decode_to_mono_16k, delete_audio, sav
 from sokhan.core.chunking import DEFAULT_OVERLAP_SECONDS, chunk_samples
 from sokhan.core.formats import to_srt, to_txt, to_vtt
 from sokhan.core.merge import merge_chunks
+from sokhan.core.punctuation import restore_punctuation
 from sokhan.core.quota import QuotaExceededError, ensure_quota, record_usage
 from sokhan.core.transcribe import get_transcriber
 from sokhan.db import get_db
@@ -80,6 +82,8 @@ def transcribe_audio(
         DEFAULT_OVERLAP_SECONDS,
         duration,
     )
+    if settings.punctuation_enabled:
+        merged = [replace(segment, text=restore_punctuation(segment.text)) for segment in merged]
     record_usage(session, user.id, None, duration)
     session.commit()
     delete_audio(path)
@@ -90,12 +94,26 @@ def transcribe_audio(
     if response_format == "text":
         return Response(text, media_type="text/plain; charset=utf-8")
     if response_format == "srt":
-        return Response(to_srt(merged), media_type="application/x-subrip; charset=utf-8")
+        return Response(
+            to_srt(merged, low_confidence_below=settings.low_confidence_threshold),
+            media_type="application/x-subrip; charset=utf-8",
+        )
     if response_format == "vtt":
-        return Response(to_vtt(merged), media_type="text/vtt; charset=utf-8")
+        return Response(
+            to_vtt(merged, low_confidence_below=settings.low_confidence_threshold),
+            media_type="text/vtt; charset=utf-8",
+        )
 
     segments_payload = [
-        {"id": index, "start": segment.start, "end": segment.end, "text": segment.text}
+        {
+            "id": index,
+            "start": segment.start,
+            "end": segment.end,
+            "text": segment.text,
+            "confidence": (
+                round(segment.confidence, 3) if segment.confidence is not None else None
+            ),
+        }
         for index, segment in enumerate(merged)
     ]
     if response_format == "verbose_json":

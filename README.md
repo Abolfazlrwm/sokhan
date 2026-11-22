@@ -53,9 +53,18 @@ built for Persian speakers from the first commit:
   split into 30-second windows with a 1-second overlap, transcribed with
   faster-whisper on CPU (int8), and merged: boundary duplicates are dropped,
   timestamps are clamped to the file duration
+- **Persian punctuation restoration** — a deterministic rule-based post-pass
+  (v1.4) turns the raw Whisper word stream into publishable text: Persian
+  question marks on question sentences, sentence periods, Latin marks mapped
+  to ،/؛/؟, spacing fixed around every mark, decimals and clock times left
+  intact (`PUNCTUATION_ENABLED`, on by default)
 - **Exports** — TXT, SRT, WebVTT (all with accurate timecodes), structured
   JSON and DOCX; the dashboard also shows the per-segment timeline with
   speaker labels and a copy-to-clipboard button
+- **Confidence-aware review flags** — every segment carries the model's own
+  `exp(avg_logprob)` confidence; spans below `LOW_CONFIDENCE_THRESHOLD` are
+  marked `⚠` in SRT/VTT/DOCX exports and badge "needs review" in the
+  dashboard timeline, so human reviewers know exactly where to re-listen
 - **OpenAI-compatible API** — `POST /v1/audio/transcriptions` works with the
   same multipart contract as the OpenAI API (`json`, `text`, `srt`, `vtt`,
   `verbose_json`), so existing tooling can point at your own instance
@@ -117,6 +126,26 @@ docker compose -f deploy/docker-compose.yml run --rm api \
 
 (The API also creates tables on startup; Alembic is there for upgrades.)
 
+### Prebuilt images (skip the build)
+
+Every push to `main` and every tagged release publishes images to GHCR via
+the `docker.yml` workflow, so self-hosting does not have to compile
+anything:
+
+```bash
+docker pull ghcr.io/abolfazlrwm/sokhan-api:latest
+docker pull ghcr.io/abolfazlrwm/sokhan-web:latest
+```
+
+`deploy/docker-compose.yml` references the same image names next to its
+`build:` blocks: keep `up -d --build` to build locally, or
+`docker compose -f deploy/docker-compose.yml pull` and
+`up -d --no-build` to run the published images. Pinned versions follow the
+git tags (e.g. `ghcr.io/abolfazlrwm/sokhan-api:1.2.0`). Note the web image
+bakes `NEXT_PUBLIC_API_BASE` (default `http://localhost:8000`) at build
+time — deployments serving the dashboard from another origin pass the
+build argument themselves.
+
 ## Development
 
 ```bash
@@ -152,6 +181,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
 | `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | per-user monthly quota |
 | `MAX_UPLOAD_MB` | `200` | upload size limit |
+| `PUNCTUATION_ENABLED` | `true` | rule-based Persian punctuation post-pass |
+| `LOW_CONFIDENCE_THRESHOLD` | `0.5` | segment confidence below which review flags apply |
 | `SUMMARY_ENABLED` | `false` | LLM summaries feature flag |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | empty | OpenAI-compatible endpoint |
 | `TELEGRAM_BOT_TOKEN` | empty | enables the bot process |
@@ -218,8 +249,12 @@ docs/        architecture notes and decision records (ADRs)
   at `MAX_SAMPLES = 0` (full 10-hour manifest, ~2 h on a free T4,
   [docs/free-gpu.md](docs/free-gpu.md))
 - Streaming chunk decode to cut worker memory for long recordings
-- Persian punctuation restoration post-pass
-- Webhooks/notifications when a job finishes
+- ~~Persian punctuation restoration post-pass~~ — shipped: a deterministic
+  rule-based pass (`PUNCTUATION_ENABLED`), no LLM dependency; segments also
+  carry the model's confidence with review flags in exports and the dashboard
+- ~~Webhooks/notifications when a job finishes~~ — shipped in the Telegram
+  bot (persisted completion notifier); signed HTTP webhooks for external
+  callers remain open
 
 Full versioned roadmap with acceptance criteria (and the measurement-first
 rule everything is held to): [docs/ROADMAP.md](docs/ROADMAP.md).

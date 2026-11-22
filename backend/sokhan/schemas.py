@@ -30,12 +30,15 @@ class SegmentOut(BaseModel):
     """One transcript span with absolute timestamps (seconds).
 
     `position` is a 1-based ordinal matching the SRT block numbering.
+    `confidence` is the model's exp(avg_logprob) estimate in (0, 1], or null
+    when the engine does not produce one.
     """
 
     position: int
     start: float
     end: float
     speaker: str | None = None
+    confidence: float | None = None
     text: str
 
 

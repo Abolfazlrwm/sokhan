@@ -20,6 +20,46 @@ const transcriptEl = $("transcript");
 const metaEl = $("meta");
 const refEl = $("ref");
 
+// ---------- Persian punctuation restoration ----------
+// Same rule family as backend/sokhan/core/punctuation.py (the worker
+// pipeline's post-pass), ported verbatim so the browser demo shows the
+// transcript in the same publishable shape the product ships: Latin
+// marks become their Persian counterparts, spacing is fixed, and every
+// sentence gets a terminal mark — ؟ when it reads as a question, .
+// otherwise. Deterministic, no model call.
+
+const LATIN_TO_PERSIAN = { ",": "،", "?": "؟", ";": "؛" };
+const PUNCT_CHARS = "،؛:.!?؟…";
+const QUESTION_WORDS = new Set([
+  "آیا", "چرا", "چطور", "چطوره", "چگونه", "چقدر", "کی", "کیه", "کِی",
+  "کجا", "کجاست", "کجای", "کدام", "کدوم", "چیه",
+]);
+
+// Punctuation and quote marks are stripped from token edges inside
+// isQuestion's regex, so "چطوره،" and «کی؟» still count as question words.
+function isQuestion(text) {
+  return text
+    .split(/\s+/)
+    .some((token) => QUESTION_WORDS.has(token.replace(/^[،؛:.!?؟…«»()"'،]+|[،؛:.!?؟…«»()"'،]+$/g, "")));
+}
+
+function restorePunctuation(text) {
+  let cleaned = text.replace(/[,?;]/g, (ch) => LATIN_TO_PERSIAN[ch] || ch).trim();
+  cleaned = cleaned.replace(/\s+([،؛:.!?؟…])/g, "$1");
+  cleaned = cleaned.replace(/([،؛؟!…])(?=[^\s،؛:.!?؟…])/g, "$1 ");
+  cleaned = cleaned.replace(/\s{2,}/g, " ").trim();
+  if (!cleaned || PUNCT_CHARS.includes(cleaned[cleaned.length - 1])) return cleaned;
+  return cleaned + (isQuestion(cleaned) ? "؟" : ".");
+}
+
+function restorePunctuationParagraph(text) {
+  // Apply per line so a multi-segment transcript keeps its sentence bounds.
+  return text
+    .split("\n")
+    .map((line) => restorePunctuation(line))
+    .join("\n");
+}
+
 const worker = new Worker("worker.js?v=2", { type: "module" });
 let busy = false;
 
@@ -70,7 +110,8 @@ function startWork(message) {
 
 function finish(text, elapsedSeconds) {
   setStatus("تمام شد — می‌توانید کلیپ دیگری امتحان کنید.");
-  transcriptEl.textContent = text || "(متنی تشخیص داده نشد — شاید صدا کوتاه یا نویزی بود.)";
+  transcriptEl.textContent =
+    restorePunctuationParagraph(text) || "(متنی تشخیص داده نشد — شاید صدا کوتاه یا نویزی بود.)";
   const audioSeconds = window.__lastAudioSeconds || 0;
   metaEl.textContent =
     `زمان پردازش: ${elapsedSeconds.toFixed(1)} ثانیه` +

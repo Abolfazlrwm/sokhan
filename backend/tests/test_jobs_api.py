@@ -23,11 +23,13 @@ def test_upload_run_and_download(client, auth, wav_bytes, wait_for_job, fake_eng
     detail = wait_for_job(client, auth, body["id"])
     assert detail["status"] == "completed"
     assert detail["progress"] == 100.0
-    assert "سلام بر تو" in detail["text"]
+    # punctuation restoration: the fake engine's plain words now carry a
+    # sentence-final period, and search still matches the phrase without it.
+    assert "سلام بر تو." in detail["text"]
 
     txt = client.get(f"/jobs/{body['id']}/transcript?format=txt", headers=auth)
     assert txt.status_code == 200
-    assert txt.text == "سلام بر تو"
+    assert txt.text == "سلام بر تو."
 
     srt = client.get(f"/jobs/{body['id']}/transcript?format=srt", headers=auth)
     assert srt.status_code == 200
@@ -66,6 +68,8 @@ def test_segments_and_new_exports_expose_timestamps(
     assert segments[0]["position"] == 1
     assert segments[0]["start"] == 0.0
     assert "سلام بر تو" in segments[0]["text"]
+    # The engine's exp(avg_logprob) flows through to the API and the JSON export.
+    assert segments[0]["confidence"] == 0.819
 
     vtt = client.get(f"/jobs/{job_id}/transcript?format=vtt", headers=auth)
     assert vtt.status_code == 200
@@ -80,10 +84,35 @@ def test_segments_and_new_exports_expose_timestamps(
     assert body["language"] == "fa"
     assert len(body["segments"]) == len(segments)
     assert body["segments"][0]["start"] == 0.0
+    assert body["segments"][0]["confidence"] == 0.819
     assert "سلام بر تو" in body["text"]
 
     bad = client.get(f"/jobs/{job_id}/transcript?format=yaml", headers=auth)
     assert bad.status_code == 422
+
+
+def test_low_confidence_segments_are_flagged_for_review(
+    client, auth, wav_bytes, wait_for_job, monkeypatch
+):
+    from sokhan.core.transcribe import Segment
+
+    class UnsureTranscriber:
+        def transcribe(self, samples, sample_rate, language):
+            return [Segment(start=0.0, end=1.0, text="یک جمله نامطمئن", avg_logprob=-1.6, confidence=0.2)]
+
+    monkeypatch.setattr(
+        "sokhan.worker.pipeline.get_transcriber", lambda: UnsureTranscriber()
+    )
+
+    response = _upload(client, auth, wav_bytes)
+    job_id = response.json()["id"]
+    detail = wait_for_job(client, auth, job_id)
+
+    assert detail["status"] == "completed"
+    assert detail["segments"][0]["confidence"] == 0.2
+
+    srt = client.get(f"/jobs/{job_id}/transcript?format=srt", headers=auth)
+    assert "⚠ یک جمله نامطمئن" in srt.text
 
 
 def test_upload_rejects_corrupt_file(client, auth):

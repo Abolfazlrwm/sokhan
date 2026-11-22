@@ -79,6 +79,9 @@ class Segment(Base):
     end: Mapped[float] = mapped_column(Float)
     text: Mapped[str] = mapped_column(Text)
     speaker: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # exp(avg_logprob) in (0, 1] from the engine; null for rows written
+    # before the confidence pass existed or by engines that produce none.
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     job: Mapped[Job] = relationship(back_populates="segments")
 

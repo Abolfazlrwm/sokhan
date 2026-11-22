@@ -1,8 +1,10 @@
 """Archive search over normalized transcript text.
 
 Both Postgres and SQLite search the same `jobs.text_normalized` column that
-the pipeline fills with `normalize_persian(text)`. Postgres additionally gets
-a pg_trgm GIN index so substring queries stay fast on large archives; SQLite
+the pipeline fills with `normalize_for_search(text)` — `normalize_persian`
+plus punctuation stripping, so phrase queries keep matching the punctuated
+text the restoration pass stores. Postgres additionally gets a pg_trgm GIN
+index so substring queries stay fast on large archives; SQLite
 (development, CI) falls back to plain ILIKE. See docs/adr/0001 and
 docs/architecture.md.
 """
@@ -11,7 +13,7 @@ from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from sokhan.core.persian import normalize_persian
+from sokhan.core.persian import normalize_for_search
 from sokhan.models import Job
 
 
@@ -22,7 +24,7 @@ def _like_pattern(query: str) -> str:
 
 def search_jobs(session: Session, user_id: str, query: str, limit: int = 50) -> list[Job]:
     """Return the user's jobs matching the query in text or filename."""
-    normalized = normalize_persian(query).strip()
+    normalized = normalize_for_search(query).strip()
     stmt = select(Job).where(Job.user_id == user_id)
     if normalized:
         like = _like_pattern(normalized)

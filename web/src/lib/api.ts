@@ -47,6 +47,8 @@ export interface TranscriptSegment {
   start: number;
   end: number;
   speaker: string | null;
+  /** Model confidence exp(avg_logprob) in (0, 1]; null when unavailable. */
+  confidence: number | null;
   text: string;
 }
 

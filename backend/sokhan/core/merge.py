@@ -24,6 +24,7 @@ def offset_segments(segments: list[Segment], offset_seconds: float) -> list[Segm
             end=segment.end + offset_seconds,
             text=segment.text,
             avg_logprob=segment.avg_logprob,
+            confidence=segment.confidence,
             speaker=segment.speaker,
         )
         for segment in segments
@@ -93,6 +94,7 @@ def merge_chunks(
                 end=round(end, 3),
                 text=segment.text,
                 avg_logprob=segment.avg_logprob,
+                confidence=segment.confidence,
                 speaker=segment.speaker,
             )
         )

@@ -41,8 +41,15 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 - Streaming/chunked decode in the worker: today the whole file is decoded
   to memory before the 30-second window split; multi-hour recordings need
   RAM proportional to file size
-- Persian punctuation restoration as a post-pass (rule-based first, LLM
-  behind `SUMMARY_ENABLED` as the optional upgrade)
+- [x] Persian punctuation restoration as a post-pass: a deterministic,
+  rule-based pass (no LLM dependency) ships behind `PUNCTUATION_ENABLED` —
+  Persian `؟` on question sentences, sentence periods, spacing fixed around
+  every mark, Latin `,`/`;`/`?` mapped to their Persian counterparts, with
+  decimals and clock times deliberately left intact. The WER benchmark path
+  is untouched, so measured numbers stay comparable. Search normalization
+  (`normalize_for_search`) strips punctuation on both column and query so
+  phrase matching survives the new marks. The browser demo ports the same
+  rule family, so product and demo show transcripts in the same shape
 - [x] Initial-prompt lexicon: `WHISPER_INITIAL_PROMPT` (plus
   `WHISPER_BEAM_SIZE`) passes a domain vocab to the decoder so names and
   technical terms survive
@@ -55,12 +62,17 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 - [x] Notify when a job finishes — the Telegram bot now pushes the
   transcript (or a failure notice) the moment the backend completes;
   signed HTTP webhooks for external callers remain open
-- Confidence-aware SRT: low-confidence segments flagged for human review
-  (the segments timeline API and UI shipped first; confidence values are
-  still not persisted per segment)
+- [x] Confidence-aware SRT: the engine's exp(avg_logprob) is persisted per
+  segment (`segments.confidence`, Alembic 0002), exposed on the API, the
+  JSON export and verbose_json, flagged with `⚠` in SRT/VTT/DOCX below
+  `LOW_CONFIDENCE_THRESHOLD` and badged "needs review" in the dashboard —
+  human reviewers know exactly where to re-listen
 - Speaker identification on top of diarization (ADR 0003/0004 define the
   interface; pyannote is the default neural engine today)
-- Docker image publish to GHCR so self-hosting skips the build step
+- [x] Docker image publish to GHCR so self-hosting skips the build step:
+  `docker.yml` builds `sokhan-api` (serves the API and, with the Celery
+  command override, the worker) and `sokhan-web` on every push to `main`
+  and every version tag
 
 ## v2.0 — direction candidates (decide by measurement, not vibes)
 

@@ -152,6 +152,7 @@ def get_job_transcript(
         select(Segment).where(Segment.job_id == job_id).order_by(Segment.position)
     ).all()
     filename_base = job.filename.rsplit(".", 1)[0] or job.id
+    review_threshold: float | None = get_settings().low_confidence_threshold
 
     if format == "txt":
         return Response(
@@ -161,13 +162,13 @@ def get_job_transcript(
         )
     if format == "srt":
         return Response(
-            to_srt(list(segments)),
+            to_srt(list(segments), low_confidence_below=review_threshold),
             media_type="application/x-subrip; charset=utf-8",
             headers={"Content-Disposition": _content_disposition(filename_base, "srt")},
         )
     if format == "vtt":
         return Response(
-            to_vtt(list(segments)),
+            to_vtt(list(segments), low_confidence_below=review_threshold),
             media_type="text/vtt; charset=utf-8",
             headers={"Content-Disposition": _content_disposition(filename_base, "vtt")},
         )
@@ -183,7 +184,11 @@ def get_job_transcript(
             headers={"Content-Disposition": _content_disposition(filename_base, "json")},
         )
     if format == "docx":
-        document = to_docx(list(segments), title=job.filename.rsplit(".", 1)[0] or "Transcript")
+        document = to_docx(
+            list(segments),
+            title=job.filename.rsplit(".", 1)[0] or "Transcript",
+            low_confidence_below=review_threshold,
+        )
         return Response(
             document,
             media_type=(

@@ -20,6 +20,10 @@ const POLL_INTERVAL_MS = 3000;
 
 const DOWNLOAD_FORMATS: TranscriptFormat[] = ["txt", "srt", "vtt", "json", "docx"];
 
+// Mirrors the backend's LOW_CONFIDENCE_THRESHOLD default: segments the
+// engine was unsure about get a "needs review" badge in the timeline.
+const LOW_CONFIDENCE_THRESHOLD = 0.5;
+
 function formatTimestamp(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds));
   const hours = Math.floor(total / 3600);
@@ -337,6 +341,17 @@ export default function JobDetailPage() {
                       {segment.speaker ? (
                         <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-bold text-teal-800">
                           {segment.speaker}
+                        </span>
+                      ) : null}
+                      {segment.confidence !== null &&
+                      segment.confidence < LOW_CONFIDENCE_THRESHOLD ? (
+                        <span
+                          title={t("confidencePercent", {
+                            percent: Math.round(segment.confidence * 100),
+                          })}
+                          className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800"
+                        >
+                          {t("lowConfidence")}
                         </span>
                       ) : null}
                       <p

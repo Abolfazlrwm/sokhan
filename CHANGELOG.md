@@ -7,6 +7,34 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- **Persian punctuation restoration** (v1.4): a deterministic rule-based
+  post-pass in the worker pipeline turns the raw Whisper word stream into
+  publishable text — `؟` on question sentences (آیا/چرا/چطور/کجا/…), `.` on
+  the rest, Latin `,`/`;`/`?` mapped to ،/؛/؟, no space before marks and one
+  space after, decimals (`3.5`) and clock times (`12:30`) left intact.
+  Behind `PUNCTUATION_ENABLED` (default on); the WER benchmark path is
+  untouched so measured numbers stay comparable, and archive search gained
+  `normalize_for_search` (punctuation stripped on column and query) so
+  phrase queries match the punctuated text. The browser demo ports the same
+  rule family, so the Space shows transcripts in the product's shape
+- **Confidence-aware review flags** (v1.5): the engine's exp(avg_logprob) is
+  now persisted per segment (Alembic migration 0002 adds
+  `segments.confidence`), flows through `GET /jobs/{id}`, the JSON export
+  and `verbose_json`, and spans below `LOW_CONFIDENCE_THRESHOLD` (default
+  0.5) are marked `⚠` in the SRT/VTT/DOCX exports and badged
+  "نیاز به بازبینی / Needs review" in the dashboard timeline — reviewers
+  re-listen exactly where the model was unsure
+- **Prebuilt Docker images on GHCR** (v1.5): a `docker.yml` workflow builds
+  and pushes `ghcr.io/abolfazlrwm/sokhan-api` and
+  `ghcr.io/abolfazlrwm/sokhan-web` on pushes to `main` and on version tags
+  (`latest`, `sha-*`, semver), so self-hosting can run published images
+  instead of building; the compose file references the same names next to
+  its `build:` blocks and the README documents the pull path
+- The compose file now passes `WHISPER_BEAM_SIZE` and
+  `WHISPER_INITIAL_PROMPT` through to the containers (the engine knobs
+  shipped earlier but were unreachable in a compose deployment) plus the
+  two new `PUNCTUATION_ENABLED` / `LOW_CONFIDENCE_THRESHOLD` variables
+
 - A public **browser demo** (`space/`): a free Static Space where Whisper
   runs entirely client-side (transformers.js, ONNX q8, base/small
   selectable, RTL Persian UI, bundled benchmark sample clip — a headless

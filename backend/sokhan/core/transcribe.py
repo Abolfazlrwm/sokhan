@@ -9,6 +9,7 @@ exercise the whole pipeline without downloading model weights.
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -21,12 +22,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Segment:
-    """One transcript span with chunk-local timestamps (seconds)."""
+    """One transcript span with chunk-local timestamps (seconds).
+
+    `confidence` is exp(avg_logprob) in (0, 1] — the model's own probability
+    estimate for the span. `None` when the engine does not produce one.
+    """
 
     start: float
     end: float
     text: str
     avg_logprob: float = 0.0
+    confidence: float | None = None
     speaker: str | None = None
 
 
@@ -85,12 +91,14 @@ class FasterWhisperTranscriber:
             text = segment.text.strip()
             if not text:
                 continue
+            avg_logprob = float(segment.avg_logprob)
             segments.append(
                 Segment(
                     start=float(segment.start),
                     end=float(segment.end),
                     text=text,
-                    avg_logprob=float(segment.avg_logprob),
+                    avg_logprob=avg_logprob,
+                    confidence=math.exp(avg_logprob),
                 )
             )
         return segments
@@ -106,7 +114,13 @@ class FakeTranscriber:
         segments: list[Segment] = []
         if duration >= 1.0:
             segments.append(
-                Segment(start=0.0, end=min(2.0, duration / 2), text="سلام بر تو", avg_logprob=-0.2)
+                Segment(
+                    start=0.0,
+                    end=min(2.0, duration / 2),
+                    text="سلام بر تو",
+                    avg_logprob=-0.2,
+                    confidence=0.819,
+                )
             )
         if duration >= 3.0:
             segments.append(
@@ -115,6 +129,7 @@ class FakeTranscriber:
                     end=duration,
                     text="حالت چطور است",
                     avg_logprob=-0.3,
+                    confidence=0.741,
                 )
             )
         return segments

@@ -22,6 +22,7 @@ def segment_to_out(segment: Segment) -> SegmentOut:
         start=segment.start,
         end=segment.end,
         speaker=segment.speaker,
+        confidence=segment.confidence,
         text=segment.text,
     )
 

@@ -119,6 +119,8 @@
     "failedDesc": "مشکلی در پردازش پیش آمد؛ می‌توانی فایل را دوباره بارگذاری کنی.",
     "summaryTitle": "خلاصه",
     "transcriptTitle": "متن رونویسی",
+    "lowConfidence": "نیاز به بازبینی",
+    "confidencePercent": "اطمینان مدل: {percent}٪",
     "downloadTitle": "دانلود خروجی",
     "downloadTxt": "متن ساده (TXT)",
     "downloadSrt": "زیرنویس (SRT)",
