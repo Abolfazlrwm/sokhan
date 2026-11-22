@@ -140,6 +140,8 @@ class EnergyClusterDiarizer:
     """Two-cluster energy/VAD diarizer built on plain numpy."""
 
     name = "energy"
+    # Frames the RMS envelope over the whole recording in one pass.
+    requires_full_audio = True
 
     def diarize(self, samples: np.ndarray, sample_rate: int) -> list[SpeakerTurn]:
         mono = samples.astype(np.float64)

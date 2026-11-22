@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     punctuation_enabled: bool = True
     low_confidence_threshold: float = 0.5
 
+    # Decode audio block-by-block while transcribing (peak RAM proportional
+    # to the 30-second window, not the file length). Diarization engines
+    # other than "stub" need the whole signal at once and force the legacy
+    # full decode automatically.
+    streaming_decode: bool = True
+
     # Diarization (optional, behind a feature flag)
     # stub = no speaker labels | energy = heuristic two-cluster splitter | pyannote = neural
     diarization_engine: str = "stub"
@@ -53,6 +59,14 @@ class Settings(BaseSettings):
     # Web / bot integration
     web_base_url: str = "http://localhost:3000"
     api_base_url: str = "http://localhost:8000"
+
+    # Job-completion webhooks: a job can carry a callback_url; when it
+    # finishes, the worker POSTs a JSON payload signed with this secret in
+    # `X-Sokhan-Signature` (t=<unix>,v1=<hex hmac-sha256(timestamp.body)>).
+    # Leave empty to deliver callbacks unsigned.
+    webhook_signing_secret: str = ""
+    webhook_timeout_seconds: float = 4.0
+    webhook_attempts: int = 2
 
 
 @lru_cache(maxsize=1)

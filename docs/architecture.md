@@ -38,6 +38,18 @@
    segments: chunk-local timestamps become file-global, duplicate boundary
    phrases are dropped (higher-confidence variant wins), and timestamps are
    clamped to `[0, duration]`.
+
+   By default (`STREAMING_DECODE=true`) the decode and the chunking run
+   while transcription proceeds: `core/audio.py` streams block-by-block and
+   `core/chunking.py::iter_chunks` emits windows from the block stream.
+   Peak worker RAM tracks one 30-second window, not the file — measured on
+   identical 16 kHz mono WAVs, the full decode peaks at 355.6 MB for a
+   30-minute file while the streaming path stays at 86.4 MB (10-minute
+   file: 169.6 MB vs 84.9 MB; ~28 MB of that is interpreter baseline).
+   Diarization engines that need the whole signal (`energy`, `pyannote`
+   — every engine whose `requires_full_audio` is true) automatically take
+   the legacy full decode; `test_streaming.py` proves both paths produce
+   identical chunks.
 3. **Post-process** — when `PUNCTUATION_ENABLED` (default), each merged
    segment passes the rule-based Persian punctuation restoration
    (`core/punctuation.py`): terminal `؟` on question sentences, `.` on
@@ -52,14 +64,21 @@
    `GET /jobs/{id}/transcript?format=txt|srt|vtt|json|docx` when done.
    Segments below `LOW_CONFIDENCE_THRESHOLD` are flagged for human review
    in the exports (`⚠` prefix) and the dashboard ("needs review" badge).
-4. **Consume** — clients poll `GET /jobs/{id}` for progress and fetch
-   `GET /jobs/{id}/transcript?format=txt|srt|docx` when done.
+   Callers that prefer push over poll pass a `callback_url` with the
+   upload: when the job completes or fails, the worker POSTs a JSON event
+   signed in `X-Sokhan-Signature: t=<unix>,v1=<hex hmac-sha256(secret,
+   "<ts>.<body>")>` (Stripe-style; see `core/webhooks.py` and
+   `WEBHOOK_SIGNING_SECRET`). Delivery is best-effort and never flips the
+   job's final status.
 
 ## Storage notes
 
-- The full file is decoded to memory before chunking; a one-hour stereo
-  recording needs roughly 250 MB of RAM in the worker. Chunking from a
-  streaming decoder is a planned improvement.
+- With `STREAMING_DECODE=true` (default) the worker never holds the whole
+  recording in memory — peak RAM is one 30-second window plus a block
+  buffer (measured: 86.4 MB total process peak for a 30-minute file,
+  versus 355.6 MB for the legacy full decode; see Request flow step 2).
+  Diarization engines that need the full signal still use the one-shot
+  decode.
 - Uploaded audio lives on the `sokhan-data` docker volume; exports are
   generated on the fly from segments.
 

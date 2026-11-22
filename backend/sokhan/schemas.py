@@ -45,6 +45,9 @@ class SegmentOut(BaseModel):
 class JobDetailOut(JobOut):
     language: str
     want_summary: bool
+    # Echoed so callers can verify which endpoint will be called back; the
+    # signing secret never leaves the server (see WEBHOOK_SIGNING_SECRET).
+    callback_url: str | None = None
     completed_at: datetime | None = None
     error: str | None = None
     summary: str | None = None

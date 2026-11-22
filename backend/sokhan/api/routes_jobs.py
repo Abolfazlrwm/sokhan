@@ -44,11 +44,23 @@ def create_job(
     file: UploadFile = File(...),
     language: str = Form("fa"),
     want_summary: bool = Form(False),
+    callback_url: str | None = Form(None),
     user: User = Depends(get_current_user),
     session: Session = Depends(get_db),
 ) -> JobCreated:
     if language not in _ALLOWED_LANGUAGES:
         language = "fa"
+
+    if callback_url is not None:
+        callback_url = callback_url.strip() or None
+        if callback_url and (
+            len(callback_url) > 2048
+            or not callback_url.lower().startswith(("http://", "https://"))
+        ):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "callback_url must be an http(s) URL of at most 2048 characters",
+            )
 
     settings = get_settings()
     data = file.file.read()
@@ -89,6 +101,7 @@ def create_job(
         stored_path=str(path),
         language=language,
         want_summary=want_summary,
+        callback_url=callback_url,
         duration_seconds=duration,
         status=JobStatus.queued.value,
     )

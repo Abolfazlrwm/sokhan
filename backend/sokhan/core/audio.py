@@ -2,9 +2,14 @@
 
 faster-whisper ships PyAV, so decoding needs no external ffmpeg install.
 Everything is normalized to mono float32 PCM at 16 kHz before chunking.
+Two decode modes share the same normalization: `decode_to_mono_16k` returns
+the whole file in one array (legacy, and required by the diarizers), while
+`iter_mono_16k_blocks` streams block by block so peak memory stays
+proportional to the block size instead of the file length.
 """
 
 import re
+from collections.abc import Iterator
 from pathlib import Path
 
 import av
@@ -25,11 +30,53 @@ def decode_to_mono_16k(path: str | Path) -> np.ndarray:
     return decode_audio(str(path), sampling_rate=SAMPLE_RATE)
 
 
-def probe_duration_seconds(path: str | Path) -> float:
+def iter_mono_16k_blocks(
+    path: str | Path, block_seconds: float = 30.0
+) -> Iterator[np.ndarray]:
+    """Stream-decode any media file to mono float32 PCM at 16 kHz.
+
+    Yields blocks of roughly `block_seconds` (the final block may be
+    shorter). Peak memory is one decoded frame plus one block, not the
+    whole file — this is what makes multi-hour recordings transcribable on
+    modest RAM. The samples are bit-compatible with `decode_to_mono_16k`:
+    concatenating every block reproduces the full-decode array exactly.
+    """
+    if block_seconds <= 0:
+        raise ValueError("block_seconds must be positive")
+    block_samples = max(1, int(round(block_seconds * SAMPLE_RATE)))
+
+    resampler = av.AudioResampler(format="s16", layout="mono", rate=SAMPLE_RATE)
+    pending = np.zeros(0, dtype=np.float32)
+    with av.open(str(path), mode="r", metadata_errors="ignore") as container:
+        frames = container.decode(audio=0)
+        for frame in frames:
+            for resampled in resampler.resample(frame):
+                # Same conversion faster-whisper applies after its s16
+                # resampling: int16 samples scaled back into [-1, 1].
+                chunk = (
+                    resampled.to_ndarray().reshape(-1).astype(np.float32) / 32768.0
+                )
+                pending = np.concatenate([pending, chunk])
+                while pending.size >= block_samples:
+                    yield pending[:block_samples]
+                    pending = pending[block_samples:].copy()
+        # Drain the resampler's internal latency so the concatenated blocks
+        # carry every sample the full decode returns.
+        for resampled in resampler.resample(None):
+            chunk = resampled.to_ndarray().reshape(-1).astype(np.float32) / 32768.0
+            pending = np.concatenate([pending, chunk])
+    if pending.size:
+        yield pending
+
+
+def probe_duration_seconds(path: str | Path, allow_full_decode: bool = True) -> float | None:
     """Return the audio duration in seconds without decoding everything.
 
     Uses container metadata when available and falls back to a full decode
-    (needed for raw WAV files that carry no container duration).
+    (needed for raw WAV files that carry no container duration). With
+    `allow_full_decode=False` the fallback is skipped and `None` is
+    returned instead — the streaming pipeline uses that form for its
+    progress estimate, since a full decode there would defeat the point.
     """
     try:
         with av.open(str(path)) as container:
@@ -40,7 +87,11 @@ def probe_duration_seconds(path: str | Path) -> float:
                 if stream.duration is not None and stream.time_base is not None:
                     return float(stream.duration * stream.time_base)
     except av.AVError:
-        pass
+        if not allow_full_decode:
+            return None
+        raise
+    if not allow_full_decode:
+        return None
     return float(len(decode_to_mono_16k(path)) / SAMPLE_RATE)
 
 

@@ -183,6 +183,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `MAX_UPLOAD_MB` | `200` | upload size limit |
 | `PUNCTUATION_ENABLED` | `true` | rule-based Persian punctuation post-pass |
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | segment confidence below which review flags apply |
+| `STREAMING_DECODE` | `true` | decode audio block-by-block (peak RAM ∝ window, not file length) |
+| `WEBHOOK_SIGNING_SECRET` | empty | HMAC secret for job-completion callbacks (`X-Sokhan-Signature`); empty sends them unsigned |
 | `SUMMARY_ENABLED` | `false` | LLM summaries feature flag |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | empty | OpenAI-compatible endpoint |
 | `TELEGRAM_BOT_TOKEN` | empty | enables the bot process |
@@ -198,7 +200,7 @@ See [.env.example](.env.example) for the commented list.
 | --- | --- |
 | `POST /auth/register`, `POST /auth/login` | email accounts |
 | `POST /auth/token-login`, `POST /auth/telegram` | connect codes / bot linking |
-| `POST /jobs` | upload audio, returns a queued job |
+| `POST /jobs` | upload audio (`language`, `want_summary`, optional `callback_url`), returns a queued job |
 | `GET /jobs` / `GET /jobs/{id}` | list, and detail with progress + segments |
 | `GET /jobs/{id}/transcript?format=txt\|srt\|vtt\|json\|docx` | exports |
 | `GET /jobs/{id}/summary` | LLM summary when enabled |

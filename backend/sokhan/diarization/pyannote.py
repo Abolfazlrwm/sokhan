@@ -26,6 +26,8 @@ class PyannoteDiarizer:
     """Runs the pyannote speaker-diarization pipeline on decoded audio."""
 
     name = "pyannote"
+    # The neural pipeline consumes one contiguous waveform array.
+    requires_full_audio = True
 
     def __init__(self, hf_token: str, model_name: str) -> None:
         self.hf_token = hf_token

@@ -38,6 +38,7 @@ def job_to_detail(job: Job) -> JobDetailOut:
         has_summary=job.summary is not None,
         language=job.language,
         want_summary=job.want_summary,
+        callback_url=job.callback_url,
         completed_at=job.completed_at,
         error=job.error,
         summary=job.summary,

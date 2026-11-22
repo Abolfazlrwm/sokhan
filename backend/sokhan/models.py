@@ -54,6 +54,9 @@ class Job(Base):
     progress: Mapped[float] = mapped_column(Float, default=0.0)
     duration_seconds: Mapped[float] = mapped_column(Float, default=0.0)
     want_summary: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Optional HTTP(S) endpoint the worker POSTs a signed completion event
+    # to (see sokhan.core.webhooks); null = no callback for this job.
+    callback_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     text: Mapped[str | None] = mapped_column(Text, nullable=True)
     text_normalized: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)

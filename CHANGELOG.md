@@ -7,6 +7,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- **Streaming decode in the worker** (v1.4): the pipeline no longer decodes
+  the whole recording to memory before chunking. `core/audio.py` streams
+  PyAV blocks resampled to mono 16 kHz and `core/chunking.py::iter_chunks`
+  emits the same 30-second windows from the block stream — `test_streaming.py`
+  proves both paths produce identical chunks, including the short-tail fold.
+  Measured on identical 16 kHz mono WAVs (whole-process peak RSS, ~28 MB of
+  it interpreter baseline): a 30-minute file peaks at **86.4 MB streamed vs
+  355.6 MB fully decoded (4.1x lower)**; a 10-minute file at 84.9 MB vs
+  169.6 MB. Full decode still grows linearly with duration, streaming stays
+  flat — multi-hour recordings no longer need RAM proportional to file size.
+  Diarization engines that need the whole signal (energy, pyannote) declare
+  `requires_full_audio` and take the legacy path automatically; behind
+  `STREAMING_DECODE` (default on)
+- **Signed job-completion webhooks** (v1.5): `POST /jobs` accepts an optional
+  `callback_url` (http/https, ≤ 2048 chars, echoed on the job detail). When
+  the job completes or fails, the worker POSTs a JSON event (event,
+  job_id, status, language, duration, text excerpt capped at 4000 chars,
+  transcript_url, error) signed Stripe-style:
+  `X-Sokhan-Signature: t=<unix>,v1=<hex hmac-sha256(secret, "<ts>.<body>")>`
+  with `X-Sokhan-Timestamp`; receivers re-compute, compare with
+  `hmac.compare_digest` and drop anything older than five minutes.
+  `WEBHOOK_SIGNING_SECRET` turns signing on (empty sends unsigned), delivery
+  retries once with a 4 s timeout and never flips the job's final status —
+  a dead callback endpoint is logged, not fatal. Migration 0003 adds
+  `jobs.callback_url`
 - **Persian punctuation restoration** (v1.4): a deterministic rule-based
   post-pass in the worker pipeline turns the raw Whisper word stream into
   publishable text — `؟` on question sentences (آیا/چرا/چطور/کجا/…), `.` on

@@ -38,9 +38,12 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 
 ## v1.4 — engine quality
 
-- Streaming/chunked decode in the worker: today the whole file is decoded
-  to memory before the 30-second window split; multi-hour recordings need
-  RAM proportional to file size
+- [x] Streaming/chunked decode in the worker: the pipeline streams PyAV
+  blocks and emits the same 30-second windows from the block stream —
+  measured peak RSS 86.4 MB for a 30-minute file vs 355.6 MB fully decoded
+  (10-minute: 84.9 MB vs 169.6 MB), and both paths produce identical chunks
+  by test. Diarization engines that need the whole signal keep the full
+  decode automatically
 - [x] Persian punctuation restoration as a post-pass: a deterministic,
   rule-based pass (no LLM dependency) ships behind `PUNCTUATION_ENABLED` —
   Persian `؟` on question sentences, sentence periods, spacing fixed around
@@ -60,8 +63,11 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 ## v1.5 — product surface
 
 - [x] Notify when a job finishes — the Telegram bot now pushes the
-  transcript (or a failure notice) the moment the backend completes;
-  signed HTTP webhooks for external callers remain open
+  transcript (or a failure notice) the moment the backend completes, and
+  external callers get push too: `POST /jobs` accepts a `callback_url` and
+  the worker delivers an HMAC-signed `job.completed` / `job.failed` event
+  (Stripe-style `X-Sokhan-Signature`, replay window 5 minutes, best-effort
+  delivery that never flips the job status)
 - [x] Confidence-aware SRT: the engine's exp(avg_logprob) is persisted per
   segment (`segments.confidence`, Alembic 0002), exposed on the API, the
   JSON export and verbose_json, flagged with `⚠` in SRT/VTT/DOCX below

@@ -21,5 +21,10 @@ class SpeakerTurn:
 
 class Diarizer(Protocol):
     name: str
+    # Whether the engine needs the whole signal in one array. The pipeline
+    # streams audio block-by-block when this is False, so engines that
+    # could work incrementally (or produce nothing, like the stub) opt in
+    # to the low-memory decode path by overriding it.
+    requires_full_audio: bool
 
     def diarize(self, samples: np.ndarray, sample_rate: int) -> list[SpeakerTurn]: ...
