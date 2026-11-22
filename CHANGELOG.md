@@ -5,9 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+(Nothing yet — the next items land here before the next release.)
+
+## [1.3.0] - 2026-11-23
+
 ### Added
 
-- **Streaming decode in the worker** (v1.4): the pipeline no longer decodes
+- **Streaming decode in the worker** (roadmap v1.4): the pipeline no longer decodes
   the whole recording to memory before chunking. `core/audio.py` streams
   PyAV blocks resampled to mono 16 kHz and `core/chunking.py::iter_chunks`
   emits the same 30-second windows from the block stream — `test_streaming.py`
@@ -20,7 +24,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   Diarization engines that need the whole signal (energy, pyannote) declare
   `requires_full_audio` and take the legacy path automatically; behind
   `STREAMING_DECODE` (default on)
-- **Signed job-completion webhooks** (v1.5): `POST /jobs` accepts an optional
+- **Signed job-completion webhooks** (roadmap v1.5): `POST /jobs` accepts an optional
   `callback_url` (http/https, ≤ 2048 chars, echoed on the job detail). When
   the job completes or fails, the worker POSTs a JSON event (event,
   job_id, status, language, duration, text excerpt capped at 4000 chars,
@@ -32,7 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   retries once with a 4 s timeout and never flips the job's final status —
   a dead callback endpoint is logged, not fatal. Migration 0003 adds
   `jobs.callback_url`
-- **Persian punctuation restoration** (v1.4): a deterministic rule-based
+- **Persian punctuation restoration** (roadmap v1.4): a deterministic rule-based
   post-pass in the worker pipeline turns the raw Whisper word stream into
   publishable text — `؟` on question sentences (آیا/چرا/چطور/کجا/…), `.` on
   the rest, Latin `,`/`;`/`?` mapped to ،/؛/؟, no space before marks and one
@@ -42,14 +46,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   `normalize_for_search` (punctuation stripped on column and query) so
   phrase queries match the punctuated text. The browser demo ports the same
   rule family, so the Space shows transcripts in the product's shape
-- **Confidence-aware review flags** (v1.5): the engine's exp(avg_logprob) is
+- **Confidence-aware review flags** (roadmap v1.5): the engine's exp(avg_logprob) is
   now persisted per segment (Alembic migration 0002 adds
   `segments.confidence`), flows through `GET /jobs/{id}`, the JSON export
   and `verbose_json`, and spans below `LOW_CONFIDENCE_THRESHOLD` (default
   0.5) are marked `⚠` in the SRT/VTT/DOCX exports and badged
   "نیاز به بازبینی / Needs review" in the dashboard timeline — reviewers
   re-listen exactly where the model was unsure
-- **Prebuilt Docker images on GHCR** (v1.5): a `docker.yml` workflow builds
+- **Prebuilt Docker images on GHCR** (roadmap v1.5): a `docker.yml` workflow builds
   and pushes `ghcr.io/abolfazlrwm/sokhan-api` and
   `ghcr.io/abolfazlrwm/sokhan-web` on pushes to `main` and on version tags
   (`latest`, `sha-*`, semver), so self-hosting can run published images
