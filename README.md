@@ -1,5 +1,7 @@
 # Sokhan · سخن
 
+**English** | [فارسی](README.fa.md)
+
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
 [![Docker](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml)
 [![Sync demo Space](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml)
@@ -35,13 +37,16 @@ headless browser (3.5 s clip, 5.0 s on-device):
 
 ![Sokhan browser demo on a free Static Space — Whisper runs on the visitor's machine](docs/assets/demo-space.png)
 
+If Sokhan is useful to you, the star button helps other Persian speakers
+find it.
+
 ## Why
 
 Most speech-to-text tooling treats Persian as an afterthought. Sokhan is
 built for Persian speakers from the first commit:
 
 - Persian UI first, English as a secondary locale (RTL by default)
-- Archive search normalizes Arabic look-alikes (ي→ی, ك→ك) so text typed on
+- Archive search normalizes Arabic look-alikes (ي→ی, ك→ک) so text typed on
   any keyboard layout matches
 - LLM summaries are prompted in Persian
 - Everything is self-hostable with one `docker compose` command
