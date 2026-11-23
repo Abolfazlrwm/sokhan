@@ -15,16 +15,17 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from sokhan.api.deps import get_current_user
+from sokhan.api.limits import ensure_file_cap, ensure_monthly_quota, resolve_plan
 from sokhan.config import get_settings
 from sokhan.core.audio import SAMPLE_RATE, decode_to_mono_16k, delete_audio, save_upload
 from sokhan.core.chunking import DEFAULT_OVERLAP_SECONDS, chunk_samples
 from sokhan.core.formats import to_srt, to_txt, to_vtt
 from sokhan.core.merge import merge_chunks
 from sokhan.core.punctuation import restore_punctuation
-from sokhan.core.quota import QuotaExceededError, ensure_quota, record_usage
+from sokhan.core.quota import record_usage
 from sokhan.core.transcribe import get_transcriber
 from sokhan.db import get_db
-from sokhan.models import User, utcnow
+from sokhan.models import User
 
 router = APIRouter(prefix="/v1", tags=["openai-compatible"])
 
@@ -50,17 +51,7 @@ def transcribe_audio(
     if len(data) > settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(413, "file too large")
 
-    try:
-        ensure_quota(session, user.id, utcnow(), settings.free_minutes_per_user_per_month)
-    except QuotaExceededError as exc:
-        raise HTTPException(
-            402,
-            detail={
-                "code": "quota_exceeded",
-                "used_minutes": exc.used_minutes,
-                "limit_minutes": exc.limit_minutes,
-            },
-        ) from exc
+    plan = resolve_plan(user)
 
     temp_id = f"inline-{uuid.uuid4()}"
     path = save_upload(data, temp_id, file.filename or "audio")
@@ -71,6 +62,15 @@ def transcribe_audio(
         raise HTTPException(422, "unsupported or corrupted audio file") from exc
 
     duration = len(samples) / SAMPLE_RATE
+    # Same gates as POST /jobs: per-file cap first, then the monthly
+    # allowance. The temp file is deleted on either rejection.
+    try:
+        ensure_file_cap(plan, duration)
+        ensure_monthly_quota(session, user, plan)
+    except HTTPException:
+        delete_audio(path)
+        raise
+
     chunks = chunk_samples(samples, SAMPLE_RATE, overlap_seconds=DEFAULT_OVERLAP_SECONDS)
     transcriber = get_transcriber()
     chunk_segments = [

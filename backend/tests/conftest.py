@@ -25,6 +25,9 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setenv("CELERY_ENABLED", "false")
     monkeypatch.setenv("SUMMARY_ENABLED", "false")
     monkeypatch.setenv("FREE_MINUTES_PER_USER_PER_MONTH", "30")
+    monkeypatch.setenv("PLAN_FREE_MAX_FILE_MINUTES", "10")
+    monkeypatch.setenv("PLAN_PRO_MAX_FILE_MINUTES", "180")
+    monkeypatch.setenv("PLAN_PRO_MONTHLY_MINUTES", "1200")
 
     from sokhan.config import get_settings
 

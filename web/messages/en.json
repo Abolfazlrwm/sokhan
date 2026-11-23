@@ -84,8 +84,10 @@
     "noFile": "Pick a file first, or record with “Record directly”.",
     "submit": "Start transcription",
     "submitting": "Uploading…",
-    "quotaLine": "You have {remaining} of {limit} free minutes left this month.",
-    "quotaEmpty": "You've used up this month's free quota."
+    "quotaLine": "{plan} plan — {remaining} of {limit} minutes left this month; max {maxFile} minutes per file.",
+    "quotaEmpty": "This month's quota is used up. Upgrade your plan for more minutes.",
+    "planFree": "Free",
+    "planPro": "Pro"
   },
   "jobs": {
     "title": "Archive",
@@ -147,9 +149,10 @@
     "passwordTooShort": "The password must be at least 8 characters.",
     "codeRequired": "Please enter your connect code.",
     "validation": "The submitted details are incomplete or invalid. Please review and try again.",
-    "quota": "You've reached this month's free limit. Your free minutes reset at the start of next month.",
+    "quota": "You've reached this month's limit. Minutes reset at the start of next month, or upgrade your plan for more.",
     "network": "Couldn't reach the server. Check your connection and try again.",
     "generic": "Something went wrong. Please try again.",
-    "notFound": "Nothing was found."
+    "notFound": "Nothing was found.",
+    "fileTooLong": "This file is longer than your plan allows — at most {max} minutes per file. Upgrade to Pro for longer recordings."
   }
 }

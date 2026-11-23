@@ -5,15 +5,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-23
+
 ### Added
 
+- **Plans and subscriptions** (free vs pro): every account starts on the
+  **free** plan — at most a **10-minute** file and **30 minutes/month** —
+  while a time-boxed **pro** subscription raises both caps to **180-minute**
+  files and **1,200 minutes/month**. Both upload paths enforce the two gates
+  (`POST /jobs` after the duration probe, `POST /v1/audio/transcriptions`
+  after the inline decode) and answer over-limit work with HTTP 402 and a
+  machine-readable `detail.code` — `file_too_long` or `quota_exceeded` — so
+  every client can show a targeted upgrade message; rejected uploads are
+  deleted so no storage leaks
+- Plan resolution honours expiry: a pro subscription only counts while
+  `plan_expires_at` is in the future, then the user silently falls back to
+  free limits (`sokhan/core/plans.py`)
+- **Operator grant API**: `POST /admin/users/{email}/plan` (and `GET
+  /admin/users/{email}`) behind a constant-time `X-Admin-Key` check —
+  grants pro for N days with renewals stacked on the remaining time, or
+  reverts to free; the whole admin surface answers 503 unless
+  `ADMIN_API_KEY` is set, so it can never ship accidentally open
+- `GET /plans` — public plan catalogue (code, Persian/English titles, caps)
+  for client upgrade screens; `GET /quota` now reports `plan`,
+  `plan_expires_at` and `max_file_minutes` alongside the monthly numbers
+- **Telegram bot** grew `/upgrade` (renders the plan catalogue in Persian),
+  a plan-aware `/quota`, a pre-flight duration guard that refuses
+  over-cap voices before downloading them, and a distinct message for the
+  `file_too_long` rejection (mapping in `sokhan_bot/client.py`, tested
+  against `httpx.MockTransport`)
+- **Web dashboard** understands the 402 codes: the upload screen shows the
+  active plan, remaining minutes and the per-file cap, and a long file
+  produces the targeted "file longer than your plan allows" message (fa/en)
+- Alembic migration `0004` adds `users.plan` (+ `plan_expires_at`)
 - A **GitHub Pages landing page** ([site/](site/), live at
   [abolfazlrwm.github.io/sokhan](https://abolfazlrwm.github.io/sokhan/)):
   a Persian-first, RTL, dark one-pager with the measured numbers, the
   benchmark table, screenshots, the quickstart and the architecture chain —
   auto-deployed from `main` by the new `pages.yml` workflow (Pages enabled
   with `build_type: workflow`), so the shareable link never drifts from the
-  repo. It ships a 1200×630 `og-image.png` for embeds
+  repo. It ships a 1200×630 `og-image.png` for embeds with native raqm
+  shaping for the Persian text
 - **Coverage measurement in CI**: the test job now runs under
   `pytest-cov` with branch coverage over `sokhan` + `sokhan_bot`
   (78.2% lines / 264 of 396 branches on the non-GPU suite at the time of
@@ -36,6 +68,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   355.6 MB peak RAM on a 30-minute file, `STREAMING_DECODE` on by default,
   `callback_url` + `X-Sokhan-Signature` webhooks), and the features list
   and Docker badge were brought in sync
+- `sokhan.__version__` was still `1.1.0` although v1.2.0 and v1.3.0 had
+  been tagged; it now tracks the release
 
 ## [1.3.0] - 2026-11-23
 

@@ -9,13 +9,13 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from sokhan.api.deps import get_current_user
+from sokhan.api.limits import ensure_file_cap, ensure_monthly_quota, resolve_plan
 from sokhan.api.serializers import job_to_detail, job_to_out
 from sokhan.config import get_settings
 from sokhan.core.audio import delete_audio, probe_duration_seconds, save_upload
 from sokhan.core.formats import to_docx, to_json_transcript, to_srt, to_txt, to_vtt
-from sokhan.core.quota import QuotaExceededError, ensure_quota
 from sokhan.db import get_db
-from sokhan.models import Job, JobStatus, Segment, User, utcnow
+from sokhan.models import Job, JobStatus, Segment, User
 from sokhan.schemas import JobCreated, JobDetailOut, JobListResponse
 from sokhan.worker.tasks import enqueue_job
 
@@ -69,19 +69,9 @@ def create_job(
     if len(data) > settings.max_upload_mb * 1024 * 1024:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "file too large")
 
-    try:
-        ensure_quota(
-            session, user.id, utcnow(), settings.free_minutes_per_user_per_month
-        )
-    except QuotaExceededError as exc:
-        raise HTTPException(
-            status.HTTP_402_PAYMENT_REQUIRED,
-            detail={
-                "code": "quota_exceeded",
-                "used_minutes": exc.used_minutes,
-                "limit_minutes": exc.limit_minutes,
-            },
-        ) from exc
+    plan = resolve_plan(user)
+    # Cheap monthly gate first, before the audio touches the disk.
+    ensure_monthly_quota(session, user, plan)
 
     job_id = str(uuid.uuid4())
     path = save_upload(data, job_id, file.filename or "upload")
@@ -93,6 +83,14 @@ def create_job(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             "unsupported or corrupted audio file",
         ) from exc
+
+    # Per-file duration cap of the plan; the stored file must not leak on
+    # rejection, so it is deleted before the 402 goes out.
+    try:
+        ensure_file_cap(plan, duration)
+    except HTTPException:
+        delete_audio(path)
+        raise
 
     job = Job(
         id=job_id,

@@ -16,6 +16,9 @@ export interface AuthResponse {
 }
 
 export interface QuotaInfo {
+  plan: string;
+  plan_expires_at: string | null;
+  max_file_minutes: number;
   limit_minutes: number;
   used_minutes: number;
   remaining_minutes: number;
@@ -70,11 +73,22 @@ export interface JobDetail {
 
 export class ApiError extends Error {
   readonly status: number;
+  /** Machine-readable code from a structured FastAPI `detail` (e.g. "file_too_long"). */
+  readonly code: string | null;
+  /** The full structured detail object when the API sent one. */
+  readonly detail: Record<string, unknown> | null;
 
-  constructor(status: number, message?: string) {
+  constructor(
+    status: number,
+    message?: string,
+    code: string | null = null,
+    detail: Record<string, unknown> | null = null,
+  ) {
     super(message ?? `API request failed with status ${status}`);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
+    this.detail = detail;
   }
 }
 
@@ -131,7 +145,29 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
   }
 
   if (authenticated) handleAuthFailure(response);
-  if (!response.ok) throw new ApiError(response.status);
+  if (!response.ok) {
+    // FastAPI errors carry either a plain-string detail or a structured
+    // object ({ code, ... }); surface both so callers can react to codes
+    // like "quota_exceeded" and "file_too_long".
+    let message: string | undefined;
+    let code: string | null = null;
+    let detail: Record<string, unknown> | null = null;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (body && typeof body === "object" && "detail" in body) {
+        const raw = body.detail;
+        if (typeof raw === "string") {
+          message = raw;
+        } else if (raw && typeof raw === "object") {
+          detail = raw as Record<string, unknown>;
+          if (typeof detail.code === "string") code = detail.code;
+        }
+      }
+    } catch {
+      // Body was not JSON; fall back to the generic status message.
+    }
+    throw new ApiError(response.status, message, code, detail);
+  }
 
   return (await response.json()) as T;
 }

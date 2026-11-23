@@ -46,9 +46,18 @@ class Settings(BaseSettings):
     pyannote_hf_token: str = ""
     pyannote_model: str = "pyannote/speaker-diarization-3.1"
 
-    # Quota
+    # Quota — the free tier is deliberately tight ("not too free"): short
+    # files and a small monthly allowance. Pro subscribers get higher caps
+    # (see sokhan.core.plans) while their subscription is unexpired.
     free_minutes_per_user_per_month: int = 30
+    plan_free_max_file_minutes: int = 10
+    plan_pro_max_file_minutes: int = 180
+    plan_pro_monthly_minutes: int = 1200
     max_upload_mb: int = 200
+
+    # Admin operations (plan grants): shared secret sent as X-Admin-Key.
+    # Leave empty to disable the admin endpoints entirely.
+    admin_api_key: str = ""
 
     # LLM summaries (optional, behind a feature flag)
     summary_enabled: bool = False

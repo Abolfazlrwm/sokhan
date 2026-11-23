@@ -14,7 +14,7 @@ from aiogram.types import (
 )
 
 from sokhan_bot import texts
-from sokhan_bot.client import BackendError, QuotaError, SokhanClient
+from sokhan_bot.client import BackendError, FileTooLongError, QuotaError, SokhanClient
 from sokhan_bot.split import split_message
 from sokhan_bot.store import TokenStore
 
@@ -50,6 +50,7 @@ class Handlers:
         self.router = Router(name="sokhan")
         self.router.message.register(self.start, CommandStart())
         self.router.message.register(self.quota, Command("quota"))
+        self.router.message.register(self.upgrade, Command("upgrade"))
         self.router.message.register(self.track, Command("track"))
         self.router.message.register(
             self.media,
@@ -98,11 +99,33 @@ class Handlers:
             return
         await message.answer(
             texts.QUOTA_LINE.format(
+                plan=texts.PLAN_LABELS.get(info.get("plan", "free"), info.get("plan", "free")),
                 used=round(info["used_minutes"], 1),
                 limit=info["limit_minutes"],
                 remaining=round(info["remaining_minutes"], 1),
+                max_file=info.get("max_file_minutes", 10),
             )
         )
+
+    async def upgrade(self, message: Message) -> None:
+        """Render the plan catalogue so users know what a subscription buys."""
+        try:
+            plans = self.client.get_plans()
+        except BackendError:
+            await message.answer(texts.SERVER_UNREACHABLE)
+            return
+        lines = [texts.UPGRADE_HEADER]
+        for plan in plans:
+            lines.append(
+                texts.UPGRADE_PLAN_LINE.format(
+                    title=texts.PLAN_LABELS.get(plan["code"], plan["code"]),
+                    max_file=plan["max_file_minutes"],
+                    monthly=plan["monthly_minutes"],
+                )
+            )
+        lines.append("")
+        lines.append(texts.UPGRADE_FOOTER)
+        await message.answer("\n".join(lines))
 
     async def track(self, message: Message, command: CommandObject) -> None:
         token = self.store.get(message.chat.id)
@@ -144,6 +167,24 @@ class Handlers:
             return
         filename = getattr(media, "file_name", None) or f"voice-{media.file_unique_id}.ogg"
 
+        # Pre-flight guard: Telegram reports the duration up front, so a
+        # file longer than the plan's per-file cap is refused before any
+        # download. If the quota lookup fails, fall through — the backend
+        # enforces its own caps on upload anyway.
+        duration = getattr(media, "duration", None)
+        if duration:
+            try:
+                max_file = int(self.client.get_quota(token).get("max_file_minutes", 10))
+                if max_file and duration > max_file * 60:
+                    await message.answer(
+                        texts.FILE_TOO_LONG.format(
+                            file_minutes=round(duration / 60.0, 1), max_file=max_file
+                        )
+                    )
+                    return
+            except BackendError:
+                pass
+
         try:
             telegram_file = await bot.get_file(media.file_id)
             buffer = io.BytesIO()
@@ -156,6 +197,13 @@ class Handlers:
 
         try:
             job_id = self.client.upload_audio(token, filename, content)
+        except FileTooLongError as exc:
+            await message.answer(
+                texts.FILE_TOO_LONG.format(
+                    file_minutes=round(exc.file_minutes, 1), max_file=exc.max_file_minutes
+                )
+            )
+            return
         except QuotaError:
             await message.answer(texts.QUOTA_EXHAUSTED)
             return

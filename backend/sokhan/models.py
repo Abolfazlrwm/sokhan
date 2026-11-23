@@ -37,6 +37,12 @@ class User(Base):
     # SHA-256 of the active API token; the raw token is only shown once.
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     telegram_id: Mapped[int | None] = mapped_column(BigInteger, unique=True, nullable=True)
+    # Subscription tier ("free" or "pro"). A "pro" value only grants the
+    # pro limits while plan_expires_at is in the future — see core/plans.py.
+    plan: Mapped[str] = mapped_column(String(16), default="free", nullable=False)
+    plan_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     jobs: Mapped[list["Job"]] = relationship(back_populates="user", cascade="all, delete-orphan")

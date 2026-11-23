@@ -61,10 +61,38 @@ class JobListResponse(BaseModel):
 
 
 class QuotaResponse(BaseModel):
+    plan: str
+    plan_expires_at: datetime | None = None
+    max_file_minutes: int
     limit_minutes: int
     used_minutes: float
     remaining_minutes: float
     month: str
+
+
+class PlanOut(BaseModel):
+    """One entry of the public plan catalogue (GET /plans)."""
+
+    code: str
+    title_fa: str
+    title_en: str
+    max_file_minutes: int
+    monthly_minutes: int
+
+
+class PlanListResponse(BaseModel):
+    plans: list[PlanOut]
+
+
+class PlanGrantRequest(BaseModel):
+    plan: str  # "free" or "pro"
+    days: int = 30
+
+
+class PlanAssignmentOut(BaseModel):
+    email: str
+    plan: str
+    plan_expires_at: datetime | None = None
 
 
 class HealthResponse(BaseModel):

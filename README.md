@@ -82,14 +82,23 @@ built for Persian speakers from the first commit:
 - **Job pipeline** — upload, progress polling, transcript downloads; Celery +
   Redis in production, inline threads (`CELERY_ENABLED=false`) when you don't
   want Redis at all
-- **Quota** — `FREE_MINUTES_PER_USER_PER_MONTH` (default 30) enforced per
-  user with an honest HTTP 402 once the limit is reached
+- **Plans & quotas** — two tiers out of the box: **Free** (10-minute files,
+  30 minutes/month) and **Pro** (180-minute files, 1,200 minutes/month,
+  active while the subscription is unexpired). Both upload paths (`POST
+  /jobs` and `POST /v1/audio/transcriptions`) reject over-limit work with an
+  honest HTTP 402 (`quota_exceeded` / `file_too_long`), expired subscribers
+  fall back to free limits automatically, and the operator grants time-boxed
+  subscriptions via `POST /admin/users/{email}/plan` (renewals stack)
+- **Quota accounting** — per-user usage rows drive the monthly allowance;
+  limits are operator-tunable through `PLAN_*` environment variables
 - **Archive search** — Persian-normalized full-text search over transcripts
   and filenames (pg_trgm on Postgres, ILIKE elsewhere)
 - **Web dashboard** — landing, login/registration + connect-code entry,
   upload with in-browser recording, live progress, searchable archive
 - **Telegram bot** — send a voice message, receive the transcript; `/quota`,
-  `/track`, summary button, and a connect code that links your web account
+  `/upgrade` (plan catalogue), `/track`, summary button, and a connect code
+  that links your web account; voices longer than the plan's per-file cap
+  are refused before upload with a Persian explanation
 - **Summaries (optional)** — any OpenAI-compatible LLM endpoint behind
   `SUMMARY_ENABLED`; without a key everything else keeps working
 - **Speaker diarization (optional)** — `DIARIZATION_ENGINE=stub|energy|pyannote`:
@@ -190,7 +199,11 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `WHISPER_MODEL_SIZE` | `small` | tiny/base/small/medium/large-v3 |
 | `WHISPER_DEVICE` | `cpu` | or `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
-| `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | per-user monthly quota |
+| `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | per-user monthly allowance of the free plan |
+| `PLAN_FREE_MAX_FILE_MINUTES` | `10` | per-file duration cap of the free plan |
+| `PLAN_PRO_MAX_FILE_MINUTES` | `180` | per-file cap for active pro subscribers |
+| `PLAN_PRO_MONTHLY_MINUTES` | `1200` | monthly allowance for active pro subscribers |
+| `ADMIN_API_KEY` | empty | shared secret for `POST /admin/users/{email}/plan`; empty disables the admin surface |
 | `MAX_UPLOAD_MB` | `200` | upload size limit |
 | `PUNCTUATION_ENABLED` | `true` | rule-based Persian punctuation post-pass |
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | segment confidence below which review flags apply |
@@ -216,7 +229,10 @@ See [.env.example](.env.example) for the commented list.
 | `GET /jobs/{id}/transcript?format=txt\|srt\|vtt\|json\|docx` | exports |
 | `GET /jobs/{id}/summary` | LLM summary when enabled |
 | `GET /search?q=…` | Persian-normalized archive search |
-| `GET /quota` | monthly usage |
+| `GET /quota` | plan, monthly usage and per-file cap |
+| `GET /plans` | public plan catalogue (free / pro limits) |
+| `GET /admin/users/{email}` | operator: inspect a user's plan and expiry |
+| `POST /admin/users/{email}/plan` | operator: grant pro for N days (renewals stack) or revert to free; `X-Admin-Key` required |
 | `POST /v1/audio/transcriptions` | OpenAI-compatible transcription |
 
 ## Repository layout

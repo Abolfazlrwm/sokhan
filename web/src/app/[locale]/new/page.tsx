@@ -145,9 +145,19 @@ export default function NewJobPage() {
     } catch (error) {
       setUploading(false);
       if (error instanceof ApiError) {
-        if (error.status === 402) setUploadError(te("quota"));
-        else if (error.status === 0) setUploadError(te("network"));
-        else setUploadError(te("generic"));
+        if (error.status === 402) {
+          if (error.code === "file_too_long") {
+            const rawMax = error.detail?.["max_file_minutes"];
+            const max = typeof rawMax === "number" ? nf.format(rawMax) : null;
+            setUploadError(max ? te("fileTooLong", { max }) : te("generic"));
+          } else {
+            setUploadError(te("quota"));
+          }
+        } else if (error.status === 0) {
+          setUploadError(te("network"));
+        } else {
+          setUploadError(te("generic"));
+        }
       } else {
         setUploadError(te("network"));
       }
@@ -324,8 +334,10 @@ export default function NewJobPage() {
             <p className="border-t border-stone-100 pt-4 text-xs leading-6 text-stone-500">
               {quota.remaining_minutes > 0
                 ? t("quotaLine", {
+                    plan: quota.plan === "pro" ? t("planPro") : t("planFree"),
                     remaining: nf.format(quota.remaining_minutes),
                     limit: nf.format(quota.limit_minutes),
+                    maxFile: nf.format(quota.max_file_minutes),
                   })
                 : t("quotaEmpty")}
             </p>
