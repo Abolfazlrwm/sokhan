@@ -21,8 +21,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   `scripts/coverage_summary.py`; `pytest-cov` joins the `dev` extra
 - A `dependabot.yml` that keeps pip (backend, bot), npm (web),
   github-actions and docker dependencies on weekly update PRs (minor/patch
-  grouped to reduce noise), plus a pull-request template with the
-  measurement-first checklist
+  grouped to reduce noise); majors on `next`, `typescript` and the
+  python/node base images, plus `av` (its `<14` pin protects
+  faster-whisper from PyAV API removals), are ignored on purpose — majors
+  land as deliberate, measured upgrades. The first run's risky major PRs
+  (#18, #20, #22, #26, #28) were closed with the reasoning recorded on
+  each, plus a pull-request template with the measurement-first checklist
 
 ### Fixed
 

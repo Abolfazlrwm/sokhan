@@ -7,6 +7,11 @@ updates:
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # deliberate pin: faster-whisper 1.2.1 calls PyAV APIs removed in
+      # newer majors (see CHANGELOG 0.1.0 and benchmarks/requirements.txt)
+      - dependency-name: av
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: /bot
@@ -23,6 +28,12 @@ updates:
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # majors are taken deliberately as measured migration PRs, not by a bot
+      - dependency-name: next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
@@ -33,8 +44,16 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    ignore:
+      # base images track the CI toolchain (python 3.12); majors are deliberate
+      - dependency-name: python
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker
     directory: /web
     schedule:
       interval: weekly
+    ignore:
+      # base image tracks CI's node 22; majors are deliberate
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
