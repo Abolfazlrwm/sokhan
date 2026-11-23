@@ -1,7 +1,9 @@
 # Sokhan · سخن
 
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
+[![Docker](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml)
 [![Sync demo Space](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml)
+[![Landing page](https://img.shields.io/badge/landing_page-abolfazlrwm.github.io%2Fsokhan-2dd4bf)](https://abolfazlrwm.github.io/sokhan/)
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 
@@ -11,7 +13,10 @@ runs Whisper entirely client-side (transformers.js, ONNX q8) — mic or file
 upload, base/small selectable, nothing to install, nothing uploaded. The
 **fine-tuned** checkpoint ships as a self-hostable Gradio app
 ([space/gradio/](space/gradio/)); HF's 2026 pricing gates hosted Gradio
-Spaces behind PRO, so the free Space is the static page.
+Spaces behind PRO, so the free Space is the static page. A one-page
+**landing site** with the measured numbers lives at
+[abolfazlrwm.github.io/sokhan](https://abolfazlrwm.github.io/sokhan/)
+(auto-deployed from [`site/`](site/)).
 
 Sokhan runs entirely on your own hardware: a FastAPI service with a
 faster-whisper engine, a Celery worker, a Next.js dashboard written
@@ -49,10 +54,12 @@ built for Persian speakers from the first commit:
 
 ## Features
 
-- **Transcription engine** — audio is decoded with PyAV (no external ffmpeg),
-  split into 30-second windows with a 1-second overlap, transcribed with
-  faster-whisper on CPU (int8), and merged: boundary duplicates are dropped,
-  timestamps are clamped to the file duration
+- **Transcription engine** — audio streams off disk block-by-block with PyAV
+  (no external ffmpeg; `STREAMING_DECODE`, default on), is split into
+  30-second windows with a 1-second overlap, transcribed with faster-whisper
+  on CPU (int8), and merged: boundary duplicates are dropped, timestamps are
+  clamped to the file duration. Peak RAM stays flat as recordings grow —
+  measured 86.4 MB vs 355.6 MB for a 30-minute file (4.1× lower)
 - **Persian punctuation restoration** — a deterministic rule-based post-pass
   (v1.4) turns the raw Whisper word stream into publishable text: Persian
   question marks on question sentences, sentence periods, Latin marks mapped
@@ -68,6 +75,10 @@ built for Persian speakers from the first commit:
 - **OpenAI-compatible API** — `POST /v1/audio/transcriptions` works with the
   same multipart contract as the OpenAI API (`json`, `text`, `srt`, `vtt`,
   `verbose_json`), so existing tooling can point at your own instance
+- **Signed webhooks** — pass `callback_url` when creating a job and the
+  worker POSTs a completion/failure event to it, HMAC-signed
+  (`X-Sokhan-Signature: t=…,v1=…`) so receivers verify the origin; one retry,
+  and a dead endpoint never flips the job's status
 - **Job pipeline** — upload, progress polling, transcript downloads; Celery +
   Redis in production, inline threads (`CELERY_ENABLED=false`) when you don't
   want Redis at all
@@ -218,6 +229,7 @@ benchmarks/  reproducible WER benchmark on real Common Voice (fa) clips
 training/    Persian Whisper fine-tuning pipeline (LoRA, month-two roadmap)
 deploy/      docker-compose for one-command self-hosting
 docs/        architecture notes and decision records (ADRs)
+site/        the GitHub Pages landing page (auto-deployed)
 ```
 
 ## Project status and honest limits
@@ -238,8 +250,11 @@ docs/        architecture notes and decision records (ADRs)
   needs the gated HF weights plus a token (see
   [ADR 0004](docs/adr/0004-diarization-engines.md)). With `stub` — the
   default — segments carry no speaker labels.
-- The whole file is decoded to memory before chunking; multi-hour recordings
-  need RAM in the worker (streaming decode is on the roadmap).
+- Memory is bounded by design: the worker streams audio block-by-block
+  (`STREAMING_DECODE`, default on) instead of decoding whole files — a
+  30-minute recording peaks at 86.4 MB vs 355.6 MB fully decoded (measured
+  on identical WAVs). Diarization engines that need the whole signal
+  (`energy`, `pyannote`) still take the legacy full-decode path.
 
 ## Roadmap
 
@@ -250,13 +265,16 @@ docs/        architecture notes and decision records (ADRs)
   clips ([training/](training/README.md)); next step is the same notebook
   at `MAX_SAMPLES = 0` (full 10-hour manifest, ~2 h on a free T4,
   [docs/free-gpu.md](docs/free-gpu.md))
-- Streaming chunk decode to cut worker memory for long recordings
+- ~~Streaming chunk decode to cut worker memory for long recordings~~ —
+  shipped in v1.3.0 (`STREAMING_DECODE`, default on): peak RAM is bounded
+  for multi-hour recordings, measured 4.1× lower on a 30-minute file
 - ~~Persian punctuation restoration post-pass~~ — shipped: a deterministic
   rule-based pass (`PUNCTUATION_ENABLED`), no LLM dependency; segments also
   carry the model's confidence with review flags in exports and the dashboard
-- ~~Webhooks/notifications when a job finishes~~ — shipped in the Telegram
-  bot (persisted completion notifier); signed HTTP webhooks for external
-  callers remain open
+- ~~Webhooks/notifications when a job finishes~~ — shipped: the Telegram bot
+  completion notifier (persisted across restarts) and signed HTTP webhooks
+  for external callers (`callback_url` on `POST /jobs`,
+  `X-Sokhan-Signature`), both in v1.3.0
 
 Full versioned roadmap with acceptance criteria (and the measurement-first
 rule everything is held to): [docs/ROADMAP.md](docs/ROADMAP.md).

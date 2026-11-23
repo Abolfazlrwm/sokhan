@@ -34,7 +34,7 @@ jobs:
         run: |
           dirs="backend"
           if [ -d bot ]; then dirs="$dirs bot"; fi
-          for extra in training benchmarks space deploy; do
+          for extra in training benchmarks space deploy scripts; do
             if [ -d "$extra" ]; then dirs="$dirs $extra"; fi
           done
           ruff check $dirs
@@ -49,7 +49,11 @@ jobs:
         run: |
           test_dirs="backend/tests"
           if [ -d bot/tests ]; then test_dirs="$test_dirs bot/tests"; fi
-          pytest -m "not gpu_optional" $test_dirs
+          pytest -m "not gpu_optional" $test_dirs \
+            --cov=sokhan --cov=sokhan_bot --cov-branch \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=json:coverage.json
+          python scripts/coverage_summary.py coverage.json >> "${GITHUB_STEP_SUMMARY}"
 
   web:
     runs-on: ubuntu-latest

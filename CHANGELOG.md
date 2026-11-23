@@ -5,7 +5,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
-(Nothing yet — the next items land here before the next release.)
+### Added
+
+- A **GitHub Pages landing page** ([site/](site/), live at
+  [abolfazlrwm.github.io/sokhan](https://abolfazlrwm.github.io/sokhan/)):
+  a Persian-first, RTL, dark one-pager with the measured numbers, the
+  benchmark table, screenshots, the quickstart and the architecture chain —
+  auto-deployed from `main` by the new `pages.yml` workflow (Pages enabled
+  with `build_type: workflow`), so the shareable link never drifts from the
+  repo. It ships a 1200×630 `og-image.png` for embeds
+- **Coverage measurement in CI**: the test job now runs under
+  `pytest-cov` with branch coverage over `sokhan` + `sokhan_bot`
+  (78.2% lines / 264 of 396 branches on the non-GPU suite at the time of
+  writing) and appends a per-file markdown table to the job summary via
+  `scripts/coverage_summary.py`; `pytest-cov` joins the `dev` extra
+- A `dependabot.yml` that keeps pip (backend, bot), npm (web),
+  github-actions and docker dependencies on weekly update PRs (minor/patch
+  grouped to reduce noise), plus a pull-request template with the
+  measurement-first checklist
+
+### Fixed
+
+- The README's "honest limits" and roadmap sections still described
+  streaming decode and signed webhooks as *open* roadmap items after they
+  had shipped in v1.3.0; they now state the shipped facts (86.4 MB vs
+  355.6 MB peak RAM on a 30-minute file, `STREAMING_DECODE` on by default,
+  `callback_url` + `X-Sokhan-Signature` webhooks), and the features list
+  and Docker badge were brought in sync
 
 ## [1.3.0] - 2026-11-23
 

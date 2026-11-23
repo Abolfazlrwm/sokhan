@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سخن — تبدیل گفتار فارسی به متن | Sokhan</title>
+  <meta name="description" content="سخن یک کیت متن‌باز تبدیل گفتار فارسی به متن است: FastAPI + faster-whisper + داشبورد Next.js فارسی‌محور + ربات تلگرام — کاملاً سلف‌هاست با لایسنس MIT.">
+  <meta property="og:title" content="سخن — Persian-first speech-to-text">
+  <meta property="og:description" content="Self-hosted Persian speech-to-text: FastAPI, faster-whisper, Next.js dashboard, Telegram bot. Measured WER, open source, MIT.">
+  <meta property="og:image" content="./assets/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top">سخن<span class="brand-en">sokhan</span></a>
+    <nav>
+      <a href="#demo">دموی زنده</a>
+      <a href="#features">امکانات</a>
+      <a href="#benchmark">بنچمارک</a>
+      <a href="#quickstart">شروع سریع</a>
+      <a class="nav-cta" href="https://github.com/Abolfazlrwm/sokhan" rel="noopener">گیت‌هاب ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ============ hero ============ -->
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">Open source · MIT · v1.3.0</p>
+      <h1>گفتار فارسی، به متنِ دقیق —<br><span class="accent">روی سرورِ خودت</span></h1>
+      <p class="hero-fa">
+        سخن یک کیت کامل تبدیل گفتار به متن است: سرویس FastAPI با موتور
+        faster-whisper، صف پردازش Celery، داشبورد وب فارسی‌محور (راست‌به‌چپ)
+        و ربات تلگرام. صدای فارسی بدهید، متن و خلاصه بگیرید — بدون هیچ
+        سرویس ابری و بدون قیمتِ هر دقیقه.
+      </p>
+      <p class="hero-en" dir="ltr">
+        Persian-first speech-to-text toolkit — self-hosted, measured, MIT-licensed.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo" rel="noopener">
+          همين حالا در مرورگر امتحان کنید
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Abolfazlrwm/sokhan" rel="noopener">
+          مشاهده کدها در گیت‌هاب
+        </a>
+      </div>
+      <div class="wave" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <p class="hero-note">دموی فضای HF همه‌چیز را روی دستگاهِ شما اجرا می‌کند — هیچ صدایی آپلود نمی‌شود.</p>
+    </div>
+  </section>
+
+  <!-- ============ stats ============ -->
+  <section class="stats">
+    <div class="container stats-grid">
+      <div class="stat">
+        <div class="stat-num">79.3٪</div>
+        <div class="stat-label">WER مدل فاین‌تیون‌شده <small>(پایه: 80.5٪)</small></div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">4.1×</div>
+        <div class="stat-label">حافظهٔ کمتر با decode جریانی <small>(فایل ۳۰ دقیقه‌ای: 86.4 در برابر 355.6 مگابایت)</small></div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">۵</div>
+        <div class="stat-label">فرمت خروجی <small>TXT · SRT · VTT · JSON · DOCX</small></div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">100٪</div>
+        <div class="stat-label">سلف‌هاست <small>یک دستور docker compose</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ features ============ -->
+  <section id="features" class="section">
+    <div class="container">
+      <p class="sec-en" dir="ltr">Features</p>
+      <h2>هر چیزی که از یک محصولِ واقعی انتظار دارید</h2>
+      <div class="cards">
+        <div class="card">
+          <h3>موتور رونویسی جریانی</h3>
+          <p>صدا با PyAV بلاک‌به‌بلاک خوانده می‌شود، در پنجره‌های ۳۰ ثانیه‌ای با هم‌پوشانی ۱ ثانیه رونویسی و دوباره یکی می‌شود؛ حافظه با طول فایل رشد نمی‌کند.</p>
+        </div>
+        <div class="card">
+          <h3>نشانه‌گذاری خودکارِ فارسی</h3>
+          <p>یک پس‌پردازشِ قاعده‌محور (بدون LLM) «؟» و «.» را می‌گذارد، فاصله‌ها را اصلاح می‌کند و علائم لاتین را به ،/؛/؟ فارسی نگاشت می‌کند — اعشار و ساعت دست‌نخورده می‌ماند.</p>
+        </div>
+        <div class="card">
+          <h3>وب‌هوک امضاشده</h3>
+          <p>در ساخت هر کاری <code>callback_url</code> بدهید تا پایان آن به‌صورت رویداد JSON با امضای HMAC (<code>X-Sokhan-Signature</code>) به سرویس شما POST شود.</p>
+        </div>
+        <div class="card">
+          <h3>پرچم «نیاز به بازبینی»</h3>
+          <p>هر سگمنت اطمینانِ خودِ مدل را حمل می‌کند؛ بخش‌های ضعیف در خروجی‌ها با «⚠» و در داشبورد با نشانِ بازبینی مشخص می‌شوند تا دقیقاً بدانید کجا را دوباره بشنوید.</p>
+        </div>
+        <div class="card">
+          <h3>سازگار با API اوپن‌ای‌آی</h3>
+          <p><code>POST /v1/audio/transcriptions</code> با همان قرارداد multipart اوپن‌ای‌آی و ۵ فرمت پاسخ — ابزارهای موجود بدون تغییر کد به سرور خودتان اشاره می‌شوند.</p>
+        </div>
+        <div class="card">
+          <h3>ربات تلگرام و جداسازی گوینده</h3>
+          <p>پیام صوتی بفرستید، متن را همان‌جا تحویل بگیرید؛ در صورت نیاز با برچسب گوینده از دو موتور دیاوریزیشن (هیوریستیک energy یا شبکه‌ای pyannote).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ demo / screenshots ============ -->
+  <section id="demo" class="section alt">
+    <div class="container">
+      <p class="sec-en" dir="ltr">Live demo</p>
+      <h2>اول در مرورگر، بعد روی سرور خودتان</h2>
+      <p class="lead">
+        دموی عمومی Whisper را کاملاً در مرورگر اجرا می‌کند (transformers.js،
+        ONNX Q8 — انتخاب پایه/کوچک). همان‌طور که تستِ خودکار سرِ URL ثبت کرده،
+        یک کلیپ واقعی ۳.۵ ثانیه‌ای در ۵.۰ ثانیه روی دستگاه رونویسی شد.
+        چک‌پوینت فاین‌تیون‌شده هم به‌صورت اپ Gradio قابل سلف‌هاست است.
+      </p>
+      <div class="shots">
+        <figure>
+          <img src="./assets/web-landing-fa.png" alt="داشبورد وب سخن — صفحهٔ اصلی فارسی">
+          <figcaption>داشبورد وب — فارسی، راست‌به‌چپ، با جست‌وجوی نرمال‌شدهٔ آرشیو</figcaption>
+        </figure>
+        <figure>
+          <img src="./assets/demo-space.png" alt="دموی مرورگری سخن روی Hugging Face Space">
+          <figcaption>دموی مرورگری روی Static Space — اجرای کامل روی دستگاهِ بازدیدکننده</figcaption>
+        </figure>
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo" rel="noopener">باز کردن دموی زنده ↗</a>
+        <a class="btn btn-ghost" href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan" rel="noopener">مدل فاین‌تیون‌شده روی HF ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ benchmark ============ -->
+  <section id="benchmark" class="section">
+    <div class="container">
+      <p class="sec-en" dir="ltr">Benchmark</p>
+      <h2>عددها اندازه‌گیری‌شده‌اند، نه ادعایی</h2>
+      <p class="lead">
+        ۱۲ کلیپ واقعی Common Voice (فارسی) — ۶۱.۱ ثانیه صدا با مرجعِ تأییدشدهٔ
+        انسانی، همگی در یک نشست و با همان نسخه‌های کتابخانه اندازه‌گیری شده‌اند؛
+        کلیپ‌ها و مرجع‌ها داخل ریپازیتوری هستند و هر کسی می‌تواند دقیقاً همان
+        ارزیابی را دوباره اجرا کند.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>مدل</th><th>پارامتر</th><th>WER</th><th>CER</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>tiny</td><td>39M</td><td>92.7٪</td><td>44.3٪</td></tr>
+            <tr><td>base</td><td>74M</td><td>90.2٪</td><td>37.6٪</td></tr>
+            <tr><td>small (پایه)</td><td>244M</td><td>80.5٪</td><td>26.7٪</td></tr>
+            <tr><td>whisper-tiny-fa-sokhan (CPU)</td><td>39M</td><td>103.7٪</td><td>47.4٪</td></tr>
+            <tr class="best"><td><strong>whisper-small-fa-sokhan (GPU)</strong></td><td>244M</td><td><strong>79.3٪</strong></td><td><strong>24.9٪</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="fineprint">
+        صادقانه: فیکسچر ۱۲تایی اختلافِ حدود ۱ واحد WER را نزدیک کفِ نویز
+        می‌گذارد؛ جهتِ بهبود با ارزیابی درون‌آموزشی هم‌خوان است اما بزرگیِ آن را
+        شاخص ببینید، نه دقیق. روش کامل و خروجیِ هر کلیپ در
+        <a href="https://github.com/Abolfazlrwm/sokhan/blob/main/benchmarks/README.md" rel="noopener">benchmarks/README.md</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ quickstart ============ -->
+  <section id="quickstart" class="section alt">
+    <div class="container">
+      <p class="sec-en" dir="ltr">Quickstart</p>
+      <h2>سه دستور تا یک نصبِ کامل</h2>
+      <div class="code" dir="ltr">
+<pre><span class="c"># clone + run (API, worker, redis, postgres, dashboard)</span>
+git clone https://github.com/Abolfazlrwm/sokhan.git
+cd sokhan
+docker compose -f deploy/docker-compose.yml up -d --build
+
+<span class="c"># or skip the build entirely — prebuilt images on GHCR</span>
+docker pull ghcr.io/abolfazlrwm/sokhan-api:latest</pre>
+      </div>
+      <p class="lead">داشبورد: <code dir="ltr">localhost:3000</code> · API و مستنداتِ تعاملی: <code dir="ltr">localhost:8000/docs</code> — Whisper روی CPU اجرا می‌شود؛ GPU لازم نیست.</p>
+
+      <div class="arch" aria-label="معماری">
+        <span class="chip">ربات تلگرام</span>
+        <span class="arrow" aria-hidden="true">←</span>
+        <span class="chip">داشبورد Next.js</span>
+        <span class="arrow" aria-hidden="true">←</span>
+        <span class="chip chip-strong">API — FastAPI</span>
+        <span class="arrow" aria-hidden="true">←</span>
+        <span class="chip">Redis / Celery</span>
+        <span class="arrow" aria-hidden="true">←</span>
+        <span class="chip chip-strong">Worker — faster-whisper</span>
+        <span class="arrow" aria-hidden="true">←</span>
+        <span class="chip">Postgres</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-fa">
+      <strong>سخن</strong> — کیت متن‌بازِ گفتار به متنِ فارسی · لایسنس MIT
+    </div>
+    <nav>
+      <a href="https://github.com/Abolfazlrwm/sokhan" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo" rel="noopener">Live demo</a>
+      <a href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan" rel="noopener">Model card</a>
+      <a href="https://github.com/Abolfazlrwm/sokhan/blob/main/docs/ROADMAP.md" rel="noopener">Roadmap</a>
+      <a href="https://github.com/Abolfazlrwm/sokhan/blob/main/docs/architecture.md" rel="noopener">Architecture</a>
+    </nav>
+    <p class="footer-en" dir="ltr">FastAPI · faster-whisper · Celery · Next.js · aiogram</p>
+  </div>
+</footer>
+
+</body>
+</html>

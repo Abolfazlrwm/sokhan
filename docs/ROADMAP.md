@@ -95,3 +95,11 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 - Never bump a model version without re-running the benchmark; archived
   sessions in `benchmarks/results/` are the paper trail
 - CI stays green; ruff/mypy/pytest are blocking, not advisory
+- [x] Coverage is measured in CI (branch coverage over `sokhan` +
+      `sokhan_bot`, per-file table in the job summary) so untested paths
+      are visible instead of guessed
+- [x] A GitHub Pages landing page ([site/](site/)) auto-deploys from
+      `main` — the shareable, always-current product face at
+      https://abolfazlrwm.github.io/sokhan/
+- [x] Dependabot version updates (pip/npm/actions/docker) on a weekly
+      cadence, plus a PR template that repeats the measurement-first rule
