@@ -1,7 +1,17 @@
 {
   "name": "sokhan-web",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
+  "description": "Persian-first RTL web dashboard for Sokhan speech-to-text",
+  "license": "MIT",
+  "homepage": "https://abolfazlrwm.github.io/sokhan/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abolfazlrwm/sokhan.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Abolfazlrwm/sokhan/issues"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

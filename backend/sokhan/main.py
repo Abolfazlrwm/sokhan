@@ -39,6 +39,10 @@ def create_app() -> FastAPI:
         description="Persian-first speech-to-text: transcripts, summaries and exports.",
         version=__version__,
         lifespan=lifespan,
+        license_info={
+            "name": "MIT",
+            "url": "https://github.com/Abolfazlrwm/sokhan/blob/main/LICENSE",
+        },
     )
     # Browsers only hit the API from the web app, so the default is the
     # local dev front-end instead of a wildcard. Deployments set

@@ -5,6 +5,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Added
+
+- `CITATION.cff` so the project can be cited in academic work
+- FastAPI app metadata: MIT license info is now rendered on `/docs`
+
+### Changed
+
+- Backend and bot package versions are dynamic now — they track
+  `__version__` (single source of truth, currently 1.4.0) instead of the
+  stale hardcoded `0.1.0` — and both carry full PEP 621 metadata:
+  authors, MIT license, keywords, classifiers and project URLs
+- `sokhan_bot.__version__` tracks the release again (was stuck at 1.1.0)
+- The web `package.json` matches the release version and declares
+  description, license, repository and bugs URLs
+- `deploy/docker-compose.yml` passes the plan/admin variables through to
+  the containers (`PLAN_FREE_MAX_FILE_MINUTES`,
+  `PLAN_PRO_MAX_FILE_MINUTES`, `PLAN_PRO_MONTHLY_MINUTES`,
+  `ADMIN_API_KEY`) — before this, plan caps were not tunable and the
+  admin surface answered 503 in every compose deployment
+- The issue-template chooser links to Discussions for questions and
+  ideas; the landing page footer does the same
+
 ## [1.4.0] - 2026-11-23
 
 ### Added

@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use Sokhan in your research, please cite it using this metadata."
+title: "Sokhan: Persian-first speech-to-text toolkit"
+type: software
+authors:
+  - family-names: Ranjbaran
+    given-names: Abolfazl
+    email: 206173650+Abolfazlrwm@users.noreply.github.com
+version: "1.4.0"
+date-released: "2026-11-23"
+license: MIT
+repository-code: "https://github.com/Abolfazlrwm/sokhan"
+url: "https://abolfazlrwm.github.io/sokhan/"
+abstract: >-
+  Sokhan is a self-hostable, Persian-first speech-to-text toolkit: a
+  FastAPI service with a faster-whisper streaming engine, a Celery
+  worker, a Persian RTL Next.js dashboard and a Telegram bot. Accuracy
+  is published as reproducible WER/CER measurements on a fixed Common
+  Voice (fa) fixture shipped with the repository, and a LoRA
+  fine-tuning pipeline adapts Whisper to Persian speech.
+keywords:
+  - persian
+  - speech-to-text
+  - whisper
+  - asr
+  - self-hosted
+  - reproducibility
