@@ -46,6 +46,23 @@ jobs:
         with:
           path: site
           retention-days: 3
+      # The artifact metadata service is eventually consistent; when a
+      # delete and an upload land in the same second, deploy-pages can
+      # fetch an empty artifact list ("No artifacts named github-pages
+      # were found"). Wait until the artifact is actually visible.
+      - name: Wait for artifact visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 15); do
+            count=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+              --jq '[.artifacts[] | select(.name == "github-pages")] | length')
+            if [ "$count" -ge 1 ]; then
+              echo "github-pages artifact visible (attempt $i)"; exit 0
+            fi
+            echo "attempt $i: not visible yet"; sleep 3
+          done
+          echo "artifact never became visible"; exit 1
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
