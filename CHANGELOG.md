@@ -5,6 +5,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Security
+
+- First CodeQL run surfaced five findings; all triaged with a written
+  policy (see SECURITY.md, "Code scanning policy"):
+  - **Fixed** `py/polynomial-redos` — the email validation regex
+    `^[^@\s]+@[^@\s]+\.[^@\s]+$` backtracked polynomially on long
+    dot-less inputs (a 200k-char request could burn minutes of CPU per
+    attempt). Replaced with an unambiguous pattern plus an RFC-5321
+    length cap (254); a pathological 200k-char address now matches in
+    ~8 ms. All 10 auth tests pass unchanged.
+  - **Fixed** `js/missing-origin-check` — the demo worker now drops
+    `postMessage` commands whose origin is not the page that created it
+    (defense in depth; cache-bust bumped to `?v=3`).
+  - **Dismissed with justification** `py/weak-sensitive-data-hashing`
+    (API tokens are high-entropy; SHA-256 token hashing is the standard
+    storage, passwords use scrypt), `js/clear-text-storage-of-sensitive-data`
+    (SPA localStorage trade-off; httpOnly-cookie migration is tracked as
+    roadmap work), and `py/path-injection` in the Gradio demo (the path
+    is produced by Gradio's upload pipeline, not raw client input).
+
 ### Added
 
 - `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, Persian-and-English

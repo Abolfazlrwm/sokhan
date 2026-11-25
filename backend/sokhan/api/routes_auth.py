@@ -23,7 +23,9 @@ from sokhan.schemas import AuthResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_EMAIL_PATTERN = re.compile(r"^[\w.+-]+@[\w-]+(\.[\w-]+)+$")
+# RFC 5321 caps a forward-path at 320 octets; 254 for the address itself.
+_MAX_EMAIL_LENGTH = 254
 _MIN_PASSWORD_LENGTH = 8
 
 
@@ -43,6 +45,10 @@ class TokenLogin(BaseModel):
 
 def _validate_credentials(email: str, password: str) -> str:
     email = email.strip().lower()
+    # Length check first: it bounds any regex work to a constant maximum,
+    # so even a pathological input cannot burn cycles in the matcher.
+    if not email or len(email) > _MAX_EMAIL_LENGTH:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "invalid email address")
     if not _EMAIL_PATTERN.match(email):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "invalid email address")
     if len(password) < _MIN_PASSWORD_LENGTH:

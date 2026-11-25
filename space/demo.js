@@ -60,7 +60,7 @@ function restorePunctuationParagraph(text) {
     .join("\n");
 }
 
-const worker = new Worker("worker.js?v=2", { type: "module" });
+const worker = new Worker("worker.js?v=3", { type: "module" });
 let busy = false;
 
 // ---------- worker plumbing ----------

@@ -49,6 +49,10 @@ function post(type, payload) {
 }
 
 self.onmessage = async (event) => {
+  // Dedicated worker: only accept commands from the page that created us.
+  // Belt-and-braces same-origin guard — the demo page and this script are
+  // always served from the same origin, so anything else is not ours.
+  if (event.origin !== self.location.origin) return;
   const { kind, modelId, audio } = event.data;
   try {
     if (kind === "load") {

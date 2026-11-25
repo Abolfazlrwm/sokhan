@@ -20,3 +20,25 @@ either side.
 This is a small, single-maintainer project: triage usually happens within
 a few days, fixes for confirmed vulnerabilities ship as soon as they are
 ready, and coordinated disclosure is welcome.
+
+## Code scanning policy
+
+CodeQL (static analysis) runs on every push and weekly; findings land in
+the Security tab. Every alert gets one of three dispositions, never
+silence:
+
+1. **Fix** — for findings that describe a real, reachable weakness
+   (for example the polynomial email-regex backtracking and the worker
+   origin check fixed in November 2026).
+2. **Dismiss with a written justification** — for framework-standard
+   patterns the query cannot see the context of. Each dismissal comment
+   on an alert states exactly why the code is safe (for example: API
+   tokens are high-entropy secrets hashed with SHA-256, which is the
+   industry-standard storage for tokens, distinct from password storage
+   which uses scrypt).
+3. **Track as an issue** — when a fix needs design work (for example
+   moving the dashboard token from localStorage to an httpOnly cookie
+   implies a CSRF layer and is roadmap work, not a drive-by patch).
+
+Dismissed alerts stay visible in the Security tab with their
+justification, so the reasoning is auditable rather than hidden.
