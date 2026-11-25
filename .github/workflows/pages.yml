@@ -10,6 +10,8 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  # needed to delete stale github-pages artifacts before upload
+  actions: write
 
 concurrency:
   group: pages
