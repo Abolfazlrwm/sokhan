@@ -1,0 +1,4 @@
+# Default: the maintainer reviews everything.
+# Per-area owners can be added as the team grows, e.g.:
+#   /web/ @someone
+* @Abolfazlrwm

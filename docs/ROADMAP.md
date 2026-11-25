@@ -5,7 +5,7 @@ below: **a claim ships only with a measurement** (WER from
 `benchmarks/benchmark_wer.py` on the fixed fixture, or a test that
 reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 
-## v1.3 — public face (current work)
+## v1.3 — public face (shipped, v1.3.0)
 
 - [x] Demo app (`space/`) — RTL Persian UI, mic + file + bundled sample
       clip. Shipped in two flavors: the free **Static Space** runs Whisper
@@ -21,22 +21,11 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
       5.0 s wall) — https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo
 - [x] Model card on the whisper-small repo (the tiny repo already had
       one): measured numbers, honest caveats, usage snippet
-- [ ] **The scaled fine-tune.** The v1.2.0 run (500 clips) beat the
-      baseline by 1.2 WER points — at the edge of the fixture's noise
-      floor. The same notebook at `MAX_SAMPLES = 0` (~10 h of speech,
-      ~2 h on a free T4) is the single highest-value experiment left in
-      the training kit. After it: re-benchmark, update the model card,
-      and publish the new checkpoint — then the 500-clip run becomes the
-      ablation row.
-- [ ] **Fine-tuned checkpoint in the browser.** Upload the merged HF
-      weights (notebook cell 11; the merged folder only exists right
-      after a training run), export ONNX, and point the client-side demo
-      at it — the free Static Space would then demo the *fine-tuned*
-      model with zero hosting cost.
-- [ ] A bigger eval fixture (target: 200 clips, stratified by age/gender
-      and accent bands) so WER deltas stop being noise-limited
 
-## v1.4 — engine quality
+The open items below moved to [next — current work](#next--current-work)
+when v1.4.0 shipped.
+
+## v1.4 — engine quality (shipped, v1.4.0)
 
 - [x] Streaming/chunked decode in the worker: the pipeline streams PyAV
   blocks and emits the same 30-second windows from the block stream —
@@ -59,8 +48,13 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
 - [x] Benchmark regression gate: the weekly `benchmark.yml` workflow runs
   the fixture against `benchmarks/results/baseline.json` and fails if
   `small` WER degrades > 1 point (guards engine/dependency upgrades)
+- [x] Release-grade packaging: dynamic package versions driven by
+  `__version__`, full PEP 621 metadata on both Python packages, MIT
+  `license_info` on `/docs`, `CITATION.cff` for academic citation, and
+  `deploy/docker-compose.yml` passing the plan/admin variables through
+  so every compose deployment is feature-complete (v1.4.0)
 
-## v1.5 — product surface
+## v1.5 — product surface (shipped in v1.4.0)
 
 - [x] Notify when a job finishes — the Telegram bot now pushes the
   transcript (or a failure notice) the moment the backend completes, and
@@ -73,12 +67,45 @@ reproduces it). Dated entries move to `CHANGELOG.md` when they land.
   JSON export and verbose_json, flagged with `⚠` in SRT/VTT/DOCX below
   `LOW_CONFIDENCE_THRESHOLD` and badged "needs review" in the dashboard —
   human reviewers know exactly where to re-listen
-- Speaker identification on top of diarization (ADR 0003/0004 define the
-  interface; pyannote is the default neural engine today)
+- [ ] Speaker identification on top of diarization (ADR 0003/0004 define
+  the interface; pyannote is the default neural engine today)
 - [x] Docker image publish to GHCR so self-hosting skips the build step:
   `docker.yml` builds `sokhan-api` (serves the API and, with the Celery
   command override, the worker) and `sokhan-web` on every push to `main`
   and every version tag
+
+- [x] Plans & quotas: two tiers out of the box — **Free** (10-minute
+  files, 30 minutes/month) and **Pro** (180-minute files, 1200
+  minutes/month) — enforced as honest HTTP 402 responses
+  (`quota_exceeded` / `file_too_long`), with expiry-based downgrade,
+  stacked renewals, and operator-issued subscriptions via
+  `POST /admin/users/{email}/plan` (`X-Admin-Key`, constant-time
+  compare; no payment gateway by design — see CHANGELOG 1.4.0)
+- [x] Dashboard and bot respect the plans: the bot answers `/quota`,
+  shows a `/upgrade` catalogue, and rejects over-cap voices before
+  upload; the dashboard renders the 402 limits
+
+## next — current work
+
+The open [good-first-issues](https://github.com/Abolfazlrwm/sokhan/issues)
+plus the highest-value experiments:
+
+- [ ] **The scaled fine-tune.** The v1.2.0 run (500 clips) beat the
+  baseline by 1.2 WER points — at the edge of the fixture's noise
+  floor. The same notebook at `MAX_SAMPLES = 0` (~10 h of speech,
+  ~2 h on a free T4) is the single highest-value experiment left in the
+  training kit. After it: re-benchmark, update the model card, publish
+  the new checkpoint — then the 500-clip run becomes the ablation row
+- [ ] **Fine-tuned checkpoint in the browser.** Upload the merged HF
+  weights (notebook cell 11), export ONNX, and point the client-side
+  demo at it — the free Static Space would then demo the *fine-tuned*
+  model with zero hosting cost
+- [ ] Extend the benchmark fixture beyond 12 clips (issue #29, target:
+  200 clips stratified by age/gender and accent bands) so WER deltas
+  stop being noise-limited
+- [ ] Punctuation post-pass: cover the edge cases the fixture exposes
+  (issue #30)
+- [ ] Translate CONTRIBUTING.md to Persian (issue #31)
 
 ## v2.0 — direction candidates (decide by measurement, not vibes)
 

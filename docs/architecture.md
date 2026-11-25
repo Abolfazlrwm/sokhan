@@ -110,12 +110,36 @@ by spaces so phrase queries match the punctuated transcripts). SQLite falls back
 `ILIKE`; Postgres adds a `pg_trgm` GIN index plus similarity scoring, created
 idempotently at startup (`ensure_postgres_search_objects`).
 
-## Quota
+## Quota and plans
 
-`FREE_MINUTES_PER_USER_PER_MONTH` (default 30) is enforced from the
-`usage_records` table: once a user's current-month total reaches the limit,
-uploads and OpenAI-compatible calls return HTTP 402 with the used and
-remaining minutes in the body. Rejections are transparent, not silent.
+Two plans out of the box, tuned through `PLAN_*` environment variables:
+
+| | Free (default) | Pro |
+| --- | --- | --- |
+| Max file length | 10 min (`PLAN_FREE_MAX_FILE_MINUTES`) | 180 min (`PLAN_PRO_MAX_FILE_MINUTES`) |
+| Monthly minutes | 30 (`FREE_MINUTES_PER_USER_PER_MONTH`) | 1200 (`PLAN_PRO_MONTHLY_MINUTES`) |
+
+Enforcement lives in the API layer:
+
+- The **monthly quota** is computed from the `usage_records` table (per
+  user, current month). Once the total reaches the plan's allowance,
+  uploads and OpenAI-compatible calls return HTTP 402 with code
+  `quota_exceeded`, plus the used and remaining minutes in the body.
+- The **per-file cap** is checked against the probed audio duration
+  before the job is queued; over-cap files return HTTP 402 with code
+  `file_too_long`.
+- A **pro subscription** is a `users.plan` + `plan_expires_at` row
+  (Alembic 0004). Expired subscribers fall back to the free limits
+  automatically; renewals stack the remaining time on top.
+- Operators grant subscriptions with `POST /admin/users/{email}/plan`
+  authenticated by `X-Admin-Key` (constant-time comparison; the admin
+  surface answers 503 unless `ADMIN_API_KEY` is configured). There is
+  deliberately **no payment gateway** — plan changes are an operator
+  decision, not a checkout.
+
+Rejections are transparent, not silent: the dashboard and the bot
+surface the same 402 codes (the bot checks a voice's length against the
+caller's plan before upload and answers `/quota` with live numbers).
 
 ## Feature flags
 

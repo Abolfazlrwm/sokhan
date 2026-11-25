@@ -7,10 +7,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
-- `CITATION.cff` so the project can be cited in academic work
-- FastAPI app metadata: MIT license info is now rendered on `/docs`
+- `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, Persian-and-English
+  friendly) and a `CODEOWNERS` file — the GitHub community profile now
+  lists every recommended community health file
+- A `CodeQL` workflow: weekly + per-push static security analysis of the
+  Python packages (security-extended queries) and the web dashboard,
+  results visible in the Security tab's code scanning
+- `WEBHOOK_TIMEOUT_SECONDS` and `WEBHOOK_ATTEMPTS` documented in
+  `.env.example` (the Settings existed; the example file did not list
+  them)
 
 ### Changed
+
+- `docs/ROADMAP.md` was two versions stale: v1.3 was still labelled
+  "current work" and the plans feature was absent. Sections are now
+  marked shipped with their versions, plans/quota are documented as a
+  shipped item, and a "next — current work" section ties the open good
+  first issues and the scaled fine-tune to real issue numbers
+- `docs/architecture.md`: the Quota section only described the v1.3
+  monthly allowance; it now documents the full plans system (free/pro
+  table, both HTTP 402 codes, expiry downgrade, stacked renewals, the
+  admin endpoint, and the deliberate no-payment-gateway design)
+- The landing page feature grid now includes the transparent-quota card
+  (free/pro limits and the honest 402 responses) — the headline feature
+  of v1.4.0 was missing from the public product face
+- `CITATION.cff` so the project can be cited in academic work
+- FastAPI app metadata: MIT license info is now rendered on `/docs`
 
 - Backend and bot package versions are dynamic now — they track
   `__version__` (single source of truth, currently 1.4.0) instead of the
