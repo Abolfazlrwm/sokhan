@@ -1,0 +1,57 @@
+name: Scorecard supply-chain security
+
+# OpenSSF Scorecard grades the repo's supply-chain posture (pinned
+# dependencies, SAST, token permissions, release signing, ...) every
+# week and on every main push. Results publish to the Security tab as
+# SARIF ("OSSF Scorecard") and to the public badge in the README.
+# Project rule, applied to process: improvements are measured, not vibes.
+
+on:
+  # For Branch-Protection check: only the default branch is relevant.
+  branch_protection_rule:
+  schedule:
+    # Tuesdays 05:40 UTC — deliberately off the hour and off CI's Monday.
+    - cron: "40 5 * * 2"
+  push:
+    branches: [main]
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@05b42c624433fc40578a4040d5cf5e36ddca8cde # v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Public repo: results appear on the project's Scorecard page
+          # and feed the README badge.
+          publish_results: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload the SARIF artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: SARIF-file
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload results to the Security tab
+        uses: github/codeql-action/upload-sarif@945b7d9e1ef2ede408e4a42d45f0579c33fc53ec # v3
+        with:
+          results_file: results.sarif

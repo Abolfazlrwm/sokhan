@@ -3,8 +3,12 @@
 **فارسی** | [English](README.md)
 
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml)
 [![Docker](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml)
+[![Benchmark gate](https://github.com/Abolfazlrwm/sokhan/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/benchmark.yml)
 [![Sync demo Space](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml)
+[![Release](https://img.shields.io/github/v/release/Abolfazlrwm/sokhan?display_name=tag)](https://github.com/Abolfazlrwm/sokhan/releases)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/badge/github_Abolfazlrwm/sokhan)](https://api.securityscorecards.dev/projects/github.com/Abolfazlrwm/sokhan)
 [![Landing page](https://img.shields.io/badge/landing_page-abolfazlrwm.github.io%2Fsokhan-2dd4bf)](https://abolfazlrwm.github.io/sokhan/)
 
 **کیت گفتار به متنِ فارسی‌محور.** یک پیام صوتی بفرستید — متنِ کامل و خلاصه تحویل بگیرید.
@@ -254,6 +258,27 @@ deploy/      docker-compose برای سلف‌هاست با یک دستور
 docs/        یادداشت‌های معماری و سوابق تصمیم (ADR)
 site/        لندینگ‌پیج GitHub Pages (دیپلوی خودکار)
 ```
+
+## داده و حریم خصوصی
+
+محصولی که با ضبط‌های صوتی سروکار دارد باید سیاستِ داده‌اش را صریح بنویسد،
+نه ضمنی بگذارد:
+
+- **سلف‌هاست یعنی دستگاه خودتان.** صدا در `DATA_DIR` همان سروری می‌نشیند که
+  خودتان اجرا می‌کنید؛ متن‌ها و ردیف‌های مصرف در Postgres خودتان‌اند و حذف
+  یک کار یعنی حذف واقعی فایل آن — هیچ تکراری به سرویس ثالثی نمی‌رود و هیچ
+  تلفن‌خانه‌ای در کار نیست. Whisper کلاً لوکال اجرا می‌شود و در مسیر
+  رونویسی هیچ API ابری وجود ندارد.
+- **دموی مرورگری هیچ‌چیز آپلود نمی‌کند.** Space عمومی با transformers.js
+  (ONNX، q8) داخل مرورگرِ بازدیدکننده اجرا می‌شود: هم وزن‌های مدل و هم صدا
+  روی دستگاه خودِ او می‌مانند. تنها ترافیک شبکه، دانلود مدلِ عمومی از
+  Hugging Face Hub است.
+- **بدون تله‌متری.** بک‌اند صفر آنالیتیکس و صفر ردیابی دارد و هیچ تماس
+  خروجی‌ای ندارد مگر قابلیت‌های اختیاری که خودتان پیکربندی کنید (مثل
+  endpoint خلاصه‌سازی LLM).
+- **سیاست نگهداری با اپراتور است.** شما تصمیم می‌گیرید `DATA_DIR` و
+  کارهای قدیمی کِی پاک شوند؛ در اسکیمای دیتابیس هیچ کپی دیگری از صدا ذخیره
+  نمی‌شود.
 
 ## وضعیت پروژه و محدودیت‌های صادقانه
 

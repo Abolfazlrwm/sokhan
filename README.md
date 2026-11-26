@@ -3,8 +3,12 @@
 **English** | [فارسی](README.fa.md)
 
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml)
 [![Docker](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml)
+[![Benchmark gate](https://github.com/Abolfazlrwm/sokhan/actions/workflows/benchmark.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/benchmark.yml)
 [![Sync demo Space](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/sync-space.yml)
+[![Release](https://img.shields.io/github/v/release/Abolfazlrwm/sokhan?display_name=tag)](https://github.com/Abolfazlrwm/sokhan/releases)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/badge/github_Abolfazlrwm/sokhan)](https://api.securityscorecards.dev/projects/github.com/Abolfazlrwm/sokhan)
 [![Landing page](https://img.shields.io/badge/landing_page-abolfazlrwm.github.io%2Fsokhan-2dd4bf)](https://abolfazlrwm.github.io/sokhan/)
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
@@ -252,6 +256,27 @@ deploy/      docker-compose for one-command self-hosting
 docs/        architecture notes and decision records (ADRs)
 site/        the GitHub Pages landing page (auto-deployed)
 ```
+
+## Data and privacy
+
+A speech-to-text product handles recordings, so the privacy story is
+explicit instead of implied:
+
+- **Self-hosted = your machine.** Audio lands in `DATA_DIR` on the server
+  you run, transcripts and usage rows live in your own Postgres, and
+  deleting a job deletes its file — nothing is replicated, phoned home,
+  or shared with a third-party service. Whisper runs locally; no cloud
+  API is involved anywhere in the transcription path.
+- **The browser demo uploads nothing.** The public Space runs
+  transformers.js (ONNX, q8) inside the visitor's browser: both the model
+  weights and the audio stay on the visitor's device. The only network
+  traffic is downloading the public model from the Hugging Face Hub.
+- **No telemetry.** The backend ships with zero analytics, zero tracking,
+  and no outbound calls except optional features you configure yourself
+  (the LLM summary endpoint, if you enable it).
+- **Operator retention is your decision.** Set your own policy for
+  pruning `DATA_DIR` and old jobs; the schema keeps no copy of the audio
+  anywhere else.
 
 ## Project status and honest limits
 
