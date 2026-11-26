@@ -1,5 +1,7 @@
 # Contributing to Sokhan
 
+**English** | [فارسی](CONTRIBUTING.fa.md)
+
 Thanks for looking into Sokhan. This repo is a self-hostable Persian
 speech-to-text kit: a FastAPI backend with a faster-whisper engine, a
 Celery worker, a Next.js (Persian-first, RTL) dashboard, an optional
