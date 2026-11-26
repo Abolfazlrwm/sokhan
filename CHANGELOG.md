@@ -82,6 +82,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   under it. Applied across LICENSE, both READMEs, CITATION.cff, both
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
+- The header shows the signed-in account as an avatar with the email's
+  initial. It opens a menu with the full email and Sign out, instead of a
+  truncated email that disappeared on narrow screens.
 
 ### Fixed
 

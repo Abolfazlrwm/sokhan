@@ -18,8 +18,10 @@
     "switchToFa": "فارسی",
     "signIn": "ورود",
     "signOut": "خروج",
-    "signedInAs": "واردشده با {email}",
-    "signOutOf": "خروج از حساب {email}"
+    "accountMenu": "حساب کاربری",
+    "accountMenuFor": "منوی حساب {email}",
+    "signedInLabel": "وارد شده با",
+    "signedIn": "وارد شده‌ای"
   },
   "landing": {
     "headline": "از گفتار به متن، در چند لحظه",
