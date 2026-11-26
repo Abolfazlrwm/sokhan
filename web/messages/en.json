@@ -15,7 +15,11 @@
     "new": "New transcription",
     "archive": "Archive",
     "switchToEn": "English",
-    "switchToFa": "فارسی"
+    "switchToFa": "فارسی",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {email}",
+    "signOutOf": "Sign out of {email}"
   },
   "landing": {
     "headline": "From speech to text, in moments",

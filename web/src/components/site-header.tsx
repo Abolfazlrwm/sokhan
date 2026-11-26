@@ -1,14 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AudioLines } from "lucide-react";
+import { AudioLines, LogIn, LogOut } from "lucide-react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { logout } from "@/lib/api";
+import { useSession } from "@/lib/session";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
+  const { ready, signedIn, email } = useSession();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    await logout();
+    setSigningOut(false);
+    router.replace("/login");
+  }
 
   const otherLocale = locale === "fa" ? "en" : "fa";
 
@@ -60,6 +72,38 @@ export function SiteHeader() {
           >
             {otherLocale === "en" ? "EN" : "فا"}
           </button>
+          {ready && signedIn && (
+            <>
+              {email && (
+                <span
+                  className="hidden max-w-48 truncate text-sm text-stone-500 md:inline"
+                  title={t("signedInAs", { email })}
+                >
+                  {email}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={signingOut}
+                aria-label={email ? t("signOutOf", { email }) : t("signOut")}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:ring-2 focus-visible:ring-teal-700 disabled:opacity-60 sm:px-3"
+              >
+                <LogOut className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+                <span className="hidden sm:inline">{t("signOut")}</span>
+              </button>
+            </>
+          )}
+          {ready && !signedIn && pathname !== "/login" && (
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600 focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+            >
+              <LogIn className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
+              <span className="hidden sm:inline">{t("signIn")}</span>
+              <span className="sr-only sm:hidden">{t("signIn")}</span>
+            </Link>
+          )}
         </nav>
       </div>
     </header>

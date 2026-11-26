@@ -15,7 +15,11 @@
     "new": "رونویسی تازه",
     "archive": "آرشیو",
     "switchToEn": "English",
-    "switchToFa": "فارسی"
+    "switchToFa": "فارسی",
+    "signIn": "ورود",
+    "signOut": "خروج",
+    "signedInAs": "واردشده با {email}",
+    "signOutOf": "خروج از حساب {email}"
   },
   "landing": {
     "headline": "از گفتار به متن، در چند لحظه",

@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ArrowRight, GraduationCap, TextSearch, Voicemail, type LucideIcon } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { LoginCta } from "@/components/login-cta";
 
 const waveBars = [12, 20, 30, 22, 34, 40, 28, 16, 26, 36, 20, 30, 14, 24, 32, 18, 26, 12, 22, 16];
 
@@ -69,12 +70,9 @@ export default async function LandingPage({
             {t("startCta")}
             <ArrowRight className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
           </Link>
-          <Link
-            href="/login"
-            className="inline-flex min-h-11 items-center rounded-xl border border-stone-300 bg-white px-6 text-sm font-bold text-stone-800 transition-colors hover:border-teal-700 hover:text-teal-800 focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
-          >
+          <LoginCta className="inline-flex min-h-11 items-center rounded-xl border border-stone-300 bg-white px-6 text-sm font-bold text-stone-800 transition-colors hover:border-teal-700 hover:text-teal-800 focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2">
             {t("loginCta")}
-          </Link>
+          </LoginCta>
         </div>
         <svg
           viewBox="0 0 200 48"

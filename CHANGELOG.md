@@ -55,6 +55,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - `POST /auth/logout` revokes the caller's token (204). An account has a
   single active token, so it signs out every client holding it.
 
+- The dashboard header shows the sign-in state: a **Sign in** button when
+  signed out, the account email and **Sign out** when signed in. Sign out
+  revokes the token on the server and works even when the API is
+  unreachable. The landing page's sign-in button is hidden and the login
+  page redirects to the upload page for a signed-in user.
+
 ### Changed
 
 - **Demo hang fix**: audio was decoded inside an `AudioContext` forced to
