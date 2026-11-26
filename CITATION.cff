@@ -6,8 +6,8 @@ authors:
   - family-names: Ranjbaran
     given-names: Abolfazl
     email: 206173650+Abolfazlrwm@users.noreply.github.com
-version: "1.4.0"
-date-released: "2026-11-23"
+version: "1.4.1"
+date-released: "2026-11-26"
 license: MIT
 repository-code: "https://github.com/Abolfazlrwm/sokhan"
 url: "https://abolfazlrwm.github.io/sokhan/"

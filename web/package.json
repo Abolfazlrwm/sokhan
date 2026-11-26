@@ -1,6 +1,6 @@
 {
   "name": "sokhan-web",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
   "description": "Persian-first RTL web dashboard for Sokhan speech-to-text",
   "license": "MIT",

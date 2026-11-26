@@ -5,6 +5,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+(nothing yet)
+
+## [1.4.1] - 2026-11-26
+
 ### Security
 
 - First CodeQL run surfaced five findings; all triaged with a written
@@ -27,18 +31,46 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- **Release automation**: pushing a `v*` tag extracts the matching
+  CHANGELOG section (`scripts/extract_release_notes.py`) and creates or
+  updates the GitHub Release — the changelog stays the single source of
+  truth; this release is the first cut by that pipeline
+- **OpenSSF Scorecard** workflow (weekly + per-push, `publish_results`)
+  grading the supply-chain posture, with the public badge in both READMEs
+- **SBOM + max-mode provenance attestations** on every GHCR image push —
+  verifiable with `docker buildx imagetools inspect`
+- **Compose integration smoke test** in CI: builds the API image, boots
+  the real postgres + redis + api stack, polls `/healthz`, asserts
+  `/plans` exposes both tiers and `/docs` renders — deployment wiring is
+  now tested, not assumed
+- A PR title check enforcing Conventional Commits on pull requests
+- "Data and privacy" sections in README.md and README.fa.md: self-hosted
+  audio stays on the operator's machine (verified: `delete_job` unlinks
+  the stored file), the browser demo uploads nothing, zero telemetry
 - `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, Persian-and-English
   friendly) and a `CODEOWNERS` file — the GitHub community profile now
-  lists every recommended community health file
+  lists every recommended community health file (85% → 100%)
 - A `CodeQL` workflow: weekly + per-push static security analysis of the
-  Python packages (security-extended queries) and the web dashboard,
-  results visible in the Security tab's code scanning
+  Python packages (security-extended queries) and the web dashboard
 - `WEBHOOK_TIMEOUT_SECONDS` and `WEBHOOK_ATTEMPTS` documented in
   `.env.example` (the Settings existed; the example file did not list
   them)
 
 ### Changed
 
+- Branch protection on `main`: the CI (`python`/`web`/`compose`) and
+  CodeQL (`Analyze *`) checks are required before a pull request merges;
+  force pushes and deletions are blocked, history stays linear
+- Every workflow got explicit `timeout-minutes`, a concurrency group
+  where stale runs would only burn quota, and an explicit least-privilege
+  `permissions` block (the Scorecard Token-Permissions check drove it)
+- All GitHub Actions pinned to full commit SHAs (tag-retargeting surface
+  removed) and then bumped to the latest majors — CodeQL Action v4 ahead
+  of the December 2026 v3 deprecation, Node-24 actions throughout
+- The Pages deploy is self-healing: stale `github-pages` artifacts are
+  cleared before upload, the artifact is awaited until visible, and the
+  deploy retries once past a 20 s settle gap — the transient
+  "multiple artifacts / no artifacts found" failure class is gone
 - `docs/ROADMAP.md` was two versions stale: v1.3 was still labelled
   "current work" and the plans feature was absent. Sections are now
   marked shipped with their versions, plans/quota are documented as a
@@ -51,13 +83,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - The landing page feature grid now includes the transparent-quota card
   (free/pro limits and the honest 402 responses) — the headline feature
   of v1.4.0 was missing from the public product face
-- `CITATION.cff` so the project can be cited in academic work
+- `CITATION.cff` so the project can be cited in academic work; version
+  and release date track this release
 - FastAPI app metadata: MIT license info is now rendered on `/docs`
-
 - Backend and bot package versions are dynamic now — they track
-  `__version__` (single source of truth, currently 1.4.0) instead of the
-  stale hardcoded `0.1.0` — and both carry full PEP 621 metadata:
-  authors, MIT license, keywords, classifiers and project URLs
+  `__version__` (single source of truth, 1.4.1 with this release)
+  instead of the stale hardcoded `0.1.0` — and both carry full PEP 621
+  metadata: authors, MIT license, keywords, classifiers and project URLs
 - `sokhan_bot.__version__` tracks the release again (was stuck at 1.1.0)
 - The web `package.json` matches the release version and declares
   description, license, repository and bugs URLs
