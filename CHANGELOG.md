@@ -7,6 +7,36 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- **Persian accuracy stack (v2)** — measured on the 12-clip Common Voice
+  fa fixture, every number reproducible:
+  - New `sokhan.core.fa_polish` module: orthographic-only Persian ASR
+    repair (ZWNJ prefix/suffix fusion, split-imperative repair like
+    "بی پوش" → "بپوش", Arabic look-alike code points, Latin→Persian
+    digits, punctuation spacing). Wired into the pipeline behind
+    `FA_POLISH=true` and ported verbatim to the browser demo
+    (16-case parity test with the Python implementation). Measured
+    −3.6 WER points; never rewords colloquial speech.
+  - New default `whisper_initial_prompt`: a ZWNJ-correct Persian
+    orthography prompt. whisper copies prompt script style — measured
+    −1.3 WER points on `small`, −4.8 on the fine-tuned checkpoint.
+  - **Default engine is now `medium`**: 56.2% WER vs 75.0% for `small`
+    under the v2 harness — a −24.3-point jump at ~1.1x realtime on 2 CPU
+    cores (int8, ~800 MB download). `WHISPER_MODEL_SIZE=small` remains
+    the documented speed-first profile.
+  - Browser demo: default model switched base → small (fixture 90.2% →
+    75.0% under v2), output now passes through the same polish pass as
+    the server, and the honesty note was updated.
+  - `benchmarks/tune_decode.py`: the decode sweep harness the decisions
+    above came from (prompt variants × beam × VAD ×
+    condition_on_previous_text).
+  - `training/export_web_onnx.py`: merge-LoRA → ONNX → int8 → HF Hub
+    pipeline that produces a transformers.js-compatible repo of any
+    Sokhan fine-tune, so the browser demo can run the project's own
+    engine once the export runs on Colab.
+  - `baseline.json` regenerated under the v2 harness (small 0.75 /
+    fine-tuned 0.75 / medium 0.5625); the weekly benchmark workflow now
+    guards `small` **and** `medium`; regression-gate test updated to the
+    committed baseline.
 - Brand refresh: a hero banner in both READMEs (`docs/assets/banner.png`),
   a redesigned 1280x640 social preview (`docs/assets/social-preview.png` —
   upload it once in Settings → General → Social preview) and a 512px app
@@ -29,7 +59,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   MediaRecorder) in that configuration — the demo sat at "در حال
   آماده‌سازی صدا" indefinitely. Decoding now happens at the context's
   natural rate and is resampled offline to 16 kHz, with a 45 s decode
-  watchdog and clear format-error messages (e.g. OGG on Safari).
+  watchdog and clear format-error messages (e.g. OGG on Safari). The
+  worker's origin guard also now accepts the EMPTY `event.origin`
+  Chromium 158+ posts for same-origin dedicated-worker messages — the
+  strict comparison silently rejected every command and left the demo
+  at "در حال پردازش" forever.
 
 - **License: MIT → PolyForm Noncommercial 1.0.0 (source-available).** The
   code stays readable and reviewable by anyone, and noncommercial use

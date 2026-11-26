@@ -1,14 +1,18 @@
 {
   "dataset": "Mozilla Common Voice (fa) — Sokhan 12-clip fixture (CC-0)",
-  "measured": "GPU-scale run recorded in benchmarks/results/results.json; CPU int8 decoding, beam_size=5, identical normalization on reference and hypothesis",
+  "measured": "v2 stack (Persian orthography initial_prompt + fa_polish on both sides), CPU int8 decoding, beam_size=5; reproduced via benchmarks/benchmark_wer.py",
   "models": {
     "small": {
-      "wer": 0.8049,
-      "cer": 0.2668
+      "wer": 0.75,
+      "cer": 0.25
     },
     "Abol0pati/whisper-small-fa-sokhan": {
-      "wer": 0.7927,
-      "cer": 0.2487
+      "wer": 0.75,
+      "cer": 0.3099
+    },
+    "medium": {
+      "wer": 0.5625,
+      "cer": 0.1849
     }
   }
 }

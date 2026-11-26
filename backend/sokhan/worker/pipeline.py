@@ -35,6 +35,7 @@ from sokhan.core.audio import (
     probe_duration_seconds,
 )
 from sokhan.core.chunking import DEFAULT_OVERLAP_SECONDS, Chunk, chunk_samples, iter_chunks
+from sokhan.core.fa_polish import polish_transcript
 from sokhan.core.merge import merge_chunks
 from sokhan.core.persian import normalize_for_search
 from sokhan.core.punctuation import restore_punctuation
@@ -157,6 +158,11 @@ def process_job(
             if settings.punctuation_enabled:
                 merged = [
                     replace(segment, text=restore_punctuation(segment.text))
+                    for segment in merged
+                ]
+            if settings.fa_polish:
+                merged = [
+                    replace(segment, text=polish_transcript(segment.text))
                     for segment in merged
                 ]
             job.text = formats.to_txt(merged)

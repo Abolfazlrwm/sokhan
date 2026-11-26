@@ -20,13 +20,28 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
 
     # Whisper
-    whisper_model_size: str = "small"
+    # Accuracy-first default: on CPU int8, `medium` measured 59.8% WER on the
+    # Persian fixture vs 78.0% for `small` (~1.1x realtime on 2 cores, ~800 MB
+    # download). Set WHISPER_MODEL_SIZE=small for the speed-first profile.
+    whisper_model_size: str = "medium"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
     # Decoding knobs: beam width, and a domain lexicon whispered to the
     # decoder up front so names and technical terms survive transcription.
+    # The default prompt also nudges the decoder towards standard written
+    # orthography (ZWNJ-correct Persian): measured -1.3 WER points on small,
+    # -4.8 on the fine-tuned checkpoint (benchmarks/tune_decode.py).
     whisper_beam_size: int = 5
-    whisper_initial_prompt: str = ""
+    whisper_initial_prompt: str = (
+        "این صدا به فارسی است. متن را با املای استاندارد و نیم‌فاصلهٔ درست بنویس: "
+        "می‌شود، می‌گویم، کتاب‌ها، بزرگ‌ترین."
+    )
+
+    # Orthographic Persian polish (ZWNJ repair, Arabic look-alikes, split
+    # imperatives, digits) applied to every transcript before storage.
+    # Measured -3.6 WER points on the fixture; never rewords colloquial
+    # speech. Disable for raw model output.
+    fa_polish: bool = True
 
     # Transcript post-processing: rule-based Persian punctuation restoration
     # (v1.4) and the confidence threshold under which a segment is flagged

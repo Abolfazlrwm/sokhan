@@ -122,11 +122,22 @@ current ML stack surfaced and are fixed:
 
 - The GPU-scale run exists (2026-11-18, free Colab T4): `whisper-small` +
   LoRA on 500 clips / ≈45 minutes of speech, 3 epochs in ~7 minutes —
-  fixture WER 80.5% → 79.3% (see the fine-tune row in
-  `benchmarks/README.md`). Real, but small; the same notebook at
-  `MAX_SAMPLES = 0` (the full 10-hour manifest, ~1.5–2 h on a T4) is the
-  next run, ideally paired with a larger speaker-disjoint hold-out than
-  the default 2% eval split.
+  under the v1 harness that was fixture WER 80.5% → 79.3%; re-measured
+  under the v2 harness (orthography prompt + polish, see
+  `benchmarks/README.md`) it lands at 75.0%. Real, but small; the same
+  notebook at `MAX_SAMPLES = 0` (the full 10-hour manifest, ~1.5–2 h on a
+  T4) is the next run, ideally paired with a larger speaker-disjoint
+  hold-out than the default 2% eval split.
+- **Next-level run (recommended): LoRA on `whisper-medium`.** The measured
+  untuned gap (small 75.0% vs medium 56.2% WER under v2) shows the base
+  model is the bottleneck, not the adapter size. The same notebook with
+  `MODEL_NAME = "openai/whisper-medium"` fits a free T4 (~1.5 GB LoRA
+  state in int8 bf16); even 2–3 hours of Persian speech there should
+  undercut every `small`-class number by a wide margin.
+- To put the fine-tuned engine **inside the browser demo**, run
+  [export_web_onnx.py](export_web_onnx.py) (merge → ONNX → int8 → Hub) on
+  Colab and add the resulting repo id to `space/index.html`. No new demo
+  code is needed — the worker loads any Xenova-style whisper repo.
 - The default eval split (2%) is small; a proper report should freeze a
   larger, speaker-disjoint hold-out.
 - Data augmentation (noise, speed perturbation) is a known next step for

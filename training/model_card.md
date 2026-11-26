@@ -55,20 +55,26 @@ human-verified references, beam_size=5, the same Persian normalization
 applied to reference and hypothesis. Session 2026-11-18,
 faster-whisper 1.2.1 / CTranslate2 4.9.0, CPU int8.
 
-| model | WER | CER |
+| model | WER (v1 harness) | WER (v2 harness: orthography prompt + polish) |
 | --- | --- | --- |
-| openai whisper-small (baseline) | 80.5% | 26.7% |
-| **whisper-small-fa-sokhan** | **79.3%** | **24.9%** |
+| openai whisper-small (baseline) | 80.5% | 75.0% |
+| **whisper-small-fa-sokhan** | **79.3%** | **75.0%** |
+| openai whisper-medium (untuned, for scale) | — | 56.2% |
 
 In-training held-out eval (10 clips): WER 85.1% → 81.6%; training loss
-3.63 → 1.75.
+3.63 → 1.75. With a Persian orthography initial prompt alone (no polish),
+this checkpoint measures 72.0% vs 76.8% without — the prompt is worth
+−4.8 WER points on this model, more than the LoRA itself contributed.
 
-**Honest caveats.** A 12-clip fixture puts the -1.2 WER margin near the
+**Honest caveats.** A 12-clip fixture puts the small margins near the
 noise floor; the direction matches the in-training eval but the ceiling
 is unknown until the same notebook runs over the full ~10-hour manifest
-(`MAX_SAMPLES=0`, ~2 h on a free T4). Common Voice fa is colloquial and
-noisy — these WER numbers are much higher than typical read-speech
-benchmarks. Do not cite this model as production-ready Persian ASR yet.
+(`MAX_SAMPLES=0`, ~2 h on a free T4) — and the measured untuned
+small-vs-medium gap (75.0% vs 56.2%) says the next fine-tune should
+target `whisper-medium`, not more data on `small`. Common Voice fa is
+colloquial and noisy — these WER numbers are much higher than typical
+read-speech benchmarks. Do not cite this model as production-ready
+Persian ASR yet.
 
 ## Usage
 

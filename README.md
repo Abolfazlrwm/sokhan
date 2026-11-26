@@ -287,14 +287,18 @@ explicit instead of implied:
 ## Project status and honest limits
 
 - Accuracy: measured on a fixed public sample — 12 real Common Voice (fa)
-  clips, 61 s of audio, human-verified references. With the default `small`
-  engine: **WER 80.5% / CER 26.7%** (`tiny` 92.7%, `base` 90.2%). The first
-  GPU fine-tune — LoRA on `whisper-small`, 500 clips, free Colab T4 —
-  measures **WER 79.3% / CER 24.9%**
-  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)):
-  a small, real gain that data scaling should grow. These numbers are high
-  because Common Voice fa is colloquial and noisy; read speech is far
-  easier. Full methodology and per-clip output:
+  clips, 61 s of audio, human-verified references. The v2 accuracy stack
+  (Persian orthography initial prompt + `fa_polish` post-processing, both
+  measured in [benchmarks/](benchmarks/README.md)) lifts the fixture from
+  **WER 80.5% → 75.0% on `small`**, and the new **default engine is
+  `medium`: WER 56.2% / CER 18.5%** at ~1.1x realtime on 2 CPU cores
+  (int8, ~800 MB download; set `WHISPER_MODEL_SIZE=small` for the
+  speed-first profile). The first GPU fine-tune — LoRA on `whisper-small`,
+  500 clips, free Colab T4 — measures **WER 75.0% / CER 31.0%** under the
+  same v2 harness
+  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)).
+  These numbers are still high because Common Voice fa is colloquial and
+  noisy; read speech is far easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).
 - Speaker labels depend on the diarization engine you pick. `energy` is a
   heuristic: its labels describe acoustic similarity, not verified identity,

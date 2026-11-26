@@ -32,7 +32,7 @@ jobs:
       - name: Run the fixture benchmark with the regression gate
         run: |
           python benchmarks/benchmark_wer.py \
-            --models small \
+            --models small medium \
             --baseline benchmarks/results/baseline.json \
             --max-regression 1.0 \
             --archive

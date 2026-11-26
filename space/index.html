@@ -103,8 +103,8 @@
       <div>
         <label class="field" for="model">کدام مدل؟ (اولین بار دانلود می‌شود)</label>
         <select id="model">
-          <option value="Xenova/whisper-base" selected>پایه (base) — سریع، دانلود ~۷۵ مگابایت</option>
-          <option value="Xenova/whisper-small">کوچک (small) — دقیق‌تر اما کندتر</option>
+          <option value="Xenova/whisper-small" selected>کوچک (small) — دقیق‌تر، دانلود ~۲۵۰ مگابایت (پیشنهادی)</option>
+          <option value="Xenova/whisper-base">پایه (base) — سریع‌تر، دانلود ~۷۵ مگابایت</option>
         </select>
       </div>
       <div style="flex:1"></div>
@@ -139,8 +139,9 @@
   </div>
 
   <p class="note">
-    صادقانه: این دمو چک‌پوینت‌های <b>پایه‌ی</b> Whisper را در مرورگر اجرا می‌کند
-    (Common Voice فارسی محاوره‌ای و پرنویز است؛ انتظار خطا داشته باشید).
+    صادقانه: دقت Whisper روی Common Voice فارسی (محاوره‌ای و پرنویز) محدود است.
+    متن خروجی با پولیش ارتوگرافی فارسی (نیم‌فاصله، حروف عربی، فعل‌های شکسته) تمیز می‌شود —
+    همان پست‌پروسس نسخهٔ سرور.
     در Chrome و Edge با WebGPU خیلی سریع‌تر است؛ سایر مرورگرها روی WASM با سقف مدت اجرا می‌کنند.
     چک‌پوینت ریزتنظیم‌شده‌ی Sokhan روی <a href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan">Hub</a>
     موجود است و اپ Gradio آن برای اجرای روی سرور خودتان در
@@ -156,6 +157,6 @@
   </footer>
 </div>
 
-<script type="module" src="demo.js?v=3"></script>
+<script type="module" src="demo.js?v=4"></script>
 </body>
 </html>

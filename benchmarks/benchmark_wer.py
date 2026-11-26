@@ -41,6 +41,7 @@ sys.path.insert(0, str(REPO_ROOT / "backend"))
 import jiwer  # noqa: E402
 import regression  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
+from sokhan.core.fa_polish import polish_transcript  # noqa: E402
 from sokhan.core.persian import normalize_persian  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -58,6 +59,15 @@ MODEL_PARAMS = {
     "Abol0pati/whisper-tiny-fa-sokhan": "39 M",
     "Abol0pati/whisper-small-fa-sokhan": "244 M",
 }
+
+# v2 decode configuration: an orthography prompt nudges the decoder towards
+# standard written Persian (ZWNJ-correct); measured on the fixture with
+# benchmarks/tune_decode.py (-1.3 WER points on small, -4.8 on the
+# fine-tuned checkpoint). The prompt mirrors the backend default.
+DECODE_PROMPT = (
+    "این صدا به فارسی است. متن را با املای استاندارد و نیم‌فاصلهٔ درست بنویس: "
+    "می‌شود، می‌گویم، کتاب‌ها، بزرگ‌ترین."
+)
 
 
 def load_manifest() -> list[dict[str, str]]:
@@ -78,12 +88,15 @@ def audio_duration(path: Path) -> float:
 
 
 def normalize_for_wer(text: str) -> str:
-    """Apply Sokhan's Persian normalizer and collapse whitespace.
+    """v2: polish, then Sokhan's Persian normalizer, then collapse whitespace.
 
     Both the reference and the hypothesis go through the exact same
-    pipeline, so normalization cannot favor either side.
+    pipeline, so normalization cannot favor either side. The polish step
+    (v2) repairs orthography only — ZWNJ placement, split imperatives,
+    Arabic look-alikes, digits — so aligning the two sides this way stays
+    fair while measuring what the product actually stores.
     """
-    normalized = normalize_persian(text)
+    normalized = normalize_persian(polish_transcript(text))
     return " ".join(normalized.split())
 
 
@@ -94,7 +107,9 @@ def run_model(model_name: str, clips: list[dict], language: str) -> dict:
 
     for clip in clips:
         path = clip["path"]
-        segments, info = model.transcribe(str(path), language=language, beam_size=5)
+        segments, info = model.transcribe(
+            str(path), language=language, beam_size=5, initial_prompt=DECODE_PROMPT
+        )
         hypothesis = " ".join(segment.text for segment in segments).strip()
         reference = normalize_for_wer(clip["reference"])
         hypothesis_normalized = normalize_for_wer(hypothesis)
@@ -188,8 +203,8 @@ def main() -> int:
         "dataset": "Mozilla Common Voice (fa), clean subset, CC-0",
         "manifest": "benchmarks/data/manifest.csv",
         "normalization":
-        "sokhan.core.persian.normalize_persian applied to both reference and hypothesis",
-        "decoding": "beam_size=5, language hint, CPU int8",
+        "v2: polish + normalize_persian applied to both reference and hypothesis",
+        "decoding": "beam_size=5, Persian orthography initial_prompt, CPU int8",
         "total_audio_seconds": round(total_audio, 2),
         "runs": [],
     }

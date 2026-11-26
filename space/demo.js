@@ -39,6 +39,188 @@ const stampChk = $("stamp");
 const copyBtn = $("copy");
 const stageEls = [...document.querySelectorAll("#stages span")];
 
+// ---------- Persian orthographic polish (v2) ----------
+// Deterministic port of backend/sokhan/core/fa_polish.py: repairs ZWNJ
+// placement ("می کنی" -> "می‌کنی"), split imperatives ("بی پوش" ->
+// "بپوش"), Arabic look-alike code points and Latin digits. It never
+// rewords — measured -3.6 WER points on the Persian fixture.
+
+const _ZWNJ = "\u200c";
+const POLISH_ARABIC_CHARS = {
+  "ي": "ی", "ى": "ی", "ك": "ک", "ة": "ه", "\u0640": "",
+  "٠": "۰", "١": "۱", "٢": "۲", "٣": "۳", "٤": "۴",
+  "٥": "۵", "٦": "۶", "٧": "۷", "٨": "۸", "٩": "۹",
+};
+
+function polishChars(text) {
+  let out = "";
+  for (const ch of text) {
+    if (ch in POLISH_ARABIC_CHARS) out += POLISH_ARABIC_CHARS[ch];
+    else if (ch >= "0" && ch <= "9") out += String.fromCharCode(0x06f0 + (ch.charCodeAt(0) - 48));
+    else out += ch;
+  }
+  return out;
+}
+
+// Very common verbs Whisper writes without the ZWNJ: "میکنم" -> "می‌کنم".
+const POLISH_ZWNJ_WORDS = new Set([
+  "میکنم", "میکنی", "میکند", "میکنیم", "میکنید", "میکنند",
+  "میشوم", "میشوی", "میشود", "میشویم", "میشوید", "میشوند",
+  "میگویم", "میگویی", "میگوید", "میگوییم", "میگویید", "میگویند",
+  "میگم", "میگی", "میگه", "میگن",
+  "میخواهم", "میخواهی", "میخواهد", "میخواهیم", "میخواهید", "میخواهند",
+  "میخوام", "میخوای", "میخواد", "میخوان",
+  "میدانم", "میدانی", "میداند", "میدانیم", "میدانید", "میدانند",
+  "میدم", "میدی", "میده", "میدن",
+  "میبرم", "میبری", "میبرد", "میبریم", "میبرید", "میبرند",
+  "میرم", "میری", "میره", "میرن",
+  "میروم", "میروی", "میرود", "میرویم", "میروید", "میروند",
+  "میآیم", "میآیی", "میآید", "میآییم", "میآیید", "میآیند",
+  "میشنوم", "میشنوی", "میشنود", "میشنویم", "میشنوید", "میشنوند",
+  "میبینم", "میبینی", "میبیند", "میبینیم", "میبینید", "میبینند",
+  "میشه",
+  "نمیکنم", "نمیکنی", "نمیکند", "نمیکنیم", "نمیکنید", "نمیکنند",
+  "نمیشود", "نمیشه",
+  "نمیگویم", "نمیگم", "نمیگی", "نمیگه", "نمیگن",
+  "نمیخواهم", "نمیخواهد", "نمیخوام", "نمیخواد",
+  "نمیدانم", "نمیدانی", "نمیداند",
+  "نمیدونم", "نمیدونی", "نمیدونه", "نمیدونن",
+  "نمیدم", "نمیدی", "نمیده", "نمیدن",
+  "نمیرم", "نمیری", "نمیره", "نمیرن", "نمیرود",
+  "نمیآید", "نمیاد",
+  "نمیبینم", "نمیبینی", "نمیبیند",
+]);
+
+// The imperative "ب" mis-heard as the real word "بی": "بی پوش" -> "بپوش".
+const POLISH_SPLIT_IMPERATIVES = {
+  "پوش": "بپوش", "بین": "ببین", "بینم": "ببینم", "بینی": "ببینی",
+  "بینید": "ببینید", "بینند": "ببینند", "خواب": "بخواب", "خور": "بخور",
+  "شین": "بشین", "نشین": "بنشین", "گیر": "بگیر", "گو": "بگو",
+  "گوی": "بگو", "بخش": "ببخش",
+};
+
+// Separated ZWNJ prefixes/suffixes: "می کنم" -> "می‌کنم".
+const POLISH_FUSED_PREFIXES = {
+  "می کنم": "می‌کنم", "می کنی": "می‌کنی", "می کند": "می‌کند",
+  "می کنیم": "می‌کنیم", "می کنید": "می‌کنید", "می کنند": "می‌کنند",
+  "می شود": "می‌شود", "می شن": "می‌شن", "می شه": "می‌شه",
+  "می گویم": "می‌گویم", "می گوید": "می‌گوید", "می گم": "می‌گم",
+  "می گی": "می‌گی", "می گه": "می‌گه", "می گن": "می‌گن",
+  "می خواهم": "می‌خواهم", "می خواهد": "می‌خواهد",
+  "می خوام": "می‌خوام", "می خواد": "می‌خواد",
+  "می دانم": "می‌دانم", "می داند": "می‌داند",
+  "می دونم": "می‌دونم", "می دم": "می‌دم", "می دی": "می‌دی",
+  "می ده": "می‌ده", "می دن": "می‌دن",
+  "می برم": "می‌برم", "می برد": "می‌برد",
+  "می رم": "می‌رم", "می ره": "می‌ره", "می رن": "می‌رن",
+  "می روم": "می‌روم", "می رود": "می‌رود",
+  "می آید": "می‌آید", "می این": "می‌این",
+  "می شنوم": "می‌شنوم", "می شنوی": "می‌شنوی", "می شنود": "می‌شنود",
+  "می بینم": "می‌بینم", "می بینی": "می‌بینی", "می بیند": "می‌بیند",
+  "نمی کنم": "نمی‌کنم", "نمی کند": "نمی‌کند",
+  "نمی شود": "نمی‌شود", "نمی شه": "نمی‌شه",
+  "نمی گم": "نمی‌گم", "نمی گه": "نمی‌گه",
+  "نمی خوام": "نمی‌خوام", "نمی خواد": "نمی‌خواد",
+  "نمی دانم": "نمی‌دانم", "نمی دونم": "نمی‌دونم",
+  "نمی رم": "نمی‌رم", "نمی ره": "نمی‌ره", "نمی آید": "نمی‌آید",
+  "نمی این": "نمی‌این", "نمی بینم": "نمی‌بینم", "نمی بیند": "نمی‌بیند",
+};
+const POLISH_PREFIXES = new Set(["می", "نمی"]);
+const POLISH_SUFFIXES = new Set(["ها", "های", "هایی", "تر", "ترین"]);
+const POLISH_PUNCT_EDGES = "،؛:.!?؟…«»()\"'-–—,";
+const POLISH_CLOSING_PUNCT = "،؛:.!?؟…»)";
+
+function polishSplitEdges(token) {
+  // Mirror Python's str.strip(chars): peel edge punctuation both sides.
+  let start = 0;
+  let end = token.length;
+  while (start < end && POLISH_PUNCT_EDGES.includes(token[start])) start++;
+  while (end > start && POLISH_PUNCT_EDGES.includes(token[end - 1])) end--;
+  return [token.slice(0, start), token.slice(start, end), token.slice(end)];
+}
+
+function polishZwnjInWord(word) {
+  if (word.startsWith("نمی") && word.length > 3) return "نمی" + _ZWNJ + word.slice(3);
+  if (word.startsWith("می") && word.length > 2) return "می" + _ZWNJ + word.slice(2);
+  return word;
+}
+
+function polishFuse(tokens) {
+  const out = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const bare = tok.split("").filter((c) => !POLISH_PUNCT_EDGES.includes(c)).join("") || tok;
+    const isClean = tok === bare;
+    if (POLISH_PREFIXES.has(bare) && i + 1 < tokens.length && isClean) {
+      const fused = POLISH_FUSED_PREFIXES[`${tok} ${tokens[i + 1]}`] ?? `${tok}${_ZWNJ}${tokens[i + 1]}`;
+      out.push(fused);
+      i++;
+      continue;
+    }
+    if (POLISH_SUFFIXES.has(bare) && out.length && isClean) {
+      const prev = out[out.length - 1];
+      const prevCore = prev.split("").filter((c) => !POLISH_PUNCT_EDGES.includes(c)).join("");
+      if (prevCore && /[\u0600-\u06FF]/.test(prevCore[prevCore.length - 1])) {
+        out[out.length - 1] = prev + _ZWNJ + bare;
+        continue;
+      }
+    }
+    out.push(tok);
+  }
+  return out.join(" ");
+}
+
+function polishTokens(text) {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const fixed = [];
+  for (const token of tokens) {
+    const [leading, core, trailing] = polishSplitEdges(token);
+    if (!core) { fixed.push(token); continue; }
+    const repaired = POLISH_ZWNJ_WORDS.has(core) ? polishZwnjInWord(core) : core;
+    fixed.push(leading + repaired + trailing);
+  }
+  const fused = polishFuse(fixed).split(/\s+/);
+  const repaired = [];
+  for (const token of fused) {
+    const core = polishSplitEdges(token)[1];
+    const prev = repaired.length ? repaired[repaired.length - 1] : "";
+    const prevCore = prev.split("").filter((c) => !POLISH_PUNCT_EDGES.includes(c)).join("");
+    if (core && POLISH_SPLIT_IMPERATIVES[core] && (prevCore === "بی" || prevCore === "به")) {
+      repaired[repaired.length - 1] = POLISH_SPLIT_IMPERATIVES[core];
+      continue;
+    }
+    repaired.push(token);
+  }
+  return repaired.join(" ");
+}
+
+function polishSpacing(text) {
+  text = text.split(_ZWNJ + " ").join(_ZWNJ).split(" " + _ZWNJ).join(_ZWNJ);
+  let out = "";
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (POLISH_CLOSING_PUNCT.includes(ch) && out.endsWith(" ")) out = out.slice(0, -1);
+    out += ch;
+    const nxt = text[i + 1] || "";
+    if (POLISH_CLOSING_PUNCT.includes(ch) && nxt && !POLISH_CLOSING_PUNCT.includes(nxt) && nxt !== " ") {
+      const prevCh = out.length >= 2 ? out[out.length - 2] : "";
+      const digitClass = /[0-9\u06F0-\u06F9]/;
+      const isDecimal = ch === "." && digitClass.test(prevCh) && digitClass.test(nxt);
+      if (!isDecimal) out += " ";
+    }
+  }
+  return out;
+}
+
+function polishTranscript(text) {
+  if (!text || !text.trim()) return text;
+  return polishSpacing(polishTokens(polishChars(text))).trim();
+}
+
+function polishTranscriptParagraph(text) {
+  return text.split("\n").map((line) => polishTranscript(line)).join("\n");
+}
+
 // ---------- Persian punctuation restoration ----------
 // Same rule family as backend/sokhan/core/punctuation.py (the worker
 // pipeline's post-pass), ported verbatim so the browser demo shows the
@@ -256,12 +438,13 @@ function renderTranscript() {
   if (stampChk.checked && lastResult.segments.length) {
     const lines = lastResult.segments.map(
       (s) =>
-        `[${mmss(s.start)}–${mmss(s.end)}] ` + restorePunctuation(s.text)
+        `[${mmss(s.start)}–${mmss(s.end)}] ` +
+        restorePunctuation(polishTranscript(s.text))
     );
     transcriptEl.textContent = lines.join("\n");
   } else {
     transcriptEl.textContent =
-      restorePunctuationParagraph(lastResult.text) ||
+      restorePunctuationParagraph(polishTranscriptParagraph(lastResult.text)) ||
       "(متنی تشخیص داده نشد — شاید صدا کوتاه یا نویزی بود.)";
   }
 }
