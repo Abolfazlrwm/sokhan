@@ -15,7 +15,9 @@
     "new": "رونویسی تازه",
     "archive": "آرشیو",
     "switchToEn": "English",
-    "switchToFa": "فارسی"
+    "switchToFa": "فارسی",
+    "themeToDark": "تم تیره",
+    "themeToLight": "تم روشن"
   },
   "landing": {
     "headline": "از گفتار به متن، در چند لحظه",

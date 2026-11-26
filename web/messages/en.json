@@ -15,7 +15,9 @@
     "new": "New transcription",
     "archive": "Archive",
     "switchToEn": "English",
-    "switchToFa": "فارسی"
+    "switchToFa": "فارسی",
+    "themeToDark": "Switch to dark theme",
+    "themeToLight": "Switch to light theme"
   },
   "landing": {
     "headline": "From speech to text, in moments",
