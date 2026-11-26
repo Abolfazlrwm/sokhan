@@ -74,6 +74,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
 
+### Fixed
+
+- The Telegram bot recovers when the API revokes the token it cached for a
+  chat (a newer sign-in or a logout of the same account). Every request
+  used to fail from then on; the bot now drops the token, re-registers
+  once and retries, and `/start` only shows a connect code that works.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security

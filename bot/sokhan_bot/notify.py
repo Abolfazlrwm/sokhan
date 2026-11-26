@@ -19,7 +19,7 @@ import time
 from aiogram import Bot
 
 from sokhan_bot import texts
-from sokhan_bot.client import SokhanClient
+from sokhan_bot.client import AuthError, SokhanClient
 from sokhan_bot.split import split_message
 from sokhan_bot.store import TokenStore
 
@@ -75,6 +75,14 @@ class CompletionNotifier:
 
             try:
                 job = await asyncio.to_thread(self.client.get_job, token, job_id)
+            except AuthError:
+                # Revoked by a web logout or a newer sign-in. The poller has
+                # no Telegram user to re-register with, so it asks for /start.
+                logger.warning("token for chat %s was revoked; untracking job %s", chat_id, job_id)
+                self.store.forget(chat_id)
+                self.store.untrack(job_id)
+                await self._send(chat_id, texts.NEED_START)
+                continue
             except Exception:
                 logger.exception("job fetch failed (%s); will retry", job_id)
                 continue
