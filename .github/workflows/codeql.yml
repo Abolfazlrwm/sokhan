@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@945b7d9e1ef2ede408e4a42d45f0579c33fc53ec # v3
+        uses: github/codeql-action/init@74c1aea9df7c0f02e9b7bfe4a8935abf2e5e3aa6 # v3
         with:
           languages: ${{ matrix.language }}
           # "none" build mode: modern CodeQL extracts JS/TS without a build;
@@ -47,6 +47,6 @@ jobs:
         working-directory: web
         run: npm ci
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@945b7d9e1ef2ede408e4a42d45f0579c33fc53ec # v3
+        uses: github/codeql-action/analyze@74c1aea9df7c0f02e9b7bfe4a8935abf2e5e3aa6 # v3
         with:
           category: "/language:${{ matrix.language }}"

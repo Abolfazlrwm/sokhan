@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment-retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Setup Pages
@@ -64,6 +64,21 @@ jobs:
             echo "attempt $i: not visible yet"; sleep 3
           done
           echo "artifact never became visible"; exit 1
-      - name: Deploy to GitHub Pages
+      # The Pages metadata service converges a few seconds AFTER the
+      # Actions artifacts API does; a delete+upload in the same run makes
+      # the first deploy attempt occasionally fetch an empty list. Two
+      # attempts with a settle gap turn the race into a non-event.
+      - name: Deploy to GitHub Pages (attempt 1)
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+      - name: Settle before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+      - name: Deploy to GitHub Pages (attempt 2)
+        id: deployment-retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
+      - name: Fail if both attempts missed
+        if: steps.deployment.outcome == 'failure' && steps.deployment-retry.outcome == 'failure'
+        run: exit 1

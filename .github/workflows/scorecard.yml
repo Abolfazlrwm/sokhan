@@ -52,6 +52,6 @@ jobs:
           retention-days: 5
 
       - name: Upload results to the Security tab
-        uses: github/codeql-action/upload-sarif@945b7d9e1ef2ede408e4a42d45f0579c33fc53ec # v3
+        uses: github/codeql-action/upload-sarif@74c1aea9df7c0f02e9b7bfe4a8935abf2e5e3aa6 # v3
         with:
           results_file: results.sarif
