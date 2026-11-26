@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import localFont from "next/font/local";
 import { routing } from "@/i18n/routing";
 import { SiteHeader } from "@/components/site-header";
+import { themeInitScript } from "@/lib/theme";
 import "../globals.css";
 
 // Fonts are self-hosted (see src/fonts/README.txt): builds must never depend
@@ -47,7 +48,10 @@ export async function generateMetadata({
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0f766e" },
+    { media: "(prefers-color-scheme: dark)", color: "#134e4a" },
+  ],
 };
 
 export default async function LocaleLayout({
@@ -64,7 +68,10 @@ export default async function LocaleLayout({
   const t = await getTranslations("common");
 
   return (
-    <html lang={locale} dir={locale === "fa" ? "rtl" : "ltr"}>
+    <html lang={locale} dir={locale === "fa" ? "rtl" : "ltr"} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body
         className={`${vazirmatn.variable} ${inter.variable} flex min-h-screen flex-col bg-stone-50 text-stone-900 antialiased`}
       >

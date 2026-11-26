@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { AudioLines } from "lucide-react";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteHeader() {
   const t = useTranslations("nav");
@@ -60,6 +61,7 @@ export function SiteHeader() {
           >
             {otherLocale === "en" ? "EN" : "فا"}
           </button>
+          <ThemeToggle />
         </nav>
       </div>
     </header>

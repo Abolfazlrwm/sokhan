@@ -37,6 +37,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
     fine-tuned 0.75 / medium 0.5625); the weekly benchmark workflow now
     guards `small` **and** `medium`; regression-gate test updated to the
     committed baseline.
+- Dashboard dark mode: a sun/moon toggle in the header, defaulting to the OS
+  preference until the user picks one (saved in localStorage, applied before
+  first paint so there is no flash). Implemented by remapping the Tailwind
+  palette under `html.dark` in `globals.css`, so existing pages needed no
+  per-class changes.
 - Brand refresh: a hero banner in both READMEs (`docs/assets/banner.png`),
   a redesigned 1280x640 social preview (`docs/assets/social-preview.png` —
   upload it once in Settings → General → Social preview) and a 512px app
