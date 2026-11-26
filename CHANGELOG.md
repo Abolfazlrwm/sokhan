@@ -74,6 +74,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
 
+### Fixed
+
+- The punctuation post-pass no longer splits numbers written with a
+  thousands separator: `1,000` stayed `1، 000` (Persian comma plus a
+  space). A comma between digits followed by exactly three digits is now
+  kept as is; a comma in a list of numbers (`4090,4080`) still becomes `،`.
+  The edge cases from #30 (slash dates, Latin digits in Persian sentences,
+  abbreviations, ellipses, repeated marks) are pinned by tests.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security

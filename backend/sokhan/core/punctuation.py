@@ -5,7 +5,8 @@ puts the transcript back into publishable shape with three conservative,
 deterministic rule families — no model call, no LLM dependency:
 
 1. Script fix: the Latin comma, question mark and semicolon become their
-   Persian counterparts (، ؟ ؛).
+   Persian counterparts (، ؟ ؛). A comma that groups digits ("1,000",
+   "12,500,000") is a thousands separator, not punctuation, and is kept.
 2. Spacing: no space *before* punctuation, exactly one space *after* clause
    and sentence punctuation. `.` and `:` are deliberately left alone so
    decimals ("3.5") and clock times ("12:30") survive.
@@ -25,6 +26,12 @@ import re
 
 # Latin forms that should not survive in a Persian transcript.
 _LATIN_TO_PERSIAN = str.maketrans({",": "،", "?": "؟", ";": "؛"})
+
+# A comma between a digit and exactly three more digits groups a number.
+# \d matches Persian digits too, so "۱,۲۰۰" is covered.
+_THOUSANDS_COMMA = re.compile(r"(?<=\d),(?=\d{3}(?!\d))")
+# Stands in for a thousands comma while the Latin marks are translated.
+_KEPT_COMMA = "\x00"
 
 _CLAUSE = "،؛"
 _SENTENCE_END = "؟!…."
@@ -73,7 +80,8 @@ def _has_terminal(text: str) -> bool:
 
 def restore_punctuation(text: str) -> str:
     """Return `text` with Persian punctuation restored; safe to re-apply."""
-    cleaned = text.translate(_LATIN_TO_PERSIAN).strip()
+    cleaned = _THOUSANDS_COMMA.sub(_KEPT_COMMA, text)
+    cleaned = cleaned.translate(_LATIN_TO_PERSIAN).replace(_KEPT_COMMA, ",").strip()
     cleaned = _SPACE_BEFORE.sub(r"\1", cleaned)
     cleaned = _SPACE_AFTER.sub(r"\1 ", cleaned)
     cleaned = _WS_RUNS.sub(" ", cleaned).strip()

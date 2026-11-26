@@ -72,6 +72,13 @@ def test_latin_digits_and_words_inside_persian_sentences():
     assert restore_punctuation("ساعت ۱۲:۳۰ بیا") == "ساعت ۱۲:۳۰ بیا."
 
 
+def test_thousands_separators_are_not_turned_into_persian_commas():
+    # A Latin comma followed by exactly three digits groups a number; turning
+    # it into ، and spacing it ("1، 000") would split one number into two.
+    assert restore_punctuation("قیمت 1,000 دلار شد") == "قیمت 1,000 دلار شد."
+    assert restore_punctuation("جمعیت 12,500,000 نفر") == "جمعیت 12,500,000 نفر."
+    assert restore_punctuation("مبلغ ۱,۲۰۰ تومان") == "مبلغ ۱,۲۰۰ تومان."
+
 
 def test_comma_between_numbers_that_is_not_grouping_stays_a_list_separator():
     assert restore_punctuation("RTX 4090,4080 و 3090") == "RTX 4090، 4080 و 3090."
