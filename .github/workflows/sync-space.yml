@@ -12,6 +12,11 @@ on:
       - .github/workflows/sync-space.yml
   workflow_dispatch:
 
+# Least privilege: the sync only reads the repository (the HF token is
+# a separate secret consumed by deploy/sync_space.py).
+permissions:
+  contents: read
+
 concurrency:
   group: sync-demo-space
   cancel-in-progress: false
