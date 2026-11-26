@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -36,14 +37,29 @@ class Segment:
     speaker: str | None = None
 
 
+# Called with the fraction (0..1) of the current chunk decoded so far.
+ProgressCallback = Callable[[float], None]
+
+
 class Transcriber(Protocol):
     def transcribe(
         self, samples: np.ndarray, sample_rate: int, language: str
     ) -> list[Segment]: ...
 
 
+def reports_progress(engine: object) -> bool:
+    """Whether `engine.transcribe` accepts an `on_progress` callback.
+
+    Opt-in via a class attribute, so third-party engines and test doubles
+    with the plain three-argument signature keep working unchanged.
+    """
+    return bool(getattr(engine, "reports_progress", False))
+
+
 class FasterWhisperTranscriber:
     """Chunk-local transcription with faster-whisper."""
+
+    reports_progress = True
 
     def __init__(
         self,
@@ -73,7 +89,11 @@ class FasterWhisperTranscriber:
         return self._model
 
     def transcribe(
-        self, samples: np.ndarray, sample_rate: int, language: str
+        self,
+        samples: np.ndarray,
+        sample_rate: int,
+        language: str,
+        on_progress: ProgressCallback | None = None,
     ) -> list[Segment]:
         model = self._load()
         settings = get_settings()
@@ -86,8 +106,13 @@ class FasterWhisperTranscriber:
         if language and language != "auto":
             options["language"] = language
         segments_iter, _info = model.transcribe(samples, **options)  # type: ignore[arg-type]
+        chunk_seconds = len(samples) / sample_rate
         segments: list[Segment] = []
+        # faster-whisper decodes lazily, segment by segment, so each step of
+        # this loop is real work done: report how far into the chunk it is.
         for segment in segments_iter:
+            if on_progress is not None and chunk_seconds > 0:
+                on_progress(min(1.0, float(segment.end) / chunk_seconds))
             text = segment.text.strip()
             if not text:
                 continue
@@ -107,8 +132,14 @@ class FasterWhisperTranscriber:
 class FakeTranscriber:
     """Deterministic engine for tests: one or two fixed Persian segments."""
 
+    reports_progress = True
+
     def transcribe(
-        self, samples: np.ndarray, sample_rate: int, language: str
+        self,
+        samples: np.ndarray,
+        sample_rate: int,
+        language: str,
+        on_progress: ProgressCallback | None = None,
     ) -> list[Segment]:
         duration = len(samples) / sample_rate
         segments: list[Segment] = []
@@ -132,6 +163,9 @@ class FakeTranscriber:
                     confidence=0.741,
                 )
             )
+        if on_progress is not None and duration > 0:
+            for segment in segments:
+                on_progress(min(1.0, segment.end / duration))
         return segments
 
 

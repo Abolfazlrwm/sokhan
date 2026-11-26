@@ -74,6 +74,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
 
+### Fixed
+
+- Job progress now moves while a chunk is being transcribed, not only
+  between 30-second chunks. A clip shorter than 30 s is a single chunk, so
+  its progress sat at 0% for the whole job and then jumped to 100%. The
+  Whisper engine reports how far into the chunk it is as each segment is
+  decoded; the worker saves that at most once a second.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security
