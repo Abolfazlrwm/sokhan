@@ -1,0 +1,47 @@
+name: Release
+
+# One release = one tag push. Creates (or updates) the GitHub Release
+# with the notes extracted from the matching CHANGELOG.md section, so
+# the changelog stays the single source of truth. No artifacts are
+# attached — images are already on GHCR, benchmark archives live in
+# benchmarks/results/.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 1
+
+      - name: Extract the CHANGELOG section for this tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: python scripts/extract_release_notes.py "$TAG" > release-notes.md
+      - name: Show the extracted notes
+        run: cat release-notes.md
+
+      - name: Create (or update) the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Sokhan $TAG" \
+              --notes-file release-notes.md
+          else
+            gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Sokhan $TAG" \
+              --notes-file release-notes.md
+          fi
