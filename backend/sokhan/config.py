@@ -93,6 +93,7 @@ class Settings(BaseSettings):
     webhook_signing_secret: str = ""
     webhook_timeout_seconds: float = 4.0
     webhook_attempts: int = 2
+    webhook_allow_private_targets: bool = False
 
 
 @lru_cache(maxsize=1)

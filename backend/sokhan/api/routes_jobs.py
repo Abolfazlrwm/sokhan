@@ -14,6 +14,7 @@ from sokhan.api.serializers import job_to_detail, job_to_out
 from sokhan.config import get_settings
 from sokhan.core.audio import delete_audio, probe_duration_seconds, save_upload
 from sokhan.core.formats import to_docx, to_json_transcript, to_srt, to_txt, to_vtt
+from sokhan.core.webhooks import callback_url_problem
 from sokhan.db import get_db
 from sokhan.models import Job, JobStatus, Segment, User
 from sokhan.schemas import JobCreated, JobDetailOut, JobListResponse
@@ -53,16 +54,16 @@ def create_job(
 
     if callback_url is not None:
         callback_url = callback_url.strip() or None
-        if callback_url and (
-            len(callback_url) > 2048
-            or not callback_url.lower().startswith(("http://", "https://"))
-        ):
+    settings = get_settings()
+    if callback_url:
+        if len(callback_url) > 2048:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
                 "callback_url must be an http(s) URL of at most 2048 characters",
             )
-
-    settings = get_settings()
+        problem = callback_url_problem(callback_url, settings.webhook_allow_private_targets)
+        if problem:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
     data = file.file.read()
     if not data:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "empty file")

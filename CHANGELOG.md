@@ -19,6 +19,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   mid-stream for chunked uploads. Before, the size check ran only after the
   whole body had been spooled to disk and read into memory, so one
   multi-gigabyte upload could exhaust the API container's disk or RAM.
+- Webhook `callback_url`s can no longer target internal addresses. Any
+  user could point the worker at loopback, private, link-local (cloud
+  metadata) or LAN hosts. Literal private hosts are now rejected at upload
+  (422), every resolved address is checked again at connect time (defeating
+  DNS rebinding), redirects are not followed and proxy env vars are ignored.
+  **Breaking for receivers on private addresses:** set
+  `WEBHOOK_ALLOW_PRIVATE_TARGETS=true` on trusted single-tenant installs.
 
 ### Added
 

@@ -225,6 +225,7 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | اطمینان سگمنت زیرِ این مقدار پرچم بازبینی می‌گیرد |
 | `STREAMING_DECODE` | `true` | خواندن بلاک‌به‌بلاک صدا (حافظهٔ اوج ∝ پنجره، نه طول فایل) |
 | `WEBHOOK_SIGNING_SECRET` | خالی | رمز HMAC برای کال‌بک‌های پایان کار (`X-Sokhan-Signature`)؛ خالی یعنی بدون امضا |
+| `WEBHOOK_ALLOW_PRIVATE_TARGETS` | `false` | اجازهٔ کال‌بک به نشانی‌های خصوصی/لوکال (فقط برای نصب تک‌کاربرهٔ مورد اعتماد) |
 | `SUMMARY_ENABLED` | `false` | فلگ امکان خلاصه‌سازی با LLM |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | خالی | endpoint سازگار با OpenAI |
 | `TELEGRAM_BOT_TOKEN` | خالی | فعال‌سازی فرایند ربات |

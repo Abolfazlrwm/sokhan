@@ -224,6 +224,7 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | segment confidence below which review flags apply |
 | `STREAMING_DECODE` | `true` | decode audio block-by-block (peak RAM ∝ window, not file length) |
 | `WEBHOOK_SIGNING_SECRET` | empty | HMAC secret for job-completion callbacks (`X-Sokhan-Signature`); empty sends them unsigned |
+| `WEBHOOK_ALLOW_PRIVATE_TARGETS` | `false` | allow callbacks to private/loopback addresses (trusted single-tenant installs only) |
 | `SUMMARY_ENABLED` | `false` | LLM summaries feature flag |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | empty | OpenAI-compatible endpoint |
 | `TELEGRAM_BOT_TOKEN` | empty | enables the bot process |
