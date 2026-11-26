@@ -31,8 +31,24 @@ def test_login_sets_an_httponly_session_cookie(cookie_client):
     assert body["csrf_token"] == csrf_token_for(body["api_token"])
 
 
-def test_cookie_is_secure_by_default(client):
+def test_cookie_secure_follows_the_scheme_by_default(client):
+    # Plain http: a Secure cookie would be dropped by the browser.
+    plain = client.post("/auth/register", json=CREDENTIALS).headers["set-cookie"]
+    assert "Secure" not in plain
+
+    # HTTPS terminated by a reverse proxy in front of the API.
+    behind_tls = client.post(
+        "/auth/login", json=CREDENTIALS, headers={"X-Forwarded-Proto": "https"}
+    ).headers["set-cookie"]
+    assert "Secure" in behind_tls
+
+
+def test_cookie_secure_can_be_forced(client, monkeypatch):
+    monkeypatch.setenv("AUTH_COOKIE_SECURE", "true")
+    get_settings.cache_clear()
+
     cookie = client.post("/auth/register", json=CREDENTIALS).headers["set-cookie"]
+
     assert "Secure" in cookie
 
 

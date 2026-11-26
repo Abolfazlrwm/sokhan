@@ -5,10 +5,14 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-# NEXT_PUBLIC_ variables are inlined into the client bundle at build time,
-# so the API base URL is provided as a build argument.
-ARG NEXT_PUBLIC_API_BASE=http://localhost:8000
+# Both are baked into the build. The browser calls the API through this
+# app's own /api path, proxied to API_PROXY_TARGET (the compose service by
+# default). NEXT_PUBLIC_API_BASE stays empty unless the API is served from
+# its own host.
+ARG NEXT_PUBLIC_API_BASE=
+ARG API_PROXY_TARGET=http://api:8000
 ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
 
 RUN npm run build
 

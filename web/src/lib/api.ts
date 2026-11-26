@@ -4,7 +4,10 @@
 // session's CSRF token. A 401 marks the session signed out and bounces the
 // user back to the login screen.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+// Same-origin by default: next.config.mjs proxies /api/* to the backend, so
+// the session cookie is first-party wherever the dashboard is served from.
+// Set NEXT_PUBLIC_API_BASE only for an API on its own host.
+const API_BASE = (process.env.NEXT_PUBLIC_API_BASE || "/api").replace(/\/$/, "");
 
 /** Fired on this tab whenever the session state changes. */
 export const SESSION_CHANGE_EVENT = "sokhan:session-change";

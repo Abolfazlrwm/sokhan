@@ -8,23 +8,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 ### Security
 
 - Sign-in through the dashboard flows (register, login, connect code) now
-  also sets the token as an `HttpOnly; Secure; SameSite=lax` session
-  cookie, and the API accepts it in place of a bearer header. Every
+  also sets the token as an `HttpOnly; SameSite=lax` session cookie
+  (`Secure` whenever the browser uses HTTPS), and the API accepts it in place of a bearer header. Every
   cookie-authenticated write must send the session's CSRF token in
   `X-CSRF-Token` (403 otherwise); the token is an HMAC of the session
   token, so nothing extra is stored. `GET /auth/session` returns the
   signed-in account and its CSRF token, and logout clears the cookie.
   Bearer auth (bot, API scripts, OpenAI-compatible clients) is unchanged
-  and needs no CSRF token. New settings: `AUTH_COOKIE_SECURE`,
-  `AUTH_COOKIE_SAMESITE`, `AUTH_COOKIE_MAX_AGE_DAYS`. CORS now allows
-  credentials for the configured `SOKHAN_CORS_ORIGINS` (#33).
+  and needs no CSRF token. New settings: `AUTH_COOKIE_SECURE`
+  (`auto`/`true`/`false`), `AUTH_COOKIE_SAMESITE`,
+  `AUTH_COOKIE_MAX_AGE_DAYS`. CORS now allows credentials for the
+  configured `SOKHAN_CORS_ORIGINS` (#33).
 - The dashboard no longer keeps the API token in `localStorage`, where an
   XSS could read it (CodeQL `js/clear-text-storage-of-sensitive-data`). It
   relies on the httpOnly session cookie, sends the CSRF token on writes,
   learns who is signed in from `GET /auth/session`, and wipes the token
-  earlier versions left in `localStorage`. **Self-hosters:**
-  `SOKHAN_CORS_ORIGINS` must list the dashboard's origin, and a plain-http
-  install on a LAN address needs `AUTH_COOKIE_SECURE=false` (#33).
+  earlier versions left in `localStorage`. The dashboard reaches the API
+  through its own `/api` path, proxied by the web server to
+  `API_PROXY_TARGET`, so the cookie is first-party on localhost, 127.0.0.1,
+  a LAN address or a domain alike; `NEXT_PUBLIC_API_BASE` now defaults to
+  empty and is only for an API on its own host (#33).
 
 ### Added
 

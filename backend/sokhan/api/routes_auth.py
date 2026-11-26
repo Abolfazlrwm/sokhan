@@ -18,7 +18,7 @@ clients and the bot.
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -74,7 +74,24 @@ def _validate_credentials(email: str, password: str) -> str:
     return email
 
 
-def _start_session(response: Response, user: User, token: str) -> AuthResponse:
+def _cookie_is_secure(request: Request) -> bool:
+    """Whether the session cookie gets the Secure attribute.
+
+    `auto` (the default) follows the scheme the browser used: HTTPS directly
+    or behind a proxy that sets X-Forwarded-Proto. Browsers drop a Secure
+    cookie that arrives over plain http (Safari even on localhost), which
+    left plain-http installs unable to stay signed in.
+    """
+    mode = get_settings().auth_cookie_secure.strip().lower()
+    if mode in ("true", "1", "yes"):
+        return True
+    if mode in ("false", "0", "no"):
+        return False
+    forwarded = request.headers.get("x-forwarded-proto", "").split(",")[0].strip().lower()
+    return request.url.scheme == "https" or forwarded == "https"
+
+
+def _start_session(request: Request, response: Response, user: User, token: str) -> AuthResponse:
     """Set the httpOnly session cookie and answer with the CSRF token."""
     settings = get_settings()
     response.set_cookie(
@@ -83,7 +100,7 @@ def _start_session(response: Response, user: User, token: str) -> AuthResponse:
         max_age=settings.auth_cookie_max_age_days * 24 * 3600,
         path="/",
         httponly=True,
-        secure=settings.auth_cookie_secure,
+        secure=_cookie_is_secure(request),
         samesite=settings.auth_cookie_samesite,
     )
     return AuthResponse(
@@ -91,20 +108,23 @@ def _start_session(response: Response, user: User, token: str) -> AuthResponse:
     )
 
 
-def _end_session(response: Response) -> None:
+def _end_session(request: Request, response: Response) -> None:
     settings = get_settings()
     response.delete_cookie(
         SESSION_COOKIE,
         path="/",
         httponly=True,
-        secure=settings.auth_cookie_secure,
+        secure=_cookie_is_secure(request),
         samesite=settings.auth_cookie_samesite,
     )
 
 
 @router.post("/register", response_model=AuthResponse)
 def register(
-    payload: Credentials, response: Response, session: Session = Depends(get_db)
+    payload: Credentials,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db),
 ) -> AuthResponse:
     email = _validate_credentials(payload.email, payload.password)
     if session.scalar(select(User).where(User.email == email)):
@@ -118,12 +138,15 @@ def register(
     )
     session.add(user)
     session.commit()
-    return _start_session(response, user, token)
+    return _start_session(request, response, user, token)
 
 
 @router.post("/login", response_model=AuthResponse)
 def login(
-    payload: Credentials, response: Response, session: Session = Depends(get_db)
+    payload: Credentials,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db),
 ) -> AuthResponse:
     email = payload.email.strip().lower()
     user = session.scalar(select(User).where(User.email == email))
@@ -133,17 +156,20 @@ def login(
     token = generate_token()
     user.token_hash = token_hash(token)
     session.commit()
-    return _start_session(response, user, token)
+    return _start_session(request, response, user, token)
 
 
 @router.post("/token-login", response_model=AuthResponse)
 def token_login(
-    payload: TokenLogin, response: Response, session: Session = Depends(get_db)
+    payload: TokenLogin,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db),
 ) -> AuthResponse:
     user = session.scalar(select(User).where(User.token_hash == token_hash(payload.api_token)))
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid connect code")
-    return _start_session(response, user, payload.api_token)
+    return _start_session(request, response, user, payload.api_token)
 
 
 @router.get("/session", response_model=SessionOut)
@@ -159,7 +185,11 @@ def current_session(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(user: User = Depends(get_current_user), session: Session = Depends(get_db)) -> Response:
+def logout(
+    request: Request,
+    user: User = Depends(get_current_user),
+    session: Session = Depends(get_db),
+) -> Response:
     """Revoke the caller's token so it stops working everywhere.
 
     An account has a single active token, so this signs out every client
@@ -170,7 +200,7 @@ def logout(user: User = Depends(get_current_user), session: Session = Depends(ge
     user.token_hash = token_hash(generate_token())
     session.commit()
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
-    _end_session(response)
+    _end_session(request, response)
     return response
 
 

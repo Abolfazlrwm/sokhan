@@ -74,12 +74,12 @@ class Settings(BaseSettings):
     # Leave empty to disable the admin endpoints entirely.
     admin_api_key: str = ""
 
-    # Dashboard session cookie (httpOnly). Secure by default: browsers still
-    # accept it on http://localhost, so only plain-http LAN installs need
-    # AUTH_COOKIE_SECURE=false. SameSite=lax works whenever the web app and
-    # the API share a site (localhost:3000 + localhost:8000, or
-    # app.example.com + api.example.com); different sites need "none".
-    auth_cookie_secure: bool = True
+    # Dashboard session cookie (httpOnly). AUTH_COOKIE_SECURE=auto sets the
+    # Secure attribute whenever the browser came in over HTTPS (directly or
+    # via X-Forwarded-Proto); true/false force it. The web app proxies the
+    # API under its own origin (/api), so SameSite=lax always applies; a
+    # separately hosted API on another site needs "none" plus HTTPS.
+    auth_cookie_secure: str = "auto"
     auth_cookie_samesite: str = "lax"
     auth_cookie_max_age_days: int = 30
 
