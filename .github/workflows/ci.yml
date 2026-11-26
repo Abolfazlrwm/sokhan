@@ -92,9 +92,35 @@ jobs:
 
   compose:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Validate compose file
         if: ${{ hashFiles('deploy/docker-compose.yml') != '' }}
         run: POSTGRES_PASSWORD=ci-placeholder docker compose -f deploy/docker-compose.yml config -q
+
+      # Real integration smoke: bring up the actual stack the self-hoster
+      # runs (postgres + redis + api), wait for /healthz, and assert the
+      # public surfaces answer. Validates wiring the unit tests cannot see.
+      - name: Smoke-test the compose stack
+        if: ${{ hashFiles('deploy/docker-compose.yml') != '' }}
+        env:
+          POSTGRES_PASSWORD: ci-smoke-password
+        run: |
+          compose="docker compose -f deploy/docker-compose.yml"
+          trap '$compose down -v --timeout 5' EXIT
+          $compose up -d --build api
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/healthz > /tmp/health.json; then
+              echo "healthz answered on attempt $i"; cat /tmp/health.json; break
+            fi
+            sleep 3
+          done
+          curl -sf http://localhost:8000/healthz > /dev/null || {
+            echo "::error::API never became healthy"; $compose logs api; exit 1; }
+          curl -sf http://localhost:8000/plans > /tmp/plans.json || {
+            echo "::error::/plans failed"; exit 1; }
+          python3 -c 'import json; plans={p["code"] for p in json.load(open("/tmp/plans.json"))["plans"]}; assert {"free","pro"} <= plans, plans; print("plans OK:", sorted(plans))'
+          curl -sf http://localhost:8000/docs > /dev/null || {
+            echo "::error::/docs failed"; exit 1; }
+          echo "compose smoke: all surfaces OK"
