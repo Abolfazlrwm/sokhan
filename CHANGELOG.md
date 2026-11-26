@@ -14,6 +14,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   compare; 403 on mismatch, 503 while unset). **Breaking for deployments
   with the bot:** set the same `BOT_API_SECRET` on the API and the bot; the
   bot refuses to start without it.
+- Request bodies above `MAX_UPLOAD_MB` (plus 1 MiB multipart allowance) are
+  now refused with 413 by a middleware, up front from `Content-Length` or
+  mid-stream for chunked uploads. Before, the size check ran only after the
+  whole body had been spooled to disk and read into memory, so one
+  multi-gigabyte upload could exhaust the API container's disk or RAM.
 
 ### Added
 
