@@ -8,6 +8,12 @@ Deliberately lightweight for v1:
 - POST /auth/token-login lets a user paste the connect code shown by the bot
   to link their browser session
 - POST /auth/logout revokes the caller's token
+- GET /auth/session tells the dashboard who is signed in
+
+Sign-in through the web flows (register, login, token-login) also sets the
+token as an httpOnly session cookie, so the dashboard never has to keep it
+in script-readable storage. The JSON body still carries `api_token` for API
+clients and the bot.
 """
 
 import re
@@ -17,11 +23,18 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from sokhan.api.deps import get_current_user
-from sokhan.auth import generate_token, hash_password, token_hash, verify_password
+from sokhan.api.deps import SESSION_COOKIE, get_current_user, get_request_token
+from sokhan.auth import (
+    csrf_token_for,
+    generate_token,
+    hash_password,
+    token_hash,
+    verify_password,
+)
+from sokhan.config import get_settings
 from sokhan.db import get_db
 from sokhan.models import User
-from sokhan.schemas import AuthResponse
+from sokhan.schemas import AuthResponse, SessionOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -61,8 +74,38 @@ def _validate_credentials(email: str, password: str) -> str:
     return email
 
 
+def _start_session(response: Response, user: User, token: str) -> AuthResponse:
+    """Set the httpOnly session cookie and answer with the CSRF token."""
+    settings = get_settings()
+    response.set_cookie(
+        SESSION_COOKIE,
+        token,
+        max_age=settings.auth_cookie_max_age_days * 24 * 3600,
+        path="/",
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite=settings.auth_cookie_samesite,
+    )
+    return AuthResponse(
+        id=user.id, email=user.email, api_token=token, csrf_token=csrf_token_for(token)
+    )
+
+
+def _end_session(response: Response) -> None:
+    settings = get_settings()
+    response.delete_cookie(
+        SESSION_COOKIE,
+        path="/",
+        httponly=True,
+        secure=settings.auth_cookie_secure,
+        samesite=settings.auth_cookie_samesite,
+    )
+
+
 @router.post("/register", response_model=AuthResponse)
-def register(payload: Credentials, session: Session = Depends(get_db)) -> AuthResponse:
+def register(
+    payload: Credentials, response: Response, session: Session = Depends(get_db)
+) -> AuthResponse:
     email = _validate_credentials(payload.email, payload.password)
     if session.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "email already registered")
@@ -75,11 +118,13 @@ def register(payload: Credentials, session: Session = Depends(get_db)) -> AuthRe
     )
     session.add(user)
     session.commit()
-    return AuthResponse(id=user.id, email=user.email, api_token=token)
+    return _start_session(response, user, token)
 
 
 @router.post("/login", response_model=AuthResponse)
-def login(payload: Credentials, session: Session = Depends(get_db)) -> AuthResponse:
+def login(
+    payload: Credentials, response: Response, session: Session = Depends(get_db)
+) -> AuthResponse:
     email = payload.email.strip().lower()
     user = session.scalar(select(User).where(User.email == email))
     if user is None or not verify_password(payload.password, user.password_hash):
@@ -88,15 +133,29 @@ def login(payload: Credentials, session: Session = Depends(get_db)) -> AuthRespo
     token = generate_token()
     user.token_hash = token_hash(token)
     session.commit()
-    return AuthResponse(id=user.id, email=user.email, api_token=token)
+    return _start_session(response, user, token)
 
 
 @router.post("/token-login", response_model=AuthResponse)
-def token_login(payload: TokenLogin, session: Session = Depends(get_db)) -> AuthResponse:
+def token_login(
+    payload: TokenLogin, response: Response, session: Session = Depends(get_db)
+) -> AuthResponse:
     user = session.scalar(select(User).where(User.token_hash == token_hash(payload.api_token)))
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid connect code")
-    return AuthResponse(id=user.id, email=user.email, api_token=payload.api_token)
+    return _start_session(response, user, payload.api_token)
+
+
+@router.get("/session", response_model=SessionOut)
+def current_session(
+    user: User = Depends(get_current_user), token: str = Depends(get_request_token)
+) -> SessionOut:
+    """Who is signed in, plus the CSRF token for this session.
+
+    The dashboard cannot read its httpOnly cookie, so it asks here after a
+    reload; a 401 means signed out.
+    """
+    return SessionOut(id=user.id, email=user.email, csrf_token=csrf_token_for(token))
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -110,7 +169,9 @@ def logout(user: User = Depends(get_current_user), session: Session = Depends(ge
     """
     user.token_hash = token_hash(generate_token())
     session.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
+    _end_session(response)
+    return response
 
 
 @router.post("/telegram", response_model=AuthResponse)

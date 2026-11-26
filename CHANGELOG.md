@@ -5,6 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Security
+
+- Sign-in through the dashboard flows (register, login, connect code) now
+  also sets the token as an `HttpOnly; Secure; SameSite=lax` session
+  cookie, and the API accepts it in place of a bearer header. Every
+  cookie-authenticated write must send the session's CSRF token in
+  `X-CSRF-Token` (403 otherwise); the token is an HMAC of the session
+  token, so nothing extra is stored. `GET /auth/session` returns the
+  signed-in account and its CSRF token, and logout clears the cookie.
+  Bearer auth (bot, API scripts, OpenAI-compatible clients) is unchanged
+  and needs no CSRF token. New settings: `AUTH_COOKIE_SECURE`,
+  `AUTH_COOKIE_SAMESITE`, `AUTH_COOKIE_MAX_AGE_DAYS`. CORS now allows
+  credentials for the configured `SOKHAN_CORS_ORIGINS` (#33).
+
 ### Added
 
 - **Persian accuracy stack (v2)** — measured on the 12-clip Common Voice

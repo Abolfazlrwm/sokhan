@@ -74,6 +74,15 @@ class Settings(BaseSettings):
     # Leave empty to disable the admin endpoints entirely.
     admin_api_key: str = ""
 
+    # Dashboard session cookie (httpOnly). Secure by default: browsers still
+    # accept it on http://localhost, so only plain-http LAN installs need
+    # AUTH_COOKIE_SECURE=false. SameSite=lax works whenever the web app and
+    # the API share a site (localhost:3000 + localhost:8000, or
+    # app.example.com + api.example.com); different sites need "none".
+    auth_cookie_secure: bool = True
+    auth_cookie_samesite: str = "lax"
+    auth_cookie_max_age_days: int = 30
+
     # LLM summaries (optional, behind a feature flag)
     summary_enabled: bool = False
     llm_api_base: str = ""
