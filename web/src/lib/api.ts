@@ -1,13 +1,16 @@
-// Browser client for the Sokhan REST API. Authenticated requests carry the
-// stored API token as a Bearer header; a 401 clears the token and bounces
-// the user back to the login screen.
+// Browser client for the Sokhan REST API. The dashboard authenticates with
+// the httpOnly session cookie the API sets at sign-in: script never sees the
+// token, every request goes out with credentials, and writes carry the
+// session's CSRF token. A 401 marks the session signed out and bounces the
+// user back to the login screen.
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-export const TOKEN_STORAGE_KEY = "sokhan_token";
-export const EMAIL_STORAGE_KEY = "sokhan_email";
-/** Fired on this tab whenever the stored session changes (sign-in or out). */
+/** Fired on this tab whenever the session state changes. */
 export const SESSION_CHANGE_EVENT = "sokhan:session-change";
+// Earlier versions kept the token in localStorage; it is wiped on load.
+const LEGACY_STORAGE_KEYS = ["sokhan_token", "sokhan_email"];
+const SAFE_METHODS = new Set(["GET", "HEAD"]);
 
 export type JobStatus = "queued" | "processing" | "completed" | "failed";
 export type TranscriptFormat = "txt" | "srt" | "vtt" | "json" | "docx";
@@ -16,6 +19,14 @@ export interface AuthResponse {
   id: string;
   email: string;
   api_token: string;
+  csrf_token: string | null;
+}
+
+export interface SessionState {
+  /** "unknown" until GET /auth/session has answered once. */
+  status: "unknown" | "signedIn" | "signedOut";
+  email: string | null;
+  csrfToken: string | null;
 }
 
 export interface QuotaInfo {
@@ -95,53 +106,93 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_STORAGE_KEY);
-}
+const UNKNOWN_SESSION: SessionState = { status: "unknown", email: null, csrfToken: null };
+const SIGNED_OUT: SessionState = { status: "signedOut", email: null, csrfToken: null };
 
-export function getEmail(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(EMAIL_STORAGE_KEY);
-}
+let session: SessionState = UNKNOWN_SESSION;
+let sessionRequest: Promise<void> | null = null;
+let otherTabs: BroadcastChannel | null = null;
 
-function notifySessionChange(): void {
+function setSession(next: SessionState, broadcast = true): void {
+  session = next;
+  if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));
+  if (broadcast) otherTabs?.postMessage("changed");
 }
 
-export function setToken(token: string, email?: string): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  if (email) window.localStorage.setItem(EMAIL_STORAGE_KEY, email);
-  else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
-  notifySessionChange();
+/** The current session snapshot; a new object only when it changes. */
+export function getSessionState(): SessionState {
+  return session;
 }
 
-export function clearToken(): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-  window.localStorage.removeItem(EMAIL_STORAGE_KEY);
-  notifySessionChange();
+/** The server snapshot: nothing is known before hydration. */
+export function getUnknownSessionState(): SessionState {
+  return UNKNOWN_SESSION;
+}
+
+/** Ask the API who is signed in (deduplicated while a request is in flight). */
+export function loadSession(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (!otherTabs && "BroadcastChannel" in window) {
+    otherTabs = new BroadcastChannel("sokhan-session");
+    otherTabs.onmessage = () => {
+      sessionRequest = null;
+      void loadSession();
+    };
+    for (const key of LEGACY_STORAGE_KEYS) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        // Storage disabled: nothing to clean up.
+      }
+    }
+  }
+  sessionRequest ??= (async () => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/session`, { credentials: "include" });
+      if (!response.ok) {
+        setSession(SIGNED_OUT, false);
+        return;
+      }
+      const body = (await response.json()) as { email: string; csrf_token: string };
+      setSession({ status: "signedIn", email: body.email, csrfToken: body.csrf_token }, false);
+    } catch {
+      setSession(SIGNED_OUT, false);
+    } finally {
+      sessionRequest = null;
+    }
+  })();
+  return sessionRequest;
+}
+
+/** Record a successful sign-in; the API has already set the cookie. */
+export function startSession(auth: AuthResponse): void {
+  setSession({ status: "signedIn", email: auth.email, csrfToken: auth.csrf_token });
+}
+
+function csrfHeaders(method: string, headers: Headers): Headers {
+  if (!SAFE_METHODS.has(method) && session.csrfToken) {
+    headers.set("X-CSRF-Token", session.csrfToken);
+  }
+  return headers;
 }
 
 /**
- * Revoke the token on the server, then forget it locally. The local
- * session is cleared even when the API is unreachable or already rejects
- * the token, so signing out always works from the user's point of view.
+ * Revoke the session on the server (which also clears the cookie), then
+ * mark it signed out locally. The local sign-out happens even when the API
+ * is unreachable, so signing out always works from the user's point of view.
  */
 export async function logout(): Promise<void> {
-  const token = getToken();
-  if (token) {
-    try {
-      await fetch(`${API_BASE}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    } catch {
-      // Offline or API down: the local sign-out below still happens.
-    }
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: csrfHeaders("POST", new Headers()),
+    });
+  } catch {
+    // Offline or API down: the local sign-out below still happens.
   }
-  clearToken();
+  setSession(SIGNED_OUT);
 }
 
 function redirectToLogin(): void {
@@ -153,7 +204,7 @@ function redirectToLogin(): void {
 
 function handleAuthFailure(response: Response): void {
   if (response.status === 401) {
-    clearToken();
+    setSession(SIGNED_OUT);
     redirectToLogin();
   }
 }
@@ -168,15 +219,16 @@ interface RequestOptions {
 async function requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, headers: extraHeaders, authenticated = false } = options;
 
-  const headers = new Headers(extraHeaders);
-  if (authenticated) {
-    const token = getToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-  }
+  const headers = csrfHeaders(method, new Headers(extraHeaders));
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, { method, headers, body });
+    response = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body,
+      credentials: "include",
+    });
   } catch {
     throw new ApiError(0, "network error");
   }
@@ -266,15 +318,12 @@ export async function searchJobs(query: string): Promise<JobListResponse> {
 }
 
 export async function deleteJob(id: string): Promise<void> {
-  const headers = new Headers();
-  const token = getToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
   let response: Response;
   try {
     response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(id)}`, {
       method: "DELETE",
-      headers,
+      headers: csrfHeaders("DELETE", new Headers()),
+      credentials: "include",
     });
   } catch {
     throw new ApiError(0, "network error");
@@ -285,15 +334,11 @@ export async function deleteJob(id: string): Promise<void> {
 }
 
 export async function downloadTranscript(id: string, format: TranscriptFormat): Promise<Blob> {
-  const headers = new Headers();
-  const token = getToken();
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
   let response: Response;
   try {
     response = await fetch(
       `${API_BASE}/jobs/${encodeURIComponent(id)}/transcript?format=${format}`,
-      { headers },
+      { credentials: "include" },
     );
   } catch {
     throw new ApiError(0, "network error");

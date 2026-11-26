@@ -10,10 +10,10 @@ import {
   deleteJob,
   downloadTranscript,
   getJob,
-  getToken,
   type JobDetail,
   type TranscriptFormat,
 } from "@/lib/api";
+import { useRequireSignIn } from "@/lib/session";
 import { ProgressBar, StatusBadge } from "@/components/job-bits";
 
 const POLL_INTERVAL_MS = 3000;
@@ -80,12 +80,9 @@ export default function JobDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!getToken()) {
-      router.replace("/login");
-      return;
-    }
+  useRequireSignIn();
 
+  useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
 

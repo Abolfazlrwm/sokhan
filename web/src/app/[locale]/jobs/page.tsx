@@ -3,14 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Clock, Search } from "lucide-react";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import {
   ApiError,
-  getToken,
   listJobs,
   searchJobs,
   type JobListItem,
 } from "@/lib/api";
+import { useRequireSignIn } from "@/lib/session";
 import { ProgressBar, StatusBadge } from "@/components/job-bits";
 
 function formatDate(iso: string, locale: string): string {
@@ -29,16 +29,13 @@ export default function JobsPage() {
   const tc = useTranslations("common");
   const te = useTranslations("errors");
   const locale = useLocale();
-  const router = useRouter();
   const nf = new Intl.NumberFormat(locale);
 
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<JobListItem[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!getToken()) router.replace("/login");
-  }, [router]);
+  useRequireSignIn();
 
   const seqRef = useRef(0);
   useEffect(() => {

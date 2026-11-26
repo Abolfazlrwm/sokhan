@@ -38,7 +38,8 @@ silence:
    which uses scrypt).
 3. **Track as an issue** — when a fix needs design work (for example
    moving the dashboard token from localStorage to an httpOnly cookie
-   implies a CSRF layer and is roadmap work, not a drive-by patch).
+   implied a CSRF layer: it was tracked as #33 and has since shipped, so
+   the dashboard no longer keeps the token in script-readable storage).
 
 Dismissed alerts stay visible in the Security tab with their
 justification, so the reasoning is auditable rather than hidden.
