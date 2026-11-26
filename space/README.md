@@ -14,11 +14,20 @@ short_description: تبدیل گفتار فارسی به نوشتار — اجر
 # Sokhan — Persian speech-to-text, in your browser
 
 A live demo of [Sokhan](https://github.com/Abolfazlrwm/sokhan)'s speech
-engine that runs **entirely client-side**: Whisper (ONNX, q8) executes on
+engine that runs **entirely client-side**: Whisper (ONNX) executes on
 the visitor's own machine via
 [transformers.js](https://huggingface.co/docs/transformers.js) — nothing
 is uploaded, no backend, no compute cost. Persian RTL UI, mic recording,
 file upload and a bundled benchmark sample clip.
+
+Speed and reliability: the demo picks the fastest backend the browser
+offers — WebGPU (fp32 encoder + q4 decoder) on Chrome/Edge, WASM q8
+everywhere else — and owns the 30 s/5 s windowing itself, so it reports
+per-window progress with an ETA, shows an elapsed timer, enforces a
+duration cap (30 min on WebGPU, 10 min on WASM) and offers a real cancel
+button that terminates the worker. Audio is decoded at the context's
+natural rate and resampled offline to 16 kHz, avoiding a Chromium hang
+on opus/webm inputs.
 
 Two untuned checkpoints are selectable (base / small) so anyone can hear
 the difference. The **fine-tuned** checkpoint

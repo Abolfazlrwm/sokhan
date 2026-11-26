@@ -48,6 +48,22 @@
   button.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.07); }
   button.recording { background: var(--err); border: none; color: #fff; }
   #status { font-size: 0.92rem; color: var(--muted); min-height: 1.6em; margin: 14px 0 6px; }
+  .stages { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 4px; }
+  .stages span { font-size: 0.78rem; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 99px; padding: 3px 10px; background: #fff; opacity: .55; }
+  .stages span.active { opacity: 1; color: #fff; font-weight: 600; border-color: transparent;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+  .stages span.done { opacity: .9; color: var(--ok); border-color: #a7f3d0; background: #ecfdf5; }
+  .badge { display: inline-block; font-size: 0.75rem; border-radius: 99px; padding: 2px 9px;
+    background: #eef2ff; color: var(--accent); font-weight: 600; }
+  #cancel { display: none; border-color: var(--err); color: var(--err); font-size: 0.85rem;
+    padding: 5px 12px; }
+  #cancel:hover:not(:disabled) { background: var(--err); color: #fff; }
+  .trow { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+    gap: 8px; margin-bottom: 8px; }
+  label.chk { font-size: 0.82rem; color: var(--muted); display: flex; gap: 6px; align-items: center;
+    cursor: pointer; }
+  button.mini { font-size: 0.82rem; padding: 5px 12px; }
   .bar { height: 8px; background: #eef0f5; border-radius: 99px; overflow: hidden; display: none; }
   .bar > div { height: 100%; width: 0%; border-radius: 99px;
     background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .2s ease; }
@@ -77,6 +93,12 @@
   <div class="privacy">🔒 حریم خصوصی کامل: صدا فقط در مرورگر شما پردازش می‌شود — به هیچ سروری ارسال نمی‌شود.</div>
 
   <div class="card">
+    <div class="stages" id="stages">
+      <span>۱ · آماده‌سازی صدا</span>
+      <span>۲ · دانلود مدل</span>
+      <span>۳ · پیاده‌سازی</span>
+      <span>۴ · پایان</span>
+    </div>
     <div class="row">
       <div>
         <label class="field" for="model">کدام مدل؟ (اولین بار دانلود می‌شود)</label>
@@ -96,10 +118,21 @@
 
     <div id="status">برای شروع، «نمونه‌ی آماده» را بزنید یا صدا ضبط/انتخاب کنید.</div>
     <div class="bar" id="bar"><div></div></div>
+    <div class="row" style="margin-top:8px">
+      <span class="badge" id="badge" style="display:none"></span>
+      <div style="flex:1"></div>
+      <button id="cancel">لغو پردازش</button>
+    </div>
   </div>
 
   <div class="card">
-    <label class="field">متن پیاده‌شده</label>
+    <div class="trow">
+      <label class="field">متن پیاده‌شده</label>
+      <div class="row" style="gap:10px">
+        <label class="chk"><input type="checkbox" id="stamp"> خط‌به‌خط با زمان</label>
+        <button class="mini" id="copy" style="display:none">کپی متن</button>
+      </div>
+    </div>
     <div id="transcript" dir="rtl">(اینجا نوشته می‌شود…)</div>
     <div id="meta"></div>
     <div id="ref"></div>
@@ -108,6 +141,7 @@
   <p class="note">
     صادقانه: این دمو چک‌پوینت‌های <b>پایه‌ی</b> Whisper را در مرورگر اجرا می‌کند
     (Common Voice فارسی محاوره‌ای و پرنویز است؛ انتظار خطا داشته باشید).
+    در Chrome و Edge با WebGPU خیلی سریع‌تر است؛ سایر مرورگرها روی WASM با سقف مدت اجرا می‌کنند.
     چک‌پوینت ریزتنظیم‌شده‌ی Sokhan روی <a href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan">Hub</a>
     موجود است و اپ Gradio آن برای اجرای روی سرور خودتان در
     <a href="https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio">space/gradio/</a>
@@ -122,6 +156,6 @@
   </footer>
 </div>
 
-<script type="module" src="demo.js?v=2"></script>
+<script type="module" src="demo.js?v=3"></script>
 </body>
 </html>

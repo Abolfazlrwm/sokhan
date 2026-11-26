@@ -12,8 +12,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   upload it once in Settings → General → Social preview) and a 512px app
   icon (`docs/assets/icon-512.png`) usable as the HF Space avatar. The
   landing site og:image was regenerated in the same style.
+- Browser demo speed & UX overhaul (space/): WebGPU fast path (fp32
+  encoder + q4 decoder) with automatic WASM/q8 fallback, per-window
+  transcription progress with an ETA and elapsed timer, a real cancel
+  button (terminates the worker; the model stays in browser cache), a
+  timestamped line-by-line transcript toggle, a copy button and stage
+  pills. The windowing (30 s window / 5 s overlap) now lives in the
+  worker with timestamp-midpoint trimming, enabling the progress stream
+  and duration caps: 30 min on WebGPU, 10 min on WASM, 60 MB per file —
+  no input can wedge the demo at an eternal "processing" state anymore.
 
 ### Changed
+
+- **Demo hang fix**: audio was decoded inside an `AudioContext` forced to
+  16 kHz; Chromium can hang forever on opus/webm (Telegram voice,
+  MediaRecorder) in that configuration — the demo sat at "در حال
+  آماده‌سازی صدا" indefinitely. Decoding now happens at the context's
+  natural rate and is resampled offline to 16 kHz, with a 45 s decode
+  watchdog and clear format-error messages (e.g. OGG on Safari).
 
 - **License: MIT → PolyForm Noncommercial 1.0.0 (source-available).** The
   code stays readable and reviewable by anyone, and noncommercial use
