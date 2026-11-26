@@ -90,6 +90,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   used to fail from then on; the bot now drops the token, re-registers
   once and retries, and `/start` only shows a connect code that works.
 
+### Removed
+
+- The landing page's separate sign-in button; signing in lives in
+  the header, and "Get started" sends signed-out visitors to the login
+  page.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security
