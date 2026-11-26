@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from sokhan.api.deps import require_bot
 from sokhan.auth import generate_token, hash_password, token_hash, verify_password
 from sokhan.db import get_db
 from sokhan.models import User
@@ -97,7 +98,7 @@ def token_login(payload: TokenLogin, session: Session = Depends(get_db)) -> Auth
     return AuthResponse(id=user.id, email=user.email, api_token=payload.api_token)
 
 
-@router.post("/telegram", response_model=AuthResponse)
+@router.post("/telegram", response_model=AuthResponse, dependencies=[Depends(require_bot)])
 def telegram_login(payload: TelegramLogin, session: Session = Depends(get_db)) -> AuthResponse:
     """Register-or-login used by the Telegram bot.
 

@@ -30,6 +30,13 @@ def main() -> None:
             file=sys.stderr,
         )
         raise SystemExit(1)
+    if not settings.bot_api_secret:
+        print(
+            "BOT_API_SECRET is not set. Set the same value on the API and the bot; "
+            "the API refuses Telegram logins without it.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
     bot = Bot(settings.telegram_bot_token)
     dispatcher = Dispatcher()

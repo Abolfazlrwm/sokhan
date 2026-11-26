@@ -88,3 +88,21 @@ def test_get_plans_parses_catalogue():
         plans = client.get_plans()
     assert [plan["code"] for plan in plans] == ["free", "pro"]
     assert plans[1]["max_file_minutes"] == 180
+
+
+def test_register_telegram_sends_the_bot_secret():
+    seen: dict[str, str | None] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["secret"] = request.headers.get("X-Bot-Secret")
+        return httpx.Response(200, json={"id": "u1", "email": "tg", "api_token": "tok"})
+
+    settings = BotSettings(
+        telegram_bot_token="t",
+        api_base_url="http://api.test",
+        web_base_url="http://web.test",
+        bot_api_secret="shared",
+    )
+    with SokhanClient(settings, transport=httpx.MockTransport(handler)) as client:
+        assert client.register_telegram(42, None) == "tok"
+    assert seen["secret"] == "shared"

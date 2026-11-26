@@ -44,3 +44,14 @@ def require_admin(x_admin_key: str | None = Header(default=None)) -> None:
         )
     if x_admin_key is None or not secrets.compare_digest(x_admin_key, settings.admin_api_key):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid admin key")
+
+
+def require_bot(x_bot_secret: str | None = Header(default=None)) -> None:
+    settings = get_settings()
+    if not settings.bot_api_secret:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "telegram login disabled: set BOT_API_SECRET on the API and the bot",
+        )
+    if x_bot_secret is None or not secrets.compare_digest(x_bot_secret, settings.bot_api_secret):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid bot secret")

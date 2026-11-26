@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Security
+
+- **`POST /auth/telegram` could be used to take over any Telegram user's
+  account.** It minted a fresh API token for whatever `telegram_id` the
+  caller sent, with no proof the caller was the bot. It now requires the
+  `X-Bot-Secret` header to match the new `BOT_API_SECRET` (constant-time
+  compare; 403 on mismatch, 503 while unset). **Breaking for deployments
+  with the bot:** set the same `BOT_API_SECRET` on the API and the bot; the
+  bot refuses to start without it.
+
 ### Added
 
 - **Persian accuracy stack (v2)** — measured on the 12-clip Common Voice

@@ -50,6 +50,7 @@ class SokhanClient:
         response = self._client.post(
             f"{self.settings.api_base_url}/auth/telegram",
             json={"telegram_id": telegram_id, "username": username},
+            headers={"X-Bot-Secret": self.settings.bot_api_secret},
         )
         if response.status_code != 200:
             raise BackendError(f"register failed with status {response.status_code}")
