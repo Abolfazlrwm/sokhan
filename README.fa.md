@@ -145,6 +145,8 @@ faster-whisper، یک ورکر Celery، یک داشبورد Next.js که فار�
 ```bash
 git clone https://github.com/Abolfazlrwm/sokhan.git
 cd sokhan
+cp .env.example deploy/.env   # compose فایل .env کنار فایل compose را می‌خواند
+# در deploy/.env مقدار POSTGRES_PASSWORD را یک رمز طولانی و تصادفی بگذارید
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
@@ -152,7 +154,9 @@ docker compose -f deploy/docker-compose.yml up -d --build
 - API و مستندات: http://localhost:8000/docs
 
 ورکر مدل Whisper تنظیم‌شده را در اولین رونویسی دانلود می‌کند
-(`WHISPER_MODEL_SIZE`، پیش‌فرض `small`). برای فعال‌کردن خلاصه‌سازی،
+(`WHISPER_MODEL_SIZE`، پیش‌فرض `small`) و آن را روی ولوم `sokhan-data`
+(`HF_HOME=/data/huggingface`) نگه می‌دارد، پس ساخت دوبارهٔ کانتینرها مدل را
+دوباره دانلود نمی‌کند. برای فعال‌کردن خلاصه‌سازی،
 `SUMMARY_ENABLED=true` و متغیرهای LLM خود را در فایل `.env` کنار
 `docker-compose.yml` بگذارید. برای اعمال مهاجرت‌های اسکیما به‌صورت دستی:
 
