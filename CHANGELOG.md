@@ -81,6 +81,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   its progress sat at 0% for the whole job and then jumped to 100%. The
   Whisper engine reports how far into the chunk it is as each segment is
   decoded; the worker saves that at most once a second.
+- The archive page refreshes itself while any job is queued or processing;
+  its progress bars never moved before. A job with no progress reported yet
+  shows a moving bar and "Getting ready" instead of an empty, stuck-looking
+  bar at 0%, and the job page shows the percentage with the right sign in
+  English.
 
 ## [1.4.1] - 2026-11-26
 

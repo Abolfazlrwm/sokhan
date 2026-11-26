@@ -67,6 +67,7 @@ export default function JobDetailPage() {
   const { id: jobId } = useParams<{ id: string }>();
   const locale = useLocale();
   const t = useTranslations("jobDetail");
+  const tj = useTranslations("jobs");
   const tc = useTranslations("common");
   const te = useTranslations("errors");
   const router = useRouter();
@@ -275,12 +276,15 @@ export default function JobDetailPage() {
               <h2 className="font-bold text-stone-900">{t("processingTitle")}</h2>
               <p className="mt-1.5 text-sm leading-7 text-stone-600">{t("processingDesc")}</p>
               <div className="mt-4">
-                <ProgressBar value={job.progress} label={t("metaDuration")} />
-                <p className="mt-1.5 text-xs text-stone-500">
-                  {new Intl.NumberFormat(locale).format(
-                    Math.min(100, Math.max(0, Math.round(job.progress))),
-                  )}
-                  ٪
+                <ProgressBar value={job.progress} label={tj("progressLabel")} />
+                <p className="mt-1.5 text-xs text-stone-500" aria-live="polite">
+                  {job.progress > 0
+                    ? tj("percent", {
+                        value: new Intl.NumberFormat(locale).format(
+                          Math.min(100, Math.round(job.progress)),
+                        ),
+                      })
+                    : tj("preparing")}
                 </p>
               </div>
             </div>
