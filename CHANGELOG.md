@@ -52,6 +52,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   and duration caps: 30 min on WebGPU, 10 min on WASM, 60 MB per file —
   no input can wedge the demo at an eternal "processing" state anymore.
 
+- `POST /auth/logout` revokes the caller's token (204). An account has a
+  single active token, so it signs out every client holding it.
+
 ### Changed
 
 - **Demo hang fix**: audio was decoded inside an `AudioContext` forced to
