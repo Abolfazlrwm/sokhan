@@ -1,0 +1,29 @@
+name: PR title check
+
+# The project follows Conventional Commits (CONTRIBUTING.md); the PR
+# title becomes the merge commit, so enforce the same discipline there.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enforce Conventional Commits on the PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|chore|ci|refactor|test|perf|build|revert)(\([a-z0-9._/-]+\))?!?: .+'
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "PR title does not follow Conventional Commits: $TITLE"
+            echo "Expected: <type>(<optional scope>): <description>"
+            echo "Types: feat fix docs chore ci refactor test perf build revert"
+            exit 1
+          fi
+          echo "OK: $TITLE"
