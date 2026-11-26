@@ -14,6 +14,7 @@
 [![Release](https://img.shields.io/github/v/release/Abolfazlrwm/sokhan?display_name=tag)](https://github.com/Abolfazlrwm/sokhan/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/badge/github_Abolfazlrwm/sokhan)](https://api.securityscorecards.dev/projects/github.com/Abolfazlrwm/sokhan)
 [![Landing page](https://img.shields.io/badge/landing_page-abolfazlrwm.github.io%2Fsokhan-2dd4bf)](https://abolfazlrwm.github.io/sokhan/)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-2dd4bf)](LICENSE)
 
 **کیت گفتار به متنِ فارسی‌محور.** یک پیام صوتی بفرستید — متنِ کامل و خلاصه تحویل بگیرید.
 
@@ -32,7 +33,7 @@
 سخن کاملاً روی سخت‌افزار خودتان اجرا می‌شود: یک سرویس FastAPI با موتور
 faster-whisper، یک ورکر Celery، یک داشبورد Next.js که فارسی‌محور نوشته
 شده (راست‌به‌چپ)، و یک ربات تلگرام اختیاری. بدون حساب ابری، بدون قیمتِ
-هر دقیقه، با لایسنس MIT.
+هر دقیقه. متن‌بازِ‌قابل‌مطالعه: برای استفاده غیرتجاری رایگان، برای استفاده تجاری لایسنس تجاری (بخش [لایسنس](#لایسنس)).
 
 ![داشبورد وب سخن — صفحهٔ اصلی](docs/assets/web-landing-fa.png)
 
@@ -333,4 +334,12 @@ site/        لندینگ‌پیج GitHub Pages (دیپلوی خودکار)
 
 ## لایسنس
 
-MIT — ببینید [LICENSE](LICENSE).
+سخن با لایسنس [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)
+منتشر می‌شود (متن کامل در [LICENSE](LICENSE)): خواندن، بررسی و ارزیابیِ کد
+آزاد است و **استفادهٔ غیرتجاری** (پروژهٔ شخصی، مطالعه، پژوهش، سازمان‌های
+غیرانتفاعی) رایگان. **هر استفادهٔ تجاری** — اجرا برای کسب‌وکار، پروژهٔ
+مشتری، فروش، یا ارائه به‌عنوان سرویس — به لایسنس تجاریِ پولی از نویسنده
+نیاز دارد: [ابوالفضل رنجبران](https://github.com/Abolfazlrwm).
+
+نسخه‌های تا و شامل v1.4.1 (۲۰۲۶-۱۱-۲۶) تحت لایسنس MIT منتشر شده بودند و
+تحت همان لایسنس باقی می‌مانند.

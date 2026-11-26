@@ -14,6 +14,7 @@
 [![Release](https://img.shields.io/github/v/release/Abolfazlrwm/sokhan?display_name=tag)](https://github.com/Abolfazlrwm/sokhan/releases)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/badge/github_Abolfazlrwm/sokhan)](https://api.securityscorecards.dev/projects/github.com/Abolfazlrwm/sokhan)
 [![Landing page](https://img.shields.io/badge/landing_page-abolfazlrwm.github.io%2Fsokhan-2dd4bf)](https://abolfazlrwm.github.io/sokhan/)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-2dd4bf)](LICENSE)
 
 **Persian-first speech-to-text toolkit.** Send a voice message — get back a transcript and a summary.
 
@@ -31,7 +32,8 @@ Spaces behind PRO, so the free Space is the static page. A one-page
 Sokhan runs entirely on your own hardware: a FastAPI service with a
 faster-whisper engine, a Celery worker, a Next.js dashboard written
 Persian-first (RTL), and an optional Telegram bot. No cloud account, no
-per-minute pricing, MIT-licensed.
+per-minute pricing. Source-available: free for noncommercial use,
+paid license for commercial use (see [License](#license)).
 
 ![Sokhan web dashboard — landing page](docs/assets/web-landing-fa.png)
 
@@ -331,4 +333,13 @@ rule everything is held to): [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Sokhan is source-available under the [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0)
+license (see [LICENSE](LICENSE)): reading, reviewing and evaluating the code
+is free, and **noncommercial use** (personal projects, study, research,
+nonprofits) is free. **Any commercial use** — deploying it for a business,
+building client projects on it, reselling it, or hosting it as a service —
+requires a paid license from the author:
+[Abolfazl Ranjbaran](https://github.com/Abolfazlrwm).
+
+Releases up to and including v1.4.1 (2026-11-26) were published under the
+MIT License and remain under it.

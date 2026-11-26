@@ -5,7 +5,9 @@ colorFrom: indigo
 colorTo: purple
 sdk: static
 pinned: false
-license: mit
+license: other
+license_name: PolyForm Noncommercial 1.0.0
+license_link: https://github.com/Abolfazlrwm/sokhan/blob/main/LICENSE
 short_description: تبدیل گفتار فارسی به نوشتار — اجرا کامل درون مرورگر
 ---
 

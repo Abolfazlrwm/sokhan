@@ -1,7 +1,9 @@
 ---
 language:
   - fa
-license: mit
+license: other
+license_name: PolyForm Noncommercial 1.0.0
+license_link: https://github.com/Abolfazlrwm/sokhan/blob/main/LICENSE
 base_model:
   - openai/whisper-small
 tags:
@@ -102,4 +104,8 @@ on a PRO Space (HF gates hosted Gradio Spaces behind PRO since 2026).
 
 Persian Common Voice files are no longer re-published as downloads by
 Mozilla; the pipeline uses the public parquet mirror instead. Licensing
-follows CC-0 for the data and MIT for the code.
+follows CC-0 for the data, and the PolyForm Noncommercial 1.0.0
+source-available license for the code and the fine-tuned weights — free
+for noncommercial use, commercial use requires a license from the author
+(https://github.com/Abolfazlrwm). The base Whisper weights remain MIT
+(OpenAI).

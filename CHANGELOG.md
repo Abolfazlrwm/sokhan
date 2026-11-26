@@ -13,6 +13,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   icon (`docs/assets/icon-512.png`) usable as the HF Space avatar. The
   landing site og:image was regenerated in the same style.
 
+### Changed
+
+- **License: MIT → PolyForm Noncommercial 1.0.0 (source-available).** The
+  code stays readable and reviewable by anyone, and noncommercial use
+  (personal projects, study, research, nonprofits) remains free; any
+  commercial use now requires a paid license from the author. Releases up
+  to and including v1.4.1 (2026-11-26) were published under MIT and remain
+  under it. Applied across LICENSE, both READMEs, CITATION.cff, both
+  pyproject.toml files, web/package.json, the landing site copy, the demo
+  Space metadata and the fine-tuned model card.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security

@@ -7,12 +7,12 @@ name = "sokhan-backend"
 description = "Persian-first speech-to-text engine and REST API for Sokhan"
 requires-python = ">=3.10"
 authors = [{ name = "Abolfazl Ranjbaran", email = "206173650+Abolfazlrwm@users.noreply.github.com" }]
-license = { text = "MIT" }
+license = { text = "PolyForm Noncommercial 1.0.0" }
 keywords = ["persian", "farsi", "speech-to-text", "asr", "whisper", "fastapi", "self-hosted"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: Other/Proprietary License",
     "Natural Language :: Persian",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
