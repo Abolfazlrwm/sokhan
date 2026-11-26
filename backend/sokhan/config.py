@@ -95,6 +95,9 @@ class Settings(BaseSettings):
     webhook_attempts: int = 2
     webhook_allow_private_targets: bool = False
 
+    login_max_failures: int = 10
+    login_failure_window_seconds: int = 900
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

@@ -26,6 +26,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   DNS rebinding), redirects are not followed and proxy env vars are ignored.
   **Breaking for receivers on private addresses:** set
   `WEBHOOK_ALLOW_PRIVATE_TARGETS=true` on trusted single-tenant installs.
+- `POST /auth/login` is throttled: after `LOGIN_MAX_FAILURES` (10) failures
+  per client address and email within `LOGIN_FAILURE_WINDOW_SECONDS` (900)
+  it answers 429 with `Retry-After`; a successful login clears the count.
 
 ### Added
 
