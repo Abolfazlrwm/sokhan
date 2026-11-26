@@ -5,7 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
-(nothing yet)
+### Added
+
+- Brand refresh: a hero banner in both READMEs (`docs/assets/banner.png`),
+  a redesigned 1280x640 social preview (`docs/assets/social-preview.png` —
+  upload it once in Settings → General → Social preview) and a 512px app
+  icon (`docs/assets/icon-512.png`) usable as the HF Space avatar. The
+  landing site og:image was regenerated in the same style.
 
 ## [1.4.1] - 2026-11-26
 

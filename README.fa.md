@@ -2,6 +2,10 @@
 
 **فارسی** | [English](README.md)
 
+<div align="center">
+  <img src="docs/assets/banner.png" alt="سخن — گفتار به متنِ فارسی" width="100%">
+</div>
+
 [![CI](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/codeql.yml)
 [![Docker](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml/badge.svg)](https://github.com/Abolfazlrwm/sokhan/actions/workflows/docker.yml)
