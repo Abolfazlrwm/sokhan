@@ -25,6 +25,14 @@ ALLOWED_EXTENSIONS = {".mp3", ".m4a", ".mp4", ".wav", ".ogg", ".opus", ".webm", 
 _SAFE_SUFFIX = re.compile(r"^[a-z0-9]{1,8}$")
 
 
+class StorageUnavailableError(Exception):
+    """DATA_DIR cannot be written, e.g. a root-owned volume or a full disk.
+
+    It is a server fault, not a bad upload, so the API answers 503 and the
+    real OSError stays in the server log instead of reaching the client.
+    """
+
+
 def decode_to_mono_16k(path: str | Path) -> np.ndarray:
     """Decode any media file to mono float32 PCM at 16 kHz."""
     return decode_audio(str(path), sampling_rate=SAMPLE_RATE)
@@ -102,12 +110,23 @@ def audio_dir() -> Path:
 
 
 def save_upload(data: bytes, job_id: str, original_filename: str) -> Path:
-    """Persist an upload under DATA_DIR/audio with a safe extension."""
+    """Persist an upload under DATA_DIR/audio with a safe extension.
+
+    Raises StorageUnavailableError when the directory or file cannot be
+    written; a partially written file is removed first.
+    """
     suffix = Path(original_filename).suffix.lower()
     if suffix not in ALLOWED_EXTENSIONS or not _SAFE_SUFFIX.match(suffix[1:]):
         suffix = ".bin"
-    path = audio_dir() / f"{job_id}{suffix}"
-    path.write_bytes(data)
+    try:
+        path = audio_dir() / f"{job_id}{suffix}"
+    except OSError as exc:
+        raise StorageUnavailableError(str(exc)) from exc
+    try:
+        path.write_bytes(data)
+    except OSError as exc:
+        delete_audio(path)
+        raise StorageUnavailableError(str(exc)) from exc
     return path
 
 

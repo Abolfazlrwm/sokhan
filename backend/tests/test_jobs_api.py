@@ -1,5 +1,8 @@
 import io
+import shutil
+from pathlib import Path
 
+import pytest
 from docx import Document
 
 
@@ -188,3 +191,51 @@ def test_other_users_cannot_read_a_job(client, auth, wav_bytes, fake_engine):
 
     assert client.get(f"/jobs/{job_id}", headers=headers).status_code == 404
     assert client.get("/jobs", headers=headers).json()["total"] == 0
+
+
+def _make_data_dir_unwritable(tmp_path):
+    """Replace DATA_DIR with a plain file, so creating DATA_DIR/audio fails."""
+    shutil.rmtree(tmp_path / "data")
+    (tmp_path / "data").write_text("not a directory")
+
+
+def test_upload_answers_503_when_storage_is_unwritable(
+    client, auth, wav_bytes, fake_engine, tmp_path
+):
+    _make_data_dir_unwritable(tmp_path)
+
+    response = _upload(client, auth, wav_bytes)
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "upload storage is unavailable, try again later"}
+    # No job row is left behind for an upload that was never stored.
+    assert client.get("/jobs", headers=auth).json()["total"] == 0
+
+
+def test_openai_endpoint_answers_503_when_storage_is_unwritable(
+    client, auth, wav_bytes, fake_engine, tmp_path
+):
+    _make_data_dir_unwritable(tmp_path)
+
+    response = client.post(
+        "/v1/audio/transcriptions",
+        files={"file": ("test.wav", wav_bytes, "audio/wav")},
+        data={"language": "fa", "response_format": "json"},
+        headers=auth,
+    )
+
+    assert response.status_code == 503
+
+
+def test_failed_write_removes_the_partial_file(app, tmp_path, monkeypatch):
+    from sokhan.core.audio import StorageUnavailableError, audio_dir, save_upload
+
+    def write_fails_midway(self, data):
+        self.open("wb").write(data[:1])
+        raise OSError(28, "No space left on device")
+
+    monkeypatch.setattr(Path, "write_bytes", write_fails_midway)
+
+    with pytest.raises(StorageUnavailableError):
+        save_upload(b"RIFF....", "job-1", "clip.wav")
+    assert list(audio_dir().iterdir()) == []

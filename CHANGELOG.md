@@ -117,6 +117,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
 
+### Fixed
+
+- An upload the API cannot store (unwritable `DATA_DIR`, full disk,
+  read-only volume) now answers **503** with a short message on `POST /jobs`
+  and `POST /v1/audio/transcriptions`, instead of a 500 with a traceback in
+  the log. The real `OSError` is logged server-side, a partially written
+  file is removed, and the API logs an error at startup when `DATA_DIR`
+  is not writable.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security
