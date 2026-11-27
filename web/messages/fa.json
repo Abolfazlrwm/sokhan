@@ -59,6 +59,8 @@
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "رمز عبور",
     "passwordPlaceholder": "••••••••",
+    "showPassword": "نمایش رمز عبور",
+    "hidePassword": "پنهان کردن رمز عبور",
     "codeLabel": "کد اتصال",
     "codePlaceholder": "کد اتصال را وارد کن",
     "codeHint": "اگر کد اتصال داری، لازم نیست ایمیل و رمز عبور وارد کنی.",

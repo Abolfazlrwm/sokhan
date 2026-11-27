@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { ApiError, login, register, startSession, tokenLogin } from "@/lib/api";
 import { useSession } from "@/lib/session";
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export default function LoginPage() {
   function switchMode(next: Mode) {
     if (next === mode) return;
     setMode(next);
+    setShowPassword(false);
     setEmailError(null);
     setPasswordError(null);
     setCodeError(null);
@@ -182,21 +185,39 @@ export default function LoginPage() {
                 >
                   {t("passwordLabel")}
                 </label>
-                <input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  dir="ltr"
-                  autoComplete={mode === "register" ? "new-password" : "current-password"}
-                  value={password}
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    if (passwordError) setPasswordError(null);
-                  }}
-                  placeholder={t("passwordPlaceholder")}
-                  aria-invalid={passwordError ? true : undefined}
-                  className={inputClasses}
-                />
+                {/* The field is always LTR, so the toggle sits at its physical right. */}
+                <div className="relative" dir="ltr">
+                  <input
+                    id="login-password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    dir="ltr"
+                    autoComplete={mode === "register" ? "new-password" : "current-password"}
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
+                    placeholder={t("passwordPlaceholder")}
+                    aria-invalid={passwordError ? true : undefined}
+                    className={`${inputClasses} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((shown) => !shown)}
+                    aria-label={showPassword ? t("hidePassword") : t("showPassword")}
+                    aria-pressed={showPassword}
+                    aria-controls="login-password"
+                    title={showPassword ? t("hidePassword") : t("showPassword")}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-e-lg text-stone-500 transition-colors hover:text-stone-800 focus-visible:ring-2 focus-visible:ring-teal-700"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" aria-hidden="true" />
+                    ) : (
+                      <Eye className="h-5 w-5" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
                 {passwordError ? (
                   <p className="mt-1.5 text-sm text-red-700">{passwordError}</p>
                 ) : mode === "register" ? (

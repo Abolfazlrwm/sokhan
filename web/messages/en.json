@@ -59,6 +59,8 @@
     "emailPlaceholder": "you@example.com",
     "passwordLabel": "Password",
     "passwordPlaceholder": "••••••••",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "codeLabel": "Connect code",
     "codePlaceholder": "Enter your connect code",
     "codeHint": "Have a connect code? No email or password needed.",

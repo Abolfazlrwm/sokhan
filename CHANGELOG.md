@@ -142,6 +142,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   worker with timestamp-midpoint trimming, enabling the progress stream
   and duration caps: 30 min on WebGPU, 10 min on WASM, 60 MB per file —
   no input can wedge the demo at an eternal "processing" state anymore.
+- A show/hide toggle (eye icon) on the login page's password field.
 
 - `CONTRIBUTING.fa.md`: a Persian translation of the contribution guide,
   with a language switcher in both files like the READMEs (#31).
