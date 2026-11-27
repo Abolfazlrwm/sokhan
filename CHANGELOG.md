@@ -53,6 +53,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   default on WASM-only browsers, the visitor's explicit pick is
   remembered in `localStorage`, and a stored turbo pick only restores on
   a browser that still supports WebGPU (with a hint explaining why).
+  Both this behavior and the sample WER below are pinned by
+  `space/check_demo_ui.js` — a dependency-free node harness that stubs
+  the DOM/Worker and asserts the WER helpers plus all five auto-pick
+  branches (`node space/check_demo_ui.js`).
 - **Per-run accuracy on the bundled sample.** After the sample clip is
   transcribed, the demo computes its word error rate against the
   human-verified reference client-side (same polish normalization
