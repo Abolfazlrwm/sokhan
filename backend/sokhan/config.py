@@ -21,14 +21,20 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
 
     # Whisper
-    # Accuracy-first default: on CPU int8, `medium` measured 59.8% WER on the
-    # Persian fixture vs 78.0% for `small` (~1.1x realtime on 2 cores, ~800 MB
-    # download). Set WHISPER_MODEL_SIZE=small for the speed-first profile.
-    whisper_model_size: str = "medium"
+    # Accuracy-first default: `large-v3-turbo` measured 43.8% WER on the
+    # Persian fixture vs 56.2% for `medium` and 75.0% for `small` (CPU int8,
+    # beam 5, orthography prompt + fa_polish; benchmarks/benchmark_wer.py).
+    # The accuracy jump costs ~1.2x decode time on the same 2-core box
+    # (turbo ran ~0.69x realtime vs ~0.83x for medium) at the same memory
+    # class. Speed
+    # profiles: WHISPER_MODEL_SIZE=medium (balanced) or small (fast).
+    whisper_model_size: str = "large-v3-turbo"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"
-    # Decoding knobs: beam width, and a domain lexicon whispered to the
-    # decoder up front so names and technical terms survive transcription.
+    # Decoding knobs: beam width, a domain lexicon whispered to the decoder
+    # up front so names and technical terms survive transcription, and an
+    # optional hotword list (faster-whisper `hotwords`) for names, brands
+    # and jargon the acoustic model mangles.
     # The default prompt also nudges the decoder towards standard written
     # orthography (ZWNJ-correct Persian): measured -1.3 WER points on small,
     # -4.8 on the fine-tuned checkpoint (benchmarks/tune_decode.py).
@@ -37,6 +43,7 @@ class Settings(BaseSettings):
         "این صدا به فارسی است. متن را با املای استاندارد و نیم‌فاصلهٔ درست بنویس: "
         "می‌شود، می‌گویم، کتاب‌ها، بزرگ‌ترین."
     )
+    whisper_hotwords: str = ""
 
     # Orthographic Persian polish (ZWNJ repair, Arabic look-alikes, split
     # imperatives, digits) applied to every transcript before storage.

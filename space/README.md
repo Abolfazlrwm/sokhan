@@ -29,8 +29,12 @@ button that terminates the worker. Audio is decoded at the context's
 natural rate and resampled offline to 16 kHz, avoiding a Chromium hang
 on opus/webm inputs.
 
-Two untuned checkpoints are selectable (base / small) so anyone can hear
-the difference. The **fine-tuned** checkpoint
+Three models are selectable: untuned **base** and **small** so anyone can
+hear the difference, plus an opt-in **large-v3-turbo**
+([`onnx-community/whisper-large-v3-turbo`](https://huggingface.co/onnx-community/whisper-large-v3-turbo),
+fp16 encoder + q4 decoder, ~1.5 GB download) that runs only on WebGPU and
+measured WER 43.8% on the Persian fixture — the same engine the
+self-hosted backend runs by default. The **fine-tuned** checkpoint
 ([`Abol0pati/whisper-small-fa-sokhan`](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan),
 LoRA on 500 Common Voice fa clips, measured WER 79.3% vs 80.5% baseline)
 is served by the same engine Sokhan runs in production — the app for that

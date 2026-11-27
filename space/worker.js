@@ -32,6 +32,22 @@ const WINDOW = WINDOW_SECONDS * SAMPLE_RATE;
 const JUMP = WINDOW - 2 * STRIDE_SECONDS * SAMPLE_RATE; // 20 s of new audio per window
 const MAX_SECONDS = { webgpu: 1800, wasm: 600 };
 
+// Per-model load profiles. small/base run everywhere: fp32 encoder + q4
+// decoder on WebGPU, q8 everywhere on WASM. The turbo repo is WebGPU-only
+// in practice — its q8 WASM path would decode glacially slow and download
+// ~1.6 GB for the privilege. fp16 needs the shader-f16 GPU feature; when
+// it is missing, one retry with the fp32 encoder (a bigger download)
+// runs before giving up with an honest message.
+const MODEL_PROFILES = {
+  "onnx-community/whisper-large-v3-turbo": {
+    webgpuOnly: true,
+    webgpu: { encoder_model: "fp16", decoder_model_merged: "q4" },
+    webgpuFallback: { encoder_model: "fp32", decoder_model_merged: "q4" },
+  },
+};
+const DEFAULT_WEBGPU = { encoder_model: "fp32", decoder_model_merged: "q4" };
+const DEFAULT_WASM = { encoder_model: "q8", decoder_model_merged: "q8" };
+
 let asr = null;
 let currentModelId = null;
 let currentDevice = null;
@@ -50,12 +66,15 @@ async function gpuAvailable() {
   }
 }
 
-async function loadModel(modelId, device) {
-  post("status", `در حال دانلود مدل ${modelId} (${device === "webgpu" ? "WebGPU" : "CPU"}) …`);
+async function loadModel(modelId, device, dtype) {
+  post(
+    "status",
+    `در حال دانلود مدل ${modelId} (${device === "webgpu" ? "WebGPU" : "CPU"}) …`
+  );
   const config =
     device === "webgpu"
-      ? { device: "webgpu", dtype: { encoder_model: "fp32", decoder_model_merged: "q4" } }
-      : { device: "wasm", dtype: { encoder_model: "q8", decoder_model_merged: "q8" } };
+      ? { device: "webgpu", dtype: dtype || DEFAULT_WEBGPU }
+      : { device: "wasm", dtype: dtype || DEFAULT_WASM };
   asr = await pipeline("automatic-speech-recognition", modelId, {
     ...config,
     progress_callback: (p) => {
@@ -76,17 +95,40 @@ async function loadBest(modelId) {
   asr = null;
   currentModelId = null;
   currentDevice = null;
-  if (await gpuAvailable()) {
+  const profile = MODEL_PROFILES[modelId] ?? {};
+  const gpu = await gpuAvailable();
+  if (!gpu && profile.webgpuOnly) {
+    throw new Error(
+      "این مدل فقط با WebGPU اجرا می‌شود و مرورگر شما از آن پشتیبانی نمی‌کند؛ " +
+        "مدل «کوچک (small)» را انتخاب کنید."
+    );
+  }
+  if (gpu) {
     try {
-      await loadModel(modelId, "webgpu");
+      await loadModel(modelId, "webgpu", profile.webgpu);
       return;
     } catch (err) {
-      console.error("WebGPU load failed; falling back to WASM", err);
+      console.error("WebGPU load failed", err);
+      if (profile.webgpuOnly && profile.webgpuFallback) {
+        post(
+          "status",
+          "نسخهٔ fp16 روی GPU شما اجرا نشد — تلاش با نسخهٔ سازگارتر (دانلود بزرگ‌تر) …"
+        );
+        try {
+          await loadModel(modelId, "webgpu", profile.webgpuFallback);
+          return;
+        } catch (err2) {
+          console.error("WebGPU fp32 fallback failed", err2);
+          throw new Error(
+            "بارگذاری این مدل روی WebGPU ممکن نشد؛ مدل «کوچک (small)» را انتخاب کنید."
+          );
+        }
+      }
       post("status", "WebGPU در دسترس نبود — بازگشت به حالت CPU …");
       asr = null;
     }
   }
-  await loadModel(modelId, "wasm");
+  await loadModel(modelId, "wasm", profile.wasm || DEFAULT_WASM);
 }
 
 function countWindows(seconds) {
@@ -148,6 +190,7 @@ async function transcribe(audio, modelId, seconds) {
   let offset = 0;
   let done = 0;
   let retriedOnWasm = false;
+  const profile = MODEL_PROFILES[modelId] ?? {};
 
   while (true) {
     const offsetEnd = offset + WINDOW;
@@ -163,9 +206,14 @@ async function transcribe(audio, modelId, seconds) {
         isLast
       );
     } catch (err) {
-      if (currentDevice === "webgpu" && !retriedOnWasm) {
+      if (
+        currentDevice === "webgpu" &&
+        !profile.webgpuOnly &&
+        !retriedOnWasm
+      ) {
         // Driver hiccup on the GPU path: reload once on CPU and redo the
-        // current window; earlier windows stay valid.
+        // current window; earlier windows stay valid. (WebGPU-only models
+        // like turbo have no usable WASM path, so they never retry here.)
         console.error("WebGPU inference failed; retrying on WASM", err);
         asr = null;
         currentModelId = null;

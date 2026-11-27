@@ -50,6 +50,18 @@ def test_default_beam_size_is_five_and_empty_prompt_is_omitted(monkeypatch):
     assert "initial_prompt" not in kwargs
 
 
+def test_hotwords_are_forwarded_and_empty_is_omitted(monkeypatch):
+    kwargs = _captured_kwargs(
+        monkeypatch,
+        {"WHISPER_HOTWORDS": "سخن، پیرانشهر، استادیوم آزادی"},
+        language="fa",
+    )
+    assert kwargs["hotwords"] == "سخن، پیرانشهر، استادیوم آزادی"
+
+    kwargs = _captured_kwargs(monkeypatch, {"WHISPER_HOTWORDS": ""}, language="fa")
+    assert "hotwords" not in kwargs
+
+
 def test_auto_language_skips_the_hint(monkeypatch):
     kwargs = _captured_kwargs(monkeypatch, {}, language="auto")
     assert "language" not in kwargs

@@ -20,8 +20,9 @@
 
 **اول در مرورگر امتحانش کنید:** دموی عمومی در
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
-مدل Whisper را کاملاً سمتِ مرورگر اجرا می‌کند (transformers.js، ONNX q8) —
-ضبط با میکروفون یا آپلود فایل، انتخاب بین مدل base/small، بدون هیچ نصبی و
+مدل Whisper را کاملاً سمتِ مرورگر اجرا می‌کند (transformers.js، ONNX) —
+ضبط با میکروفون یا آپلود فایل، انتخاب بین مدل small/base به‌علاوهٔ یک
+**large-v3-turbo اختیاری** روی WebGPU، بدون هیچ نصبی و
 بدون آپلود شدنِ هیچ صدایی. چک‌پوینتِ **فاین‌تیون‌شده** هم به‌صورت اپ Gradio
 قابل سلف‌هاست منتشر شده ([space/gradio/](space/gradio/))؛ قیمت‌گذاری ۲۰۲۶
 هاگینگ‌فیس، Spaceهای Gradio را پشت اشتراک PRO قفل کرده، برای همین Space
@@ -154,7 +155,7 @@ docker compose -f deploy/docker-compose.yml up -d --build
 - API و مستندات: http://localhost:8000/docs
 
 ورکر مدل Whisper تنظیم‌شده را در اولین رونویسی دانلود می‌کند
-(`WHISPER_MODEL_SIZE`، پیش‌فرض `small`) و آن را روی ولوم `sokhan-data`
+(`WHISPER_MODEL_SIZE`، پیش‌فرض `large-v3-turbo`) و آن را روی ولوم `sokhan-data`
 (`HF_HOME=/data/huggingface`) نگه می‌دارد، پس ساخت دوبارهٔ کانتینرها مدل را
 دوباره دانلود نمی‌کند. برای فعال‌کردن خلاصه‌سازی،
 `SUMMARY_ENABLED=true` و متغیرهای LLM خود را در فایل `.env` کنار
@@ -216,7 +217,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `REDIS_URL` | `redis://localhost:6379/0` | broker/backend سِلِری |
 | `CELERY_ENABLED` | `true` | `false` یعنی کارها درون‌فرآیندی (بدون Redis) |
 | `DATA_DIR` | `./data` | محل ذخیرهٔ صداهای آپلودشده |
-| `WHISPER_MODEL_SIZE` | `small` | tiny/base/small/medium/large-v3 |
+| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | tiny/base/small/medium/large-v3-turbo/large-v3 |
+| `WHISPER_HOTWORDS` | `` | فهرست واژهٔ داغ برای اسم‌ها/برندها/اصطلاحات |
 | `WHISPER_DEVICE` | `cpu` | یا `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | روی GPU: `float16` |
 | `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | سهمیهٔ ماهانهٔ پلن رایگان هر کاربر |
@@ -299,12 +301,18 @@ site/        لندینگ‌پیج GitHub Pages (دیپلوی خودکار)
   (فارسی)، ۶۱ ثانیه صدا، مرجعِ تأییدشدهٔ انسانی. پشتهٔ دقت v2 (پرامپت ارتوگرافی
   فارسی + پست‌پروسس `fa_polish`، هر دو در [benchmarks/](benchmarks/README.md)
   اندازه‌گیری شده) فیکسچر را از **WER 80.5% به 75.0% روی `small`** می‌رساند و
-  **موتور پیش‌فرض حالا `medium` است: WER 56.2% / CER 18.5%** با سرعت ~۱٫۱×
-  بلادرنگ روی ۲ هستهٔ CPU (int8، دانلود ~۸۰۰ مگابایت؛ برای حالت سرعت‌محور
-  `WHISPER_MODEL_SIZE=small` بگذارید). اولین فاین‌تیون GPU — LoRA روی
+  **موتور پیش‌فرض حالا `large-v3-turbo` است: WER 43.8% / CER 15.9%** —
+  یعنی ۱۲٫۴ واحد بهتر از `medium` (۵۶٫۲٪ / ۱۸٫۵٪) با ~۱٫۲ برابر زمانِ
+  پردازش آن روی همان ماشین ۲ هسته‌ای (~۰٫۶۹× در برابر ۰٫۸۳× بلادرنگ،
+  هم‌کلاس حافظه؛ برای حالت
+  متعادل `WHISPER_MODEL_SIZE=medium` و برای سرعت‌محور `small` بگذارید).
+  دموی مرورگری هم همین موتور turbo را به‌صورت اختیاری روی WebGPU ارائه
+  می‌دهد. اولین فاین‌تیون GPU — LoRA روی
   `whisper-small`، ۵۰۰ کلیپ، T4 رایگان Colab — با همان هارنس v2 عدد
   **WER 75.0% / CER 31.0%** می‌گیرد
-  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)).
+  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan))
+  — یعنی بهتر از smallِ ریزتنظیم‌نشده نیست؛ برای همین امروز بارِ دقت روی
+  موتورهای بزرگ‌تر است، نه آن فاین‌تیون.
   این عددها همچنان به‌خاطر عامیانه و پرنویز بودن Common Voice فارسی بالاست؛
   گفتار بازخوانی خیلی ساده‌تر است. روش کامل و خروجیِ هر کلیپ:
   [benchmarks/README.md](benchmarks/README.md).

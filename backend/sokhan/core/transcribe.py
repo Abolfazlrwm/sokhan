@@ -103,6 +103,10 @@ class FasterWhisperTranscriber:
         }
         if settings.whisper_initial_prompt:
             options["initial_prompt"] = settings.whisper_initial_prompt
+        if settings.whisper_hotwords:
+            # faster-whisper's hotword biasing: names, brands and jargon the
+            # acoustic model keeps mangling, passed through to the decoder.
+            options["hotwords"] = settings.whisper_hotwords
         if language and language != "auto":
             options["language"] = language
         segments_iter, _info = model.transcribe(samples, **options)  # type: ignore[arg-type]

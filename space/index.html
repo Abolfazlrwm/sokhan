@@ -103,7 +103,8 @@
       <div>
         <label class="field" for="model">کدام مدل؟ (اولین بار دانلود می‌شود)</label>
         <select id="model">
-          <option value="Xenova/whisper-small" selected>کوچک (small) — دقیق‌تر، دانلود ~۲۵۰ مگابایت (پیشنهادی)</option>
+          <option value="Xenova/whisper-small" selected>کوچک (small) — سبک و سریع، دانلود ~۲۵۰ مگابایت</option>
+          <option value="onnx-community/whisper-large-v3-turbo">حداکثر دقت (large-v3-turbo) — دقیق‌ترین، دانلود ~۱.۵ گیگابایت، فقط WebGPU</option>
           <option value="Xenova/whisper-base">پایه (base) — سریع‌تر، دانلود ~۷۵ مگابایت</option>
         </select>
       </div>
@@ -140,9 +141,12 @@
 
   <p class="note">
     صادقانه: دقت Whisper روی Common Voice فارسی (محاوره‌ای و پرنویز) محدود است.
+    دقیق‌ترین انتخاب، مدل «حداکثر دقت» (large-v3-turbo) است — همان موتوری که نسخهٔ
+    سلف‌هاست به‌صورت پیش‌فرض اجرا می‌کند — ولی دانلود ~۱.۵ گیگابایتی و اجرای آن فقط
+    روی مرورگرهای Chrome/Edge با WebGPU ممکن است.
     متن خروجی با پولیش ارتوگرافی فارسی (نیم‌فاصله، حروف عربی، فعل‌های شکسته) تمیز می‌شود —
     همان پست‌پروسس نسخهٔ سرور.
-    در Chrome و Edge با WebGPU خیلی سریع‌تر است؛ سایر مرورگرها روی WASM با سقف مدت اجرا می‌کنند.
+    سایر مرورگرها روی WASM با سقف مدت اجرا می‌کنند.
     چک‌پوینت ریزتنظیم‌شده‌ی Sokhan روی <a href="https://huggingface.co/Abol0pati/whisper-small-fa-sokhan">Hub</a>
     موجود است و اپ Gradio آن برای اجرای روی سرور خودتان در
     <a href="https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio">space/gradio/</a>

@@ -7,6 +7,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ### Added
 
+- **Accuracy stack v3 — the default engine is now `large-v3-turbo`.**
+  Measured on the same 12-clip Common Voice fa fixture, CPU int8,
+  beam 5, orthography prompt + `fa_polish` (all reproducible via
+  `benchmarks/benchmark_wer.py`): **WER 43.8% / CER 15.9%** vs 56.2% /
+  18.5% for `medium` and 75.0% / 25.0% for `small` — a −12.4-point jump
+  over the previous default at ~1.2x its decode time on the same 2-core
+  box (~0.69x vs 0.83x realtime, same memory class). Speed profiles stay
+  documented:
+  `WHISPER_MODEL_SIZE=medium` (balanced) and `small` (fast). A focused
+  decode sweep (`tune_decode.py`) confirmed VAD and
+  `condition_on_previous_text` do not move the needle on short clips,
+  so the backend decode defaults stay as they are.
+- `WHISPER_HOTWORDS`: an optional decoder hotword list (faster-whisper
+  `hotwords`) for names, brands and jargon the acoustic model keeps
+  mangling; wired through config, compose and `.env.example`.
+- **The browser demo offers the same turbo engine as an opt-in**
+  (`onnx-community/whisper-large-v3-turbo`, fp16 encoder + q4 decoder,
+  ~1.5 GB download, WebGPU-only with an fp32-encoder fallback and an
+  honest message when a browser cannot run it). The live progress bar,
+  cancel and caps all work unchanged; the honesty note names turbo as
+  the most accurate choice.
+
 - **Live progress in the Telegram bot.** The receipt message for a sent
   voice file now carries the job id and a live bar that the notifier edits
   in place while the job runs (`▓▓▓░░░░░░░ ۳۰٪`, Persian numerals and the

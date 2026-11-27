@@ -20,8 +20,9 @@
 
 **Try it in the browser first:** the public demo at
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
-runs Whisper entirely client-side (transformers.js, ONNX q8) — mic or file
-upload, base/small selectable, nothing to install, nothing uploaded. The
+runs Whisper entirely client-side (transformers.js, ONNX) — mic or file
+upload, small/base selectable plus an opt-in **large-v3-turbo** on WebGPU,
+nothing to install, nothing uploaded. The
 **fine-tuned** checkpoint ships as a self-hostable Gradio app
 ([space/gradio/](space/gradio/)); HF's 2026 pricing gates hosted Gradio
 Spaces behind PRO, so the free Space is the static page. A one-page
@@ -152,8 +153,8 @@ docker compose -f deploy/docker-compose.yml up -d --build
 - API and docs: http://localhost:8000/docs
 
 The worker downloads the configured Whisper model on first transcription
-(`WHISPER_MODEL_SIZE`, default `small`) and caches it on the `sokhan-data`
-volume (`HF_HOME=/data/huggingface`), so recreating the containers does not
+(`WHISPER_MODEL_SIZE`, default `large-v3-turbo`) and caches it on the
+`sokhan-data` volume (`HF_HOME=/data/huggingface`), so recreating the containers does not
 download it again. To enable summaries, set
 `SUMMARY_ENABLED=true` and your LLM variables in a `.env` file next to
 `docker-compose.yml`. To apply schema migrations manually:
@@ -215,7 +216,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `REDIS_URL` | `redis://localhost:6379/0` | Celery broker/backend |
 | `CELERY_ENABLED` | `true` | `false` runs jobs inline (no Redis) |
 | `DATA_DIR` | `./data` | Uploaded audio storage |
-| `WHISPER_MODEL_SIZE` | `small` | tiny/base/small/medium/large-v3 |
+| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | tiny/base/small/medium/large-v3-turbo/large-v3 |
+| `WHISPER_HOTWORDS` | `` | decoder hotword list for names/brands/jargon |
 | `WHISPER_DEVICE` | `cpu` | or `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
 | `FREE_MINUTES_PER_USER_PER_MONTH` | `30` | per-user monthly allowance of the free plan |
@@ -298,13 +300,19 @@ explicit instead of implied:
   clips, 61 s of audio, human-verified references. The v2 accuracy stack
   (Persian orthography initial prompt + `fa_polish` post-processing, both
   measured in [benchmarks/](benchmarks/README.md)) lifts the fixture from
-  **WER 80.5% → 75.0% on `small`**, and the new **default engine is
-  `medium`: WER 56.2% / CER 18.5%** at ~1.1x realtime on 2 CPU cores
-  (int8, ~800 MB download; set `WHISPER_MODEL_SIZE=small` for the
-  speed-first profile). The first GPU fine-tune — LoRA on `whisper-small`,
+  **WER 80.5% → 75.0% on `small`**, and the **default engine is now
+  `large-v3-turbo`: WER 43.8% / CER 15.9%** — a −12.4-point jump over
+  `medium` (56.2% / 18.5%) at ~1.2x its decode time on the same 2-core
+  machine (~0.69x vs 0.83x realtime, same memory class; set
+  `WHISPER_MODEL_SIZE=medium` for the
+  balanced profile or `small` for the speed-first one). The browser demo
+  offers the same turbo engine as an opt-in on WebGPU. The first GPU
+  fine-tune — LoRA on `whisper-small`,
   500 clips, free Colab T4 — measures **WER 75.0% / CER 31.0%** under the
   same v2 harness
-  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)).
+  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan))
+  — i.e. no better than untuned `small`, which is why bigger engines, not
+  that fine-tune, carry the accuracy today.
   These numbers are still high because Common Voice fa is colloquial and
   noisy; read speech is far easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).

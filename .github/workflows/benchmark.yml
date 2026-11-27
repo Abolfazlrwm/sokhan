@@ -1,7 +1,7 @@
 name: Benchmark gate (weekly)
 
 # Re-runs the fixed Common Voice (fa) fixture against the recorded baseline
-# (benchmarks/results/baseline.json) and fails if the `small` engine loses
+# (benchmarks/results/baseline.json) and fails if any guarded engine loses
 # more than one WER point — guards engine/dependency upgrades (roadmap v1.4).
 on:
   schedule:
@@ -32,7 +32,7 @@ jobs:
       - name: Run the fixture benchmark with the regression gate
         run: |
           python benchmarks/benchmark_wer.py \
-            --models small medium \
+            --models small medium large-v3-turbo \
             --baseline benchmarks/results/baseline.json \
             --max-regression 1.0 \
             --archive
