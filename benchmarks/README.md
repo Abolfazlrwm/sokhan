@@ -15,7 +15,40 @@ re-run the exact same evaluation.
   Arabic/Persian look-alike characters and digit forms cannot create
   artificial errors
 
-## Latest results (measured, 2026-11-18)
+## Latest results (v3 stack, measured 2026-11-27)
+
+Total audio: 61.1 s across 12 clips (3.5–6.9 s each), faster-whisper 1.2.1,
+CTranslate2 4.9.1, CPU int8. The v3 decode stack mirrors the product engine
+exactly (`backend/sokhan/core/transcribe.py`): **no initial prompt, the VAD
+filter on, and a language-drift guard** — a forced-fa decode that comes back
+mostly in another script is retried once deterministically (temperature 0,
+VAD forced on) and the more-Persian result wins.
+
+| Model | Params | WER (v3) | CER (v3) | Wall time | vs v2 |
+| --- | --- | --- | --- | --- | --- |
+| small | 244 M | 70.0% | 25.0% | 24.7 s | −5.0 |
+| medium | 769 M | 48.8% | 15.4% | 68.2 s | −7.4 |
+| **large-v3-turbo (default)** | 809 M | **37.5%** | **9.9%** | 84.5 s | −6.3 |
+
+Every guarded model improved — the v2 orthography prompt was actively
+hurting the modern decode configs, and the drift guard recovers a clip
+that Whisper decoded as **Icelandic** (`در هر حال اینکارو کردی` →
+`Er hær hálf einhver kjærði?`, retried → `ار هر حال انکار کردی`).
+
+The v4 sweep (`--quick`-style probes over beam 3/8, best_of+patience,
+temperature 0, `condition_on_previous_text`) moved nothing else: beam 5
+stays. The remaining errors on the fixture are acoustic (colloquial
+pronunciations like «نمردیمو معنی عدالتم فهمیدیم») or metric noise
+(written-vs-spoken variants counted as errors), not decode settings.
+
+Why not `large-v3`? It measured well in isolation but **needs >3.4 GB RAM
+just to load** (int8), which OOMs on small VPS boxes — the turbo default
+keeps the same memory class as `medium`. On a GPU host it remains one
+environment variable away: `WHISPER_MODEL_SIZE=large-v3`.
+
+## Previous sessions
+
+### v2 stack (measured, 2026-11-18)
 
 Total audio: 61.1 s across 12 clips (3.5–6.9 s each). All five models were
 measured back to back in one session, same library versions
@@ -30,7 +63,7 @@ measured back to back in one session, same library versions
 | **Abol0pati/whisper-small-fa-sokhan (fine-tuned, GPU run)** | 244 M | **79.3%** | **24.9%** |
 
 The table above is the **v1 harness** (no prompt, `normalize_persian` only).
-The **v2 accuracy stack** changes two things, each measured in isolation
+The **v2 accuracy stack** changed two things, each measured in isolation
 with [tune_decode.py](tune_decode.py):
 
 1. **Persian orthography initial prompt** — whisper copies the script style
@@ -63,8 +96,10 @@ CPU cores (61.1 s of audio in 75.5 s). Decode sweep detail (small, beam 5):
 | orthography | false | 78.0% |
 | orthography, beam 8 | true | 80.5% |
 
-beam 8 hurts; VAD on/off is a wash on these clean clips; the orthography
-prompt helps and costs nothing at runtime.
+beam 8 hurts on `small`; VAD on/off is a wash on these clean clips; the
+orthography prompt helped `small` — the v3 session above shows the same
+prompt hurting `large-v3-turbo`, which is why the default engine no longer
+sends one.
 
 Earlier sessions are archived so every published number stays reproducible:
 [results-2026-11-13.json](results/results-2026-11-13.json) (tiny 93.9% /
@@ -75,15 +110,15 @@ between library versions — that is version noise, not a fixture change;
 the fixture is identical. Full per-clip output of the current run lives
 in [results/results.json](results/results.json).
 
-## Regression baseline (v2)
+## Regression baseline (v3)
 
-[results/baseline.json](results/baseline.json) records the v2 numbers for
-`small`, the fine-tuned `small` and `medium`; the weekly benchmark workflow
-runs `small` and `medium` against it with a +1.0-point tolerance. If you
-change the decode stack or the polish module, regenerate the baseline with
-the same command so the gate compares apples to apples:
+[results/baseline.json](results/baseline.json) records the v3 numbers for
+`small`, `medium` and `large-v3-turbo`; the weekly benchmark workflow runs
+all three against it with a +1.0-point tolerance. If you change the decode
+stack or the polish module, regenerate the baseline with the same command
+so the gate compares apples to apples:
 
-    python benchmarks/benchmark_wer.py --models small medium
+    python benchmarks/benchmark_wer.py --models small medium large-v3-turbo
 
 ## First GPU-scale fine-tune (measured, 2026-11-18)
 

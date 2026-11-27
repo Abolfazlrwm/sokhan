@@ -2,35 +2,168 @@
   "dataset": "Mozilla Common Voice (fa), clean subset, CC-0",
   "manifest": "benchmarks/data/manifest.csv",
   "normalization": "v2: polish + normalize_persian applied to both reference and hypothesis",
-  "decoding": "beam_size=5, Persian orthography initial_prompt, CPU int8",
+  "decoding": "beam_size=5, VAD filter on, no initial prompt, language-drift guard (mirrors the product engine), CPU int8",
   "total_audio_seconds": 61.1,
   "runs": [
     {
-      "model": "large-v3-turbo",
-      "params": "?",
+      "model": "small",
+      "params": "244 M",
       "compute_type": "int8",
       "language": "fa",
       "clips": 12,
       "audio_seconds": 61.1,
-      "wall_time_seconds": 88.28,
-      "wer": 0.4375,
-      "cer": 0.1589,
+      "wall_time_seconds": 21.61,
+      "wer": 0.7,
+      "cer": 0.25,
       "per_clip": [
         {
           "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
           "reference": "بسیار خوب، این عالیه.",
-          "hypothesis": "بسیار خوبین علیه.",
-          "raw_hypothesis": "بسیار خوبین علیه.",
-          "wer": 0.75,
-          "cer": 0.1905,
+          "hypothesis": "ده سیارخو بین الیر",
+          "raw_hypothesis": "ده سیارخو بین آلیر",
+          "wer": 1.0,
+          "cer": 0.4762,
           "ref_words": 4,
-          "hyp_words": 3
+          "hyp_words": 4
         },
         {
           "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
           "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
-          "hypothesis": "بابام برام یه پیراهن اورد میگه بپوش ببین اندازت هست؟",
-          "raw_hypothesis": "بابام برام یه پیراهن آورد می‌گه به پوش ببین اندازت هست؟",
+          "hypothesis": "ببان برامی پیراهن اورد میگه بپوش ببین اندازت هست",
+          "raw_hypothesis": "ببان برامی پیراهن آورد میگه بی پوش بی بین اندازت هست",
+          "wer": 0.3,
+          "cer": 0.0784,
+          "ref_words": 10,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00007969_95940e721b24.wav",
+          "reference": "پلیس حق و حساب بگیر",
+          "hypothesis": "پولی سه هکو هست اپ بگی",
+          "raw_hypothesis": "پولی سه هکو هست اپ بگی",
+          "wer": 1.2,
+          "cer": 0.5789,
+          "ref_words": 5,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
+          "reference": "تو من رو ممنوع میکنی؟",
+          "hypothesis": "تو من رو مامنو میکنی؟",
+          "raw_hypothesis": "تو من رو مامنو میکنی؟",
+          "wer": 0.2,
+          "cer": 0.0952,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
+          "reference": "تو از دشتای دور و جادههای پر غبار",
+          "hypothesis": "تو از دشتای دور و جادحای پارغبار",
+          "raw_hypothesis": "تو از دشتای دور و جادحای پارغبار",
+          "wer": 0.375,
+          "cer": 0.1212,
+          "ref_words": 8,
+          "hyp_words": 7
+        },
+        {
+          "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
+          "reference": "نمردیمو معنی عدالتم فهمیدیم",
+          "hypothesis": "نمورتیم و معانی ازالت هم فهمیده",
+          "raw_hypothesis": "نمورتیم و معانی ازالت هم فهمیده",
+          "wer": 1.5,
+          "cer": 0.3704,
+          "ref_words": 4,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00012223_8556160f538d.wav",
+          "reference": "پروانههای کپی لفت را به وجود اورد",
+          "hypothesis": "پر وانهای کوپی لفت را به وجودا ورد",
+          "raw_hypothesis": "پر وانهای کوپی لفت را به وجودا ورد",
+          "wer": 0.7143,
+          "cer": 0.1515,
+          "ref_words": 7,
+          "hyp_words": 8
+        },
+        {
+          "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
+          "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
+          "hypothesis": "در یک نفزت زندگانی گوزرد مگزار چیجوز بشادمانی گوزرد",
+          "raw_hypothesis": "در یک نفزت زندگانی گوزرد مگزار چیجوز بشادمانی گوزرد",
+          "wer": 0.8333,
+          "cer": 0.283,
+          "ref_words": 12,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
+          "reference": "در هر حال اینکارو کردی",
+          "hypothesis": "ار هر هر انکار که اردی",
+          "raw_hypothesis": "ار هر هر انکار که اردی",
+          "wer": 1.0,
+          "cer": 0.4091,
+          "ref_words": 5,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
+          "reference": "شما نگران زن و بچه این نباش.",
+          "hypothesis": "شوانه گرانه زنواتشه این نباش",
+          "raw_hypothesis": "شوانه گرانه زنواتشه این نباش",
+          "wer": 0.8571,
+          "cer": 0.3571,
+          "ref_words": 7,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001501_39aee6016733.wav",
+          "reference": "معلومه حسابی قاطی کردی",
+          "hypothesis": "مردم احساب قاتی کردی",
+          "raw_hypothesis": "مردم احساب قاتی کردی",
+          "wer": 0.75,
+          "cer": 0.3182,
+          "ref_words": 4,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00011690_2f37cb3fc74b.wav",
+          "reference": "او همیشه طرفدار پر وپا قرص فرانسه بوده است.",
+          "hypothesis": "او همیشه طرف دور پرو پاپورس فرامسه بود است.",
+          "raw_hypothesis": "او همیشه طرف دور پرو پاپورس فرامسه بود است.",
+          "wer": 0.6667,
+          "cer": 0.2093,
+          "ref_words": 9,
+          "hyp_words": 9
+        }
+      ]
+    },
+    {
+      "model": "medium",
+      "params": "769 M",
+      "compute_type": "int8",
+      "language": "fa",
+      "clips": 12,
+      "audio_seconds": 61.1,
+      "wall_time_seconds": 68.21,
+      "wer": 0.4875,
+      "cer": 0.1536,
+      "per_clip": [
+        {
+          "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
+          "reference": "بسیار خوب، این عالیه.",
+          "hypothesis": "و سیار خوبین عالیه",
+          "raw_hypothesis": "و سیار خوبین عالیه",
+          "wer": 1.0,
+          "cer": 0.2857,
+          "ref_words": 4,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
+          "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
+          "hypothesis": "بابام برام یه پیراحن اورد میگه بپوش ببین اندازت هست",
+          "raw_hypothesis": "بابام برام یه پیراحن آورد میگه به پوش ببین اندازت هست",
           "wer": 0.2,
           "cer": 0.0392,
           "ref_words": 10,
@@ -39,38 +172,38 @@
         {
           "audio": "clips/cv_fa_00007969_95940e721b24.wav",
           "reference": "پلیس حق و حساب بگیر",
-          "hypothesis": "پولیس حق و حساب بگیر.",
-          "raw_hypothesis": "پولیس حق و حساب بگیر.",
-          "wer": 0.4,
-          "cer": 0.1053,
+          "hypothesis": "پولیسه هقو اصابه گیر",
+          "raw_hypothesis": "پولیسه هقو اصابه گیر",
+          "wer": 1.0,
+          "cer": 0.4211,
           "ref_words": 5,
-          "hyp_words": 5
+          "hyp_words": 4
         },
         {
           "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
           "reference": "تو من رو ممنوع میکنی؟",
-          "hypothesis": "تو من رو ممنوع میکنی؟",
-          "raw_hypothesis": "تو من رو ممنوع می‌کنی؟",
-          "wer": 0.0,
-          "cer": 0.0,
+          "hypothesis": "تو من رو ممنو میکنی؟",
+          "raw_hypothesis": "تو من رو ممنو می کنی؟",
+          "wer": 0.2,
+          "cer": 0.0476,
           "ref_words": 5,
           "hyp_words": 5
         },
         {
           "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
           "reference": "تو از دشتای دور و جادههای پر غبار",
-          "hypothesis": "تو از دشتهای دور و جادههای پرگبار",
-          "raw_hypothesis": "تو از دشت‌های دور و جاده‌های پرگبار",
-          "wer": 0.375,
-          "cer": 0.0909,
+          "hypothesis": "تو از دشتای دور و جادههای پرقبار",
+          "raw_hypothesis": "تو از دشتای دور و جاده های پرقبار",
+          "wer": 0.25,
+          "cer": 0.0606,
           "ref_words": 8,
           "hyp_words": 7
         },
         {
           "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
           "reference": "نمردیمو معنی عدالتم فهمیدیم",
-          "hypothesis": "نموردیم و معنی ازالتم فهم بیدیم.",
-          "raw_hypothesis": "نموردیم و معنی ازالتم فهم بیدیم.",
+          "hypothesis": "نموردیم و مهنی اضالت هم فهمیدیم",
+          "raw_hypothesis": "نموردیم و مهنی اضالت هم فهمیدیم",
           "wer": 1.25,
           "cer": 0.2593,
           "ref_words": 4,
@@ -79,50 +212,183 @@
         {
           "audio": "clips/cv_fa_00012223_8556160f538d.wav",
           "reference": "پروانههای کپی لفت را به وجود اورد",
-          "hypothesis": "پروانههای کوپیلفت را به وجود اورد.",
-          "raw_hypothesis": "پروانه‌های کوپی‌لفت را به وجود آورد.",
-          "wer": 0.4286,
-          "cer": 0.0909,
+          "hypothesis": "پروانههای کوپی لیفت را به وجود اورد",
+          "raw_hypothesis": "پروانه های کوپی لیفت را به وجود آورد",
+          "wer": 0.2857,
+          "cer": 0.0606,
           "ref_words": 7,
-          "hyp_words": 6
+          "hyp_words": 7
         },
         {
           "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
           "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
-          "hypothesis": "گر یک نفس از زندگانی گذارد، مگذار که جز به شادمانی گذارد.",
-          "raw_hypothesis": "گر یک نفس از زندگانی گذارد، مگذار که جز به شادمانی گذارد.",
-          "wer": 0.3333,
-          "cer": 0.1132,
+          "hypothesis": "در یک نفذت زندگانی گذرت, مگذار تجوز به شادمانی گذرت.",
+          "raw_hypothesis": "در یک نفذت زندگانی گذرت, مگذار تجوز به شادمانی گذرت.",
+          "wer": 0.5833,
+          "cer": 0.2264,
           "ref_words": 12,
-          "hyp_words": 12
+          "hyp_words": 10
         },
         {
           "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
           "reference": "در هر حال اینکارو کردی",
-          "hypothesis": "er hær hál einhver kjærði?",
-          "raw_hypothesis": "Er hær hál einhver kjærði?",
-          "wer": 1.0,
-          "cer": 1.0,
+          "hypothesis": "به هر حال انکارو کردی",
+          "raw_hypothesis": "به هر حال انکارو کردی",
+          "wer": 0.4,
+          "cer": 0.1364,
           "ref_words": 5,
           "hyp_words": 5
         },
         {
           "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
           "reference": "شما نگران زن و بچه این نباش.",
-          "hypothesis": "شما نگران زن و بچهای نباشد.",
-          "raw_hypothesis": "شما نگران زن و بچه‌ای نباشد.",
-          "wer": 0.4286,
-          "cer": 0.1071,
+          "hypothesis": "شما نگران زن و بچه این نباش",
+          "raw_hypothesis": "شما نگران زن و بچه این نباش",
+          "wer": 0.1429,
+          "cer": 0.0357,
           "ref_words": 7,
-          "hyp_words": 6
+          "hyp_words": 7
         },
         {
           "audio": "clips/cv_fa_00001501_39aee6016733.wav",
           "reference": "معلومه حسابی قاطی کردی",
-          "hypothesis": "معلوم حسابی قاطی کرده.",
-          "raw_hypothesis": "معلوم حسابی قاطی کرده.",
-          "wer": 0.5,
+          "hypothesis": "مردمه انسابی قاتی کردی",
+          "raw_hypothesis": "مردمه انسابی قاتی کردی",
+          "wer": 0.75,
+          "cer": 0.2727,
+          "ref_words": 4,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00011690_2f37cb3fc74b.wav",
+          "reference": "او همیشه طرفدار پر وپا قرص فرانسه بوده است.",
+          "hypothesis": "او همیشه طرف داره پر او پا پرس فراموست بوده است.",
+          "raw_hypothesis": "او همیشه طرف داره پر او پا پرس فراموست بوده است.",
+          "wer": 0.6667,
+          "cer": 0.2093,
+          "ref_words": 9,
+          "hyp_words": 11
+        }
+      ]
+    },
+    {
+      "model": "large-v3-turbo",
+      "params": "809 M",
+      "compute_type": "int8",
+      "language": "fa",
+      "clips": 12,
+      "audio_seconds": 61.1,
+      "wall_time_seconds": 84.45,
+      "wer": 0.375,
+      "cer": 0.099,
+      "per_clip": [
+        {
+          "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
+          "reference": "بسیار خوب، این عالیه.",
+          "hypothesis": "بسیر خوبین اولیه",
+          "raw_hypothesis": "بسیر خوبین اولیه",
+          "wer": 1.0,
+          "cer": 0.3333,
+          "ref_words": 4,
+          "hyp_words": 3
+        },
+        {
+          "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
+          "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
+          "hypothesis": "بابا هم برام یه پیراهن اورد میگه بپوش ببین اندازت هست؟",
+          "raw_hypothesis": "بابا هم برام یه پیراهن آورد میگه به پوش ببین اندازت هست؟",
+          "wer": 0.4,
+          "cer": 0.0784,
+          "ref_words": 10,
+          "hyp_words": 11
+        },
+        {
+          "audio": "clips/cv_fa_00007969_95940e721b24.wav",
+          "reference": "پلیس حق و حساب بگیر",
+          "hypothesis": "پولیس حق و حساب بگیر",
+          "raw_hypothesis": "پولیس حق و حساب بگیر",
+          "wer": 0.2,
+          "cer": 0.0526,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
+          "reference": "تو من رو ممنوع میکنی؟",
+          "hypothesis": "تو من رو ممنون میکنی؟",
+          "raw_hypothesis": "تو من رو ممنون می کنی؟",
+          "wer": 0.2,
+          "cer": 0.0476,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
+          "reference": "تو از دشتای دور و جادههای پر غبار",
+          "hypothesis": "تو از دشتهای دور و جادههای پرغبار",
+          "raw_hypothesis": "تو از دشتهای دور و جاده های پرغبار",
+          "wer": 0.375,
+          "cer": 0.0606,
+          "ref_words": 8,
+          "hyp_words": 7
+        },
+        {
+          "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
+          "reference": "نمردیمو معنی عدالتم فهمیدیم",
+          "hypothesis": "نموردیم و معنی جالتم فهم بیدیم",
+          "raw_hypothesis": "نموردیم و معنی جالتم فهم بیدیم",
+          "wer": 1.25,
+          "cer": 0.2222,
+          "ref_words": 4,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00012223_8556160f538d.wav",
+          "reference": "پروانههای کپی لفت را به وجود اورد",
+          "hypothesis": "پروانههای کوپی لفت را به وجود اورد.",
+          "raw_hypothesis": "پروانه های کوپی لفت را به وجود آورد.",
+          "wer": 0.2857,
+          "cer": 0.0606,
+          "ref_words": 7,
+          "hyp_words": 7
+        },
+        {
+          "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
+          "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
+          "hypothesis": "گر یک نفس از زندگانی گذرد، مگذار که جز به شادمانی گذرد.",
+          "raw_hypothesis": "گر یک نفس از زندگانی گذرد، مگذار که جز به شادمانی گذرد.",
+          "wer": 0.3333,
+          "cer": 0.0755,
+          "ref_words": 12,
+          "hyp_words": 12
+        },
+        {
+          "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
+          "reference": "در هر حال اینکارو کردی",
+          "hypothesis": "ار هر حال انکار کردی",
+          "raw_hypothesis": "ار هر حال انکار کردی",
+          "wer": 0.4,
           "cer": 0.1364,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
+          "reference": "شما نگران زن و بچه این نباش.",
+          "hypothesis": "شما نگران زن و بچه این نباشد.",
+          "raw_hypothesis": "شما نگران زن و بچه این نباشد.",
+          "wer": 0.1429,
+          "cer": 0.0357,
+          "ref_words": 7,
+          "hyp_words": 7
+        },
+        {
+          "audio": "clips/cv_fa_00001501_39aee6016733.wav",
+          "reference": "معلومه حسابی قاطی کردی",
+          "hypothesis": "معلوم حسابی قاطی کردی",
+          "raw_hypothesis": "معلوم حسابی قاطی کردی",
+          "wer": 0.25,
+          "cer": 0.0455,
           "ref_words": 4,
           "hyp_words": 4
         },
@@ -135,139 +401,6 @@
           "cer": 0.1395,
           "ref_words": 9,
           "hyp_words": 7
-        }
-      ]
-    },
-    {
-      "model": "medium",
-      "params": "769 M",
-      "compute_type": "int8",
-      "language": "fa",
-      "clips": 12,
-      "audio_seconds": 61.1,
-      "wall_time_seconds": 73.44,
-      "wer": 0.5625,
-      "cer": 0.1849,
-      "per_clip": [
-        {
-          "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
-          "reference": "بسیار خوب، این عالیه.",
-          "hypothesis": "و سیارخوابین عالیه.",
-          "raw_hypothesis": "و سیارخوابین عالیه.",
-          "wer": 0.75,
-          "cer": 0.3333,
-          "ref_words": 4,
-          "hyp_words": 3
-        },
-        {
-          "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
-          "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
-          "hypothesis": "بابا ام برام یه پیراهن اورد، میگه به پش ببین اندازت هست؟",
-          "raw_hypothesis": "بابا ام برام یه پیراهن آورد، می‌گه به پش ببین اندازت هست؟",
-          "wer": 0.7,
-          "cer": 0.1569,
-          "ref_words": 10,
-          "hyp_words": 12
-        },
-        {
-          "audio": "clips/cv_fa_00007969_95940e721b24.wav",
-          "reference": "پلیس حق و حساب بگیر",
-          "hypothesis": "پولیسه هقو اصابهگیر.",
-          "raw_hypothesis": "پولیسه هقو اصابه‌گیر.",
-          "wer": 1.0,
-          "cer": 0.4737,
-          "ref_words": 5,
-          "hyp_words": 3
-        },
-        {
-          "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
-          "reference": "تو من رو ممنوع میکنی؟",
-          "hypothesis": "تو من رو ممنو میکنی؟",
-          "raw_hypothesis": "تو من رو ممنو می‌کنی؟",
-          "wer": 0.2,
-          "cer": 0.0476,
-          "ref_words": 5,
-          "hyp_words": 5
-        },
-        {
-          "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
-          "reference": "تو از دشتای دور و جادههای پر غبار",
-          "hypothesis": "تو از دشتای دور و جادههای پرقبار.",
-          "raw_hypothesis": "تو از دشتای دور و جاده‌های پرقبار.",
-          "wer": 0.25,
-          "cer": 0.0909,
-          "ref_words": 8,
-          "hyp_words": 7
-        },
-        {
-          "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
-          "reference": "نمردیمو معنی عدالتم فهمیدیم",
-          "hypothesis": "نموردیم و مهنی اضالت هم فهمیدیم.",
-          "raw_hypothesis": "نموردیم و مهنی اضالت هم فهمیدیم.",
-          "wer": 1.5,
-          "cer": 0.2963,
-          "ref_words": 4,
-          "hyp_words": 6
-        },
-        {
-          "audio": "clips/cv_fa_00012223_8556160f538d.wav",
-          "reference": "پروانههای کپی لفت را به وجود اورد",
-          "hypothesis": "پروانههای کوپی لیفت را به وجود اورد.",
-          "raw_hypothesis": "پروانه‌های کوپی لیفت را به وجود آورد.",
-          "wer": 0.4286,
-          "cer": 0.0909,
-          "ref_words": 7,
-          "hyp_words": 7
-        },
-        {
-          "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
-          "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
-          "hypothesis": "اگر یک نفصت زندگانی گذرت، مگذرتی جوز به شادمانی گذرت.",
-          "raw_hypothesis": "اگر یک نفصت زندگانی گذرت، مگذرتی جوز به شادمانی گذرت.",
-          "wer": 0.6667,
-          "cer": 0.2453,
-          "ref_words": 12,
-          "hyp_words": 10
-        },
-        {
-          "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
-          "reference": "در هر حال اینکارو کردی",
-          "hypothesis": "در هر حال انکارو کردی.",
-          "raw_hypothesis": "در هر حال انکارو کردی.",
-          "wer": 0.4,
-          "cer": 0.0909,
-          "ref_words": 5,
-          "hyp_words": 5
-        },
-        {
-          "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
-          "reference": "شما نگران زن و بچه این نباش.",
-          "hypothesis": "شما نگران زن و بچه این نباش.",
-          "raw_hypothesis": "شما نگران زن و بچه این نباش.",
-          "wer": 0.0,
-          "cer": 0.0,
-          "ref_words": 7,
-          "hyp_words": 7
-        },
-        {
-          "audio": "clips/cv_fa_00001501_39aee6016733.wav",
-          "reference": "معلومه حسابی قاطی کردی",
-          "hypothesis": "مردمه این سابی قاتی کردی.",
-          "raw_hypothesis": "مردمه این سابی قاتی کردی.",
-          "wer": 1.25,
-          "cer": 0.4091,
-          "ref_words": 4,
-          "hyp_words": 5
-        },
-        {
-          "audio": "clips/cv_fa_00011690_2f37cb3fc74b.wav",
-          "reference": "او همیشه طرفدار پر وپا قرص فرانسه بوده است.",
-          "hypothesis": "او همیشه ترفتار پر و پاپورس فرماسه بوده است.",
-          "raw_hypothesis": "او همیشه ترفتار پر و پاپورس فرماسه بوده است.",
-          "wer": 0.4444,
-          "cer": 0.186,
-          "ref_words": 9,
-          "hyp_words": 9
         }
       ]
     }

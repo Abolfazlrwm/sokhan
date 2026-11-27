@@ -9,16 +9,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 - **Accuracy stack v3 — the default engine is now `large-v3-turbo`.**
   Measured on the same 12-clip Common Voice fa fixture, CPU int8,
-  beam 5, orthography prompt + `fa_polish` (all reproducible via
-  `benchmarks/benchmark_wer.py`): **WER 43.8% / CER 15.9%** vs 56.2% /
-  18.5% for `medium` and 75.0% / 25.0% for `small` — a −12.4-point jump
+  beam 5, `fa_polish` (all reproducible via
+  `benchmarks/benchmark_wer.py`; final numbers after the decode-stack
+  re-measurement below): **WER 37.5% / CER 9.9%** vs 48.8% / 15.4% for
+  `medium` and 70.0% / 25.0% for `small` — a −11.3-point jump
   over the previous default at ~1.2x its decode time on the same 2-core
-  box (~0.69x vs 0.83x realtime, same memory class). Speed profiles stay
+  box (~0.72x vs 0.9x realtime, same memory class). Speed profiles stay
   documented:
-  `WHISPER_MODEL_SIZE=medium` (balanced) and `small` (fast). A focused
-  decode sweep (`tune_decode.py`) confirmed VAD and
-  `condition_on_previous_text` do not move the needle on short clips,
-  so the backend decode defaults stay as they are.
+  `WHISPER_MODEL_SIZE=medium` (balanced) and `small` (fast).
 - `WHISPER_HOTWORDS`: an optional decoder hotword list (faster-whisper
   `hotwords`) for names, brands and jargon the acoustic model keeps
   mangling; wired through config, compose and `.env.example`.
@@ -47,6 +45,38 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   end-to-end through the proxy, logout clears the cookie and revokes the
   token (stale cookie and bearer both 401), and the bot's bearer path needs
   no CSRF token and is unchanged.
+
+### Changed
+
+- **Decode stack re-measured and hardened — every engine got more accurate
+  for free** (same 12-clip Common Voice fa fixture, CPU int8, beam 5,
+  `fa_polish` on both sides; regenerated via `benchmarks/benchmark_wer.py`):
+  `large-v3-turbo` 43.8% → **37.5% WER** (CER 15.9% → 9.9%), `medium`
+  56.2% → 48.8%, `small` 75.0% → 70.0%, and the new default decode is also
+  the fastest so far (84.5 s vs 93.9 s for the same 61.1 s of audio).
+  Three changes, each measured:
+  - **The orthography initial prompt is no longer sent by default** — it
+    helped `small` under the v2 stack but measurably *hurt* `large-v3-turbo`
+    (+3.8 WER points) and `medium`. `WHISPER_INITIAL_PROMPT` stays available
+    and is still worth setting for `small`/`medium` or as a domain lexicon.
+  - **New language-drift guard in the engine.** Whisper occasionally
+    ignores a forced language on short or noise-heavy clips and decodes an
+    unrelated language (a fixture clip came back as *Icelandic*). A decode
+    whose letters mostly fall outside the target language's script
+    (`fa`/`ar`/`ur`/`ps`) is retried once deterministically (temperature 0,
+    VAD forced on) and the result closer to the target script wins —
+    measured on the drift clip: WER 100% → 40%. Languages without a script
+    entry are never guarded, so `en` and friends behave exactly as before.
+  - **`WHISPER_VAD_FILTER` (default `true`)** — the previously hardcoded
+    VAD step is now an operator knob; documented that clean studio audio
+    can gain a fraction of accuracy by turning it off, while real uploads
+    keep it to avoid silence hallucinations.
+- A decode sweep (beam 3/8, `best_of`+`patience`, fixed temperature,
+  `condition_on_previous_text`) moved nothing on the fixture — beam 5 and
+  the default temperature fallback schedule stay. `large-v3` needs
+  >3.4 GB RAM just to load, which rules it out for small VPS boxes; the
+  turbo default keeps the same memory class as `medium` (`WHISPER_MODEL_SIZE=large-v3`
+  remains the one-variable switch on GPU hosts).
 
 ## [1.5.0] - 2026-11-27
 

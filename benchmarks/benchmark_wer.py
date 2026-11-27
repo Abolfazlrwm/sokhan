@@ -43,6 +43,7 @@ import regression  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
 from sokhan.core.fa_polish import polish_transcript  # noqa: E402
 from sokhan.core.persian import normalize_persian  # noqa: E402
+from sokhan.core.transcribe import looks_like_wrong_language  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parent / "data"
 MANIFEST = DATA_DIR / "manifest.csv"
@@ -62,14 +63,13 @@ MODEL_PARAMS = {
     "Abol0pati/whisper-small-fa-sokhan": "244 M",
 }
 
-# v2 decode configuration: an orthography prompt nudges the decoder towards
-# standard written Persian (ZWNJ-correct); measured on the fixture with
-# benchmarks/tune_decode.py (-1.3 WER points on small, -4.8 on the
-# fine-tuned checkpoint). The prompt mirrors the backend default.
-DECODE_PROMPT = (
-    "این صدا به فارسی است. متن را با املای استاندارد و نیم‌فاصلهٔ درست بنویس: "
-    "می‌شود، می‌گویم، کتاب‌ها، بزرگ‌ترین."
-)
+# v3 decode configuration: mirrors the product engine
+# (backend/sokhan/core/transcribe.py) — beam 5, no initial prompt by
+# default (the orthography prompt is model-dependent: it helped small but
+# measurably hurt the turbo default), the VAD filter on, and the
+# language-drift guard active. Decode options live in run_model() below;
+# keep the two in sync when you change the engine.
+DECODE_PROMPT = ""
 
 
 def load_manifest() -> list[dict[str, str]]:
@@ -110,9 +110,25 @@ def run_model(model_name: str, clips: list[dict], language: str) -> dict:
     for clip in clips:
         path = clip["path"]
         segments, info = model.transcribe(
-            str(path), language=language, beam_size=5, initial_prompt=DECODE_PROMPT
+            str(path),
+            language=language,
+            beam_size=5,
+            vad_filter=True,
         )
         hypothesis = " ".join(segment.text for segment in segments).strip()
+        if looks_like_wrong_language(hypothesis, language):
+            # Mirror the product engine's drift retry (single source of
+            # truth: sokhan.core.transcribe.looks_like_wrong_language).
+            retry, _info = model.transcribe(
+                str(path),
+                language=language,
+                beam_size=5,
+                vad_filter=True,
+                temperature=0.0,
+                condition_on_previous_text=False,
+            )
+            hypothesis = " ".join(segment.text for segment in retry).strip()
+        hypothesis = hypothesis.strip()
         reference = normalize_for_wer(clip["reference"])
         hypothesis_normalized = normalize_for_wer(hypothesis)
 
@@ -206,7 +222,8 @@ def main() -> int:
         "manifest": "benchmarks/data/manifest.csv",
         "normalization":
         "v2: polish + normalize_persian applied to both reference and hypothesis",
-        "decoding": "beam_size=5, Persian orthography initial_prompt, CPU int8",
+        "decoding": "beam_size=5, VAD filter on, no initial prompt, "
+        "language-drift guard (mirrors the product engine), CPU int8",
         "total_audio_seconds": round(total_audio, 2),
         "runs": [],
     }

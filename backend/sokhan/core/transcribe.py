@@ -4,6 +4,14 @@
 process-wide singleton model (the weights are heavy; load them once).
 `FakeTranscriber` produces deterministic segments so tests and CI can
 exercise the whole pipeline without downloading model weights.
+
+The engine also carries a language-drift guard: Whisper sometimes ignores
+a forced language on short or noise-heavy clips and decodes text in an
+unrelated language (Icelandic was observed on a forced-fa fixture clip).
+When a forced-language decode comes back mostly outside the language's
+script, the engine retries once deterministically (temperature 0) with the
+VAD filter forced on — measured on the drift clip: WER 100% -> 40% — and
+keeps whichever result better matches the target script.
 """
 
 from __future__ import annotations
@@ -19,6 +27,52 @@ import numpy as np
 from sokhan.config import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Unicode blocks per language code, used by the drift guard. A decode whose
+# letters mostly fall outside the language's script is presumed to have
+# drifted and is retried once. Languages without an entry are never guarded.
+_LANGUAGE_SCRIPT_BLOCKS: dict[str, tuple[tuple[int, int], ...]] = {
+    "fa": ((0x0600, 0x06FF),),
+    "ar": ((0x0600, 0x06FF),),
+    "ur": ((0x0600, 0x06FF),),
+    "ps": ((0x0600, 0x06FF),),
+}
+
+# Below this share of target-script letters a decode is judged drifted.
+# Non-zero: Persian text still contains the occasional Latin brand name.
+_DRIFT_SCRIPT_THRESHOLD = 0.5
+
+# Decoding fewer letters than this is too weak evidence to retry on.
+_MIN_LETTERS_FOR_DRIFT = 8
+
+
+def script_ratio(text: str, blocks: tuple[tuple[int, int], ...]) -> float:
+    """Share of alphabetic characters that fall inside the given blocks."""
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return 1.0
+    inside = sum(
+        1
+        for c in letters
+        if any(low <= ord(c) <= high for low, high in blocks)
+    )
+    return inside / len(letters)
+
+
+def looks_like_wrong_language(text: str, language: str) -> bool:
+    """Whether a forced-language decode drifted to another script.
+
+    Requires enough letters to judge (short answers like "OK" must not
+    trigger a retry) and only ever fires for languages listed in
+    `_LANGUAGE_SCRIPT_BLOCKS`.
+    """
+    blocks = _LANGUAGE_SCRIPT_BLOCKS.get(language)
+    if blocks is None:
+        return False
+    letters = [c for c in text if c.isalpha()]
+    if len(letters) < _MIN_LETTERS_FOR_DRIFT:
+        return False
+    return script_ratio(text, blocks) < _DRIFT_SCRIPT_THRESHOLD
 
 
 @dataclass
@@ -98,7 +152,7 @@ class FasterWhisperTranscriber:
         model = self._load()
         settings = get_settings()
         options: dict[str, object] = {
-            "vad_filter": True,
+            "vad_filter": settings.whisper_vad_filter,
             "beam_size": settings.whisper_beam_size,
         }
         if settings.whisper_initial_prompt:
@@ -109,14 +163,51 @@ class FasterWhisperTranscriber:
             options["hotwords"] = settings.whisper_hotwords
         if language and language != "auto":
             options["language"] = language
-        segments_iter, _info = model.transcribe(samples, **options)  # type: ignore[arg-type]
+        segments = self._collect(model.transcribe(samples, **options))
         chunk_seconds = len(samples) / sample_rate
-        segments: list[Segment] = []
+        if (
+            language
+            and language != "auto"
+            and looks_like_wrong_language(
+                " ".join(s.text for s in segments), language
+            )
+        ):
+            # Deterministic retry with the VAD filter forced on: the drift
+            # clip's noise floor was what pulled the decoder off-language.
+            logger.warning(
+                "decode drifted away from %s; retrying deterministically with VAD",
+                language,
+            )
+            retry_options = {
+                **options,
+                "temperature": 0.0,
+                "condition_on_previous_text": False,
+                "vad_filter": True,
+            }
+            retry_segments = self._collect(
+                model.transcribe(samples, **retry_options)
+            )
+            blocks = _LANGUAGE_SCRIPT_BLOCKS[language]
+            first_ratio = script_ratio(
+                " ".join(s.text for s in segments), blocks
+            )
+            retry_ratio = script_ratio(
+                " ".join(s.text for s in retry_segments), blocks
+            )
+            if retry_ratio > first_ratio:
+                segments = retry_segments
+
         # faster-whisper decodes lazily, segment by segment, so each step of
         # this loop is real work done: report how far into the chunk it is.
-        for segment in segments_iter:
-            if on_progress is not None and chunk_seconds > 0:
+        if on_progress is not None and chunk_seconds > 0:
+            for segment in segments:
                 on_progress(min(1.0, float(segment.end) / chunk_seconds))
+        return segments
+
+    def _collect(self, result) -> list[Segment]:
+        """Materialize the lazy segment iterator into Segment records."""
+        segments: list[Segment] = []
+        for segment in result[0]:
             text = segment.text.strip()
             if not text:
                 continue

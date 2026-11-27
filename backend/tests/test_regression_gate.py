@@ -42,9 +42,9 @@ def test_models_missing_from_baseline_are_ignored():
 def test_load_baseline_reads_the_committed_file():
     path = os.path.join(BENCHMARKS_DIR, "results", "baseline.json")
     baseline = regression.load_baseline(path)
-    # v2 stack (orthography prompt + fa_polish on both sides); the numbers
-    # must match benchmarks/results/baseline.json — regenerate that file via
-    # benchmarks/benchmark_wer.py whenever the stack changes.
-    assert abs(baseline["small"] - 0.75) < 1e-9
-    assert abs(baseline["Abol0pati/whisper-small-fa-sokhan"] - 0.75) < 1e-9
-    assert abs(baseline["medium"] - 0.5625) < 1e-9
+    # v3 stack (no prompt, VAD on, drift guard; fa_polish on both sides);
+    # the numbers must match benchmarks/results/baseline.json — regenerate
+    # that file via benchmarks/benchmark_wer.py whenever the stack changes.
+    assert abs(baseline["small"] - 0.70) < 1e-9
+    assert abs(baseline["medium"] - 0.488) < 1e-9
+    assert abs(baseline["large-v3-turbo"] - 0.375) < 1e-9
