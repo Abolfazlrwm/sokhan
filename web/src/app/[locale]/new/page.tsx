@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "rea
 import { useLocale, useTranslations } from "next-intl";
 import { ChevronDown, FileText, Mic, Square, Upload } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
-import { ApiError, getQuota, getToken, uploadJob, type QuotaInfo } from "@/lib/api";
+import { ApiError, getQuota, uploadJob, type QuotaInfo } from "@/lib/api";
+import { useRequireSignIn } from "@/lib/session";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -43,9 +44,7 @@ export default function NewJobPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    if (!getToken()) router.replace("/login");
-  }, [router]);
+  useRequireSignIn();
 
   useEffect(() => {
     let active = true;

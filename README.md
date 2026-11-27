@@ -180,10 +180,10 @@ docker pull ghcr.io/abolfazlrwm/sokhan-web:latest
 `build:` blocks: keep `up -d --build` to build locally, or
 `docker compose -f deploy/docker-compose.yml pull` and
 `up -d --no-build` to run the published images. Pinned versions follow the
-git tags (e.g. `ghcr.io/abolfazlrwm/sokhan-api:1.2.0`). Note the web image
-bakes `NEXT_PUBLIC_API_BASE` (default `http://localhost:8000`) at build
-time — deployments serving the dashboard from another origin pass the
-build argument themselves.
+git tags (e.g. `ghcr.io/abolfazlrwm/sokhan-api:1.2.0`). The dashboard calls
+the API through its own `/api` path, which the web server proxies to
+`API_PROXY_TARGET` (default `http://api:8000`, baked at build time), so one
+image works on any host or domain.
 
 ## Development
 
@@ -236,7 +236,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `BOT_API_SECRET` | empty | shared secret the bot sends to `POST /auth/telegram`; set the same value on the API and the bot, empty disables Telegram login |
 | `WEB_BASE_URL` | `http://localhost:3000` | links the bot sends |
 | `API_BASE_URL` | `http://localhost:8000` | API address the bot calls |
-| `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | API address the web app calls (build-time) |
+| `NEXT_PUBLIC_API_BASE` | empty (same-origin `/api`) | API address the web app calls, only for an API on its own host (build-time) |
+| `API_PROXY_TARGET` | `http://api:8000` | Where the web server proxies `/api` (build-time) |
 
 See [.env.example](.env.example) for the commented list.
 

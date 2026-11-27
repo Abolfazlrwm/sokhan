@@ -76,6 +76,15 @@ class Settings(BaseSettings):
 
     bot_api_secret: str = ""
 
+    # Dashboard session cookie (httpOnly). AUTH_COOKIE_SECURE=auto sets the
+    # Secure attribute whenever the browser came in over HTTPS (directly or
+    # via X-Forwarded-Proto); true/false force it. The web app proxies the
+    # API under its own origin (/api), so SameSite=lax always applies; a
+    # separately hosted API on another site needs "none" plus HTTPS.
+    auth_cookie_secure: str = "auto"
+    auth_cookie_samesite: str = "lax"
+    auth_cookie_max_age_days: int = 30
+
     # LLM summaries (optional, behind a feature flag)
     summary_enabled: bool = False
     llm_api_base: str = ""

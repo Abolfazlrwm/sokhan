@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { ApiError, login, register, setToken, tokenLogin } from "@/lib/api";
+import { ApiError, login, register, startSession, tokenLogin } from "@/lib/api";
 import { useSession } from "@/lib/session";
 
 type Mode = "login" | "register" | "code";
@@ -78,7 +78,7 @@ export default function LoginPage() {
           : mode === "register"
             ? await register(email.trim(), password)
             : await tokenLogin(code.trim());
-      setToken(result.api_token, result.email);
+      startSession(result);
     } catch (error) {
       setPending(false);
       if (error instanceof ApiError) {

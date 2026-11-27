@@ -58,6 +58,9 @@ services:
       PLAN_PRO_MONTHLY_MINUTES: ${PLAN_PRO_MONTHLY_MINUTES:-1200}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
       BOT_API_SECRET: ${BOT_API_SECRET:-}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-auto}
+      AUTH_COOKIE_SAMESITE: ${AUTH_COOKIE_SAMESITE:-lax}
+      AUTH_COOKIE_MAX_AGE_DAYS: ${AUTH_COOKIE_MAX_AGE_DAYS:-30}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-200}
       SUMMARY_ENABLED: ${SUMMARY_ENABLED:-false}
       LLM_API_BASE: ${LLM_API_BASE:-}
@@ -97,7 +100,10 @@ services:
     build:
       context: ../web
       args:
-        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+        # Empty: the browser calls /api on the web origin, proxied to the api
+        # service, so the session cookie is first-party on any host.
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-}
+        API_PROXY_TARGET: ${API_PROXY_TARGET:-http://api:8000}
     ports:
       - "${SOKHAN_WEB_PORT:-3000}:3000"
     depends_on:

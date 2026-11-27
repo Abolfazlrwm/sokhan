@@ -181,10 +181,10 @@ docker pull ghcr.io/abolfazlrwm/sokhan-web:latest
 خودش نوشته: با `up -d --build` لوکال بسازید، یا با
 `docker compose -f deploy/docker-compose.yml pull` و `up -d --no-build`
 ایمیج‌های منتشرشده را اجرا کنید. نسخه‌های پین‌شده تابع تگ‌های گیت هستند
-(مثل `ghcr.io/abolfazlrwm/sokhan-api:1.2.0`). توجه: ایمیج وب مقدار
-`NEXT_PUBLIC_API_BASE` (پیش‌فرض `http://localhost:8000`) را موقع build
-می‌گیرد — دیپلوی‌هایی که داشبورد را از origin دیگری سرو می‌کنند باید خودشان
-این build argument را بدهند.
+(مثل `ghcr.io/abolfazlrwm/sokhan-api:1.2.0`). داشبورد API را از
+مسیر `/api` روی همان origin خودش صدا می‌زند و وب‌سرور آن را به
+`API_PROXY_TARGET` (پیش‌فرض `http://api:8000`، موقع build) پراکسی می‌کند؛
+برای همین یک ایمیج روی هر هاست یا دامنه‌ای کار می‌کند.
 
 ## توسعه
 
@@ -237,7 +237,8 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `BOT_API_SECRET` | خالی | رمز مشترکی که ربات به `POST /auth/telegram` می‌فرستد؛ روی API و ربات یک مقدار بگذارید، خالی یعنی ورود تلگرامی غیرفعال |
 | `WEB_BASE_URL` | `http://localhost:3000` | لینک‌هایی که ربات می‌فرستد |
 | `API_BASE_URL` | `http://localhost:8000` | آدرس API که ربات صدا می‌زند |
-| `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | آدرس API که اپ وب صدا می‌زند (زمان build) |
+| `NEXT_PUBLIC_API_BASE` | خالی (همان origin، `/api`) | آدرس API که اپ وب صدا می‌زند، فقط وقتی API روی هاست جدا است (زمان build) |
+| `API_PROXY_TARGET` | `http://api:8000` | مقصد پراکسی `/api` در وب‌سرور (زمان build) |
 
 فهرست کامنت‌دار در [.env.example](.env.example).
 

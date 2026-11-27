@@ -40,3 +40,13 @@ def generate_token() -> str:
 
 def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def csrf_token_for(token: str) -> str:
+    """The CSRF token bound to a session token (stateless double submit).
+
+    It is an HMAC keyed by the session token itself, so the server can
+    recompute it from the cookie without storing anything, and a cross-site
+    page that cannot read the cookie cannot derive it either.
+    """
+    return hmac.new(token.encode("utf-8"), b"sokhan-csrf-v1", hashlib.sha256).hexdigest()

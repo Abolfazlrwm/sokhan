@@ -70,7 +70,9 @@ def create_app() -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
-        allow_credentials=False,
+        # The dashboard's session cookie rides on credentialed requests; the
+        # origins above are an explicit list, never a wildcard.
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )

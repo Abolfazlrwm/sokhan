@@ -9,6 +9,15 @@ class AuthResponse(BaseModel):
     id: str
     email: str
     api_token: str
+    # Sent back as X-CSRF-Token on cookie-authenticated writes; absent for
+    # flows that set no cookie (the Telegram bot).
+    csrf_token: str | None = None
+
+
+class SessionOut(BaseModel):
+    id: str
+    email: str
+    csrf_token: str
 
 
 class JobCreated(BaseModel):
