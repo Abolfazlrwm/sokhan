@@ -95,6 +95,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   and duration caps: 30 min on WebGPU, 10 min on WASM, 60 MB per file —
   no input can wedge the demo at an eternal "processing" state anymore.
 
+- `CONTRIBUTING.fa.md`: a Persian translation of the contribution guide,
+  with a language switcher in both files like the READMEs (#31).
+
 ### Changed
 
 - **Demo hang fix**: audio was decoded inside an `AudioContext` forced to
