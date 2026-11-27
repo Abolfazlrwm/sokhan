@@ -1,5 +1,12 @@
 """User-facing strings. The bot speaks Persian; these stay in one place."""
 
+_FA_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
+
+
+def fa_digits(value: object) -> str:
+    """Persian numerals for any value — the bot's UI language is Persian."""
+    return str(value).translate(_FA_DIGITS)
+
 WELCOME = (
     "سلام! من سخن هستم.\n\n"
     "پیام صوتی یا فایل را برایم بفرست تا متن رونویسی‌شده را برایت بنویسم و "
@@ -11,7 +18,13 @@ WELCOME = (
     "برای اتصال حساب وب، این کد را در صفحهٔ ورود سخن وارد کن:\n{connect_code}"
 )
 
-VOICE_RECEIVED = "دریافت شد! در صف پردازش گذاشتم؛ به‌محض آماده شدن، متن را همین‌جا می‌فرستم."
+VOICE_RECEIVED = (
+    "دریافت شد! در صف پردازش گذاشتم؛ پیشرفت را در پیام بعدی زنده می‌بینی و "
+    "متن هم به‌محض آماده شدن همین‌جا فرستاده می‌شود."
+)
+
+# The live-progress message the bot keeps editing while a job runs.
+PROGRESS_LINE = "{bar} {percent}٪\nوضعیت: {status}"
 
 TRANSCRIPT_READY = "متن رونویسی آماده شد:\n\n{transcript}"
 
@@ -33,8 +46,6 @@ WEB_ARCHIVE_BUTTON = "مشاهده در وب"
 
 SUMMARY_NOT_READY = "خلاصه هنوز آماده نیست؛ کمی بعد دوباره امتحان کن."
 SUMMARY_DISABLED = "خلاصه‌سازی روی این سرور فعال نیست."
-
-STATUS_LINE = "وضعیت: {status}\nپیشرفت: {progress}٪"
 
 QUOTA_LINE = (
     "پلن: {plan}\n"

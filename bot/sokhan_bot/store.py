@@ -48,11 +48,53 @@ class TokenStore:
             if self._tokens.pop(str(chat_id), None) is not None:
                 self._save()
 
-    def track(self, job_id: str, chat_id: int) -> None:
-        """Watch a job so the notifier can push its transcript when it finishes."""
+    def track(
+        self,
+        job_id: str,
+        chat_id: int,
+        message_id: int | None = None,
+        progress: float | None = None,
+        status: str | None = None,
+    ) -> None:
+        """Watch a job so the notifier can push its transcript when it finishes.
+
+        `message_id` is the Telegram progress message the notifier keeps
+        editing while the job runs; watches recorded by older bot versions
+        have none and simply get no live progress.
+        """
+        entry: dict = {"chat": chat_id, "since": time.time()}
+        if message_id is not None:
+            entry["message_id"] = int(message_id)
+        if progress is not None:
+            entry["progress"] = float(progress)
+        if status is not None:
+            entry["status"] = str(status)
         with self._lock:
-            self._tracked[str(job_id)] = {"chat": chat_id, "since": time.time()}
+            self._tracked[str(job_id)] = entry
             self._save()
+
+    def watch(self, job_id: str) -> dict | None:
+        """A copy of the full watch entry (chat, since, message_id, ...) or None."""
+        with self._lock:
+            entry = self._tracked.get(str(job_id))
+            return dict(entry) if entry else None
+
+    def set_progress(self, job_id: str, progress: float, status: str) -> None:
+        """Remember the last progress reported for a job (dedupes live edits)."""
+        with self._lock:
+            entry = self._tracked.get(str(job_id))
+            if entry is None:
+                return
+            entry["progress"] = float(progress)
+            entry["status"] = str(status)
+            self._save()
+
+    def drop_message_id(self, job_id: str) -> None:
+        """Stop editing a job's progress message (e.g. the user deleted it)."""
+        with self._lock:
+            entry = self._tracked.get(str(job_id))
+            if entry is not None and entry.pop("message_id", None) is not None:
+                self._save()
 
     def untrack(self, job_id: str) -> None:
         with self._lock:

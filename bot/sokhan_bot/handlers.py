@@ -24,6 +24,7 @@ from sokhan_bot.client import (
     QuotaError,
     SokhanClient,
 )
+from sokhan_bot.notify import progress_message
 from sokhan_bot.split import split_message
 from sokhan_bot.store import TokenStore
 
@@ -179,12 +180,7 @@ class Handlers:
         except BackendError:
             await message.answer(texts.UNKNOWN_JOB)
             return
-        await message.answer(
-            texts.STATUS_LINE.format(
-                status=texts.STATUS_LABELS.get(job["status"], job["status"]),
-                progress=round(job["progress"]),
-            )
-        )
+        await message.answer(progress_message(job))
 
     async def media(self, message: Message, bot: Bot) -> None:
         if self._rate_limited(message.chat.id):
@@ -254,10 +250,18 @@ class Handlers:
             return
 
         await message.answer(texts.VOICE_RECEIVED)
-        self.store.track(job_id, message.chat.id)
-        await message.answer(
-            f"شناسهٔ پردازش: {job_id}\nبا /track {job_id} وضعیت را دنبال کن.",
+        # The progress message doubles as the job-id notice: the notifier
+        # keeps editing it with a live bar until the transcript replaces it.
+        progress_note = await message.answer(
+            progress_message({"id": job_id, "status": "queued", "progress": 0.0}),
             reply_markup=_job_keyboard(job_id, self.client.settings.web_base_url),
+        )
+        self.store.track(
+            job_id,
+            message.chat.id,
+            message_id=progress_note.message_id,
+            progress=0.0,
+            status="queued",
         )
 
     async def summary(self, callback: CallbackQuery) -> None:

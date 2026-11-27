@@ -3,6 +3,29 @@
 All notable changes to Sokhan are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project versions with [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Live progress in the Telegram bot.** The receipt message for a sent
+  voice file now carries the job id and a live bar that the notifier edits
+  in place while the job runs (`▓▓▓░░░░░░░ ۳۰٪`, Persian numerals and the
+  Persian status label), replacing the old "track it yourself with /track"
+  step. Edits are only sent when the percent or the status actually moved,
+  so a queued job never spams Telegram. When the job completes the bar is
+  deleted and the transcript — or the failure notice — lands in its place;
+  watches recorded by older bot versions (without a message id) still get
+  their completion push, just without the live bar. `/track` now renders
+  the same bar instead of a bare percentage.
+- The dashboard cookie session was verified end-to-end against the real
+  deploy topology (the standalone web server proxying `/api` to the API):
+  sign-in sets the `HttpOnly; SameSite=lax` cookie without `Secure` over
+  plain http and with `Secure` behind `X-Forwarded-Proto: https`, cookie
+  writes are refused with 403 without `X-CSRF-Token`, a real upload transcribes
+  end-to-end through the proxy, logout clears the cookie and revokes the
+  token (stale cookie and bearer both 401), and the bot's bearer path needs
+  no CSRF token and is unchanged.
+
 ## [1.5.0] - 2026-11-27
 
 ### Security

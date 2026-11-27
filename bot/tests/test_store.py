@@ -59,3 +59,39 @@ def test_forget_drops_a_token_and_persists(tmp_path):
 
     assert store.get(42) is None
     assert TokenStore(path).get(42) is None
+
+
+def test_track_with_progress_message_roundtrip(tmp_path):
+    path = str(tmp_path / "store.json")
+    store = TokenStore(path)
+    store.track("job-1", 42, message_id=313, progress=0.0, status="queued")
+
+    watch = store.watch("job-1")
+    assert watch["chat"] == 42
+    assert watch["message_id"] == 313
+    assert watch["progress"] == 0.0
+    assert watch["status"] == "queued"
+
+    store.set_progress("job-1", 55.5, "processing")
+    watch = store.watch("job-1")
+    assert watch["progress"] == 55.5
+    assert watch["status"] == "processing"
+
+    # All of it survives a reload.
+    reloaded = TokenStore(path)
+    assert reloaded.watch("job-1")["message_id"] == 313
+    assert reloaded.watch("job-1")["progress"] == 55.5
+
+
+def test_progress_helpers_are_noops_for_unknown_or_bare_watches(tmp_path):
+    store = TokenStore(str(tmp_path / "store.json"))
+
+    store.set_progress("ghost", 50.0, "processing")  # unknown job: no crash
+    store.drop_message_id("ghost")
+
+    store.track("job-1", 42)  # old-style watch: no message id, no progress
+    assert store.watch("job-1") == {"chat": 42, "since": store.watch("job-1")["since"]}
+    assert store.watch("job-1").get("message_id") is None
+
+    store.drop_message_id("job-1")  # no message id stored: nothing to drop
+    assert store.watch("job-1").get("message_id") is None
