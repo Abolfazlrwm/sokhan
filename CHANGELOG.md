@@ -178,6 +178,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
 
+### Fixed
+
+- The Telegram bot recovers when the API revokes the token it cached for a
+  chat (a newer sign-in or a logout of the same account). Every request
+  used to fail from then on; the bot now drops the token, re-registers
+  once and retries, and `/start` only shows a connect code that works.
+
+### Removed
+
+- The landing page's separate sign-in button; signing in lives in
+  the header, and "Get started" sends signed-out visitors to the login
+  page.
+
 ## [1.4.1] - 2026-11-26
 
 ### Security
