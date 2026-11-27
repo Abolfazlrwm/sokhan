@@ -20,8 +20,10 @@
     "themeToLight": "Switch to light theme",
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "signedInAs": "Signed in as {email}",
-    "signOutOf": "Sign out of {email}"
+    "accountMenu": "Account",
+    "accountMenuFor": "Account menu for {email}",
+    "signedInLabel": "Signed in as",
+    "signedIn": "Signed in"
   },
   "landing": {
     "headline": "From speech to text, in moments",
