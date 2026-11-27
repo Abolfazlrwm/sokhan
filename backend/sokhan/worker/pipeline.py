@@ -131,14 +131,19 @@ def process_job(
             chunk_starts = []
             last_saved_at = float("-inf")
 
+            # The progress writer's view of the job row. `job` itself is
+            # reassigned in the failure path below, so the closure reads a
+            # stable alias (and mypy sees a plain Job, not Job | None).
+            job_row = job
+
             def save_progress(value: float) -> None:
                 """Persist mid-chunk progress: monotonic, below 100, ~1/s."""
                 nonlocal last_saved_at
                 value = min(99.0, round(value, 1))
                 now = _progress_clock()
-                if value <= (job.progress or 0.0) or now - last_saved_at < 1.0:
+                if value <= (job_row.progress or 0.0) or now - last_saved_at < 1.0:
                     return
-                job.progress = value
+                job_row.progress = value
                 session.commit()
                 last_saved_at = now
 

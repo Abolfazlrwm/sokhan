@@ -81,7 +81,7 @@ export function SiteHeader() {
           {ready && !signedIn && pathname !== "/login" && (
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600 focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-950"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-teal-600 focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
             >
               <LogIn className="h-4 w-4 rtl:-scale-x-100" aria-hidden="true" />
               <span className="hidden sm:inline">{t("signIn")}</span>

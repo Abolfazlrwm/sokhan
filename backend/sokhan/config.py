@@ -6,6 +6,7 @@ variables per test and clear the cache afterwards.
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -82,7 +83,9 @@ class Settings(BaseSettings):
     # API under its own origin (/api), so SameSite=lax always applies; a
     # separately hosted API on another site needs "none" plus HTTPS.
     auth_cookie_secure: str = "auto"
-    auth_cookie_samesite: str = "lax"
+    # Starlette's set_cookie only accepts these three, so invalid values fail
+    # loudly at startup instead of breaking every sign-in response.
+    auth_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
     auth_cookie_max_age_days: int = 30
 
     # LLM summaries (optional, behind a feature flag)
