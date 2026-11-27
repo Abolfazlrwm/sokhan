@@ -20,6 +20,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - `WHISPER_HOTWORDS`: an optional decoder hotword list (faster-whisper
   `hotwords`) for names, brands and jargon the acoustic model keeps
   mangling; wired through config, compose and `.env.example`.
+- **The LoRA fine-tune is now the measured-best small-class engine under
+  the v3 stack.** Re-benchmarked on the same 12-clip fixture with the
+  product decode stack: `Abol0pati/whisper-small-fa-sokhan` measures
+  **WER 66.2% / CER 22.9%** (79.3% / 24.9% under the v1 harness) —
+  **3.8 WER points better than untuned `small`**, which updates the
+  v1-era conclusion that bigger engines, not the fine-tune, carry the
+  accuracy for small-class deployments. For RAM-tight boxes,
+  `WHISPER_MODEL_SIZE=Abol0pati/whisper-small-fa-sokhan` is now the
+  documented pick — faster-whisper loads the Hub id directly, so it is a
+  config change, not a code change. The v2-era numbers that were still
+  quoted in the README accuracy bullets, `config.py`, the Space README,
+  the Gradio app docstrings and the model card are all refreshed to the
+  v3 measurements; the per-clip session is archived under
+  `benchmarks/results/archive/`.
+- **The browser demo's greedy decode is verified, not accidental.** A
+  beam sweep on the fixture (beam 1/2/5, same `small` model and
+  protocol) measures WER 70.0% / 71.2% / 70.0% — beam search moves
+  nothing on the small class and costs ~10–15% wall time, so the demo
+  keeps greedy decode. Documented in `benchmarks/README.md` with the
+  reproduction command (`benchmarks/tune_decode.py --models small
+  --beams 1 5`).
 - **The browser demo offers the same turbo engine as an opt-in**
   (`onnx-community/whisper-large-v3-turbo`, fp16 encoder + q4 decoder,
   ~1.5 GB download, WebGPU-only with an fp32-encoder fallback and an

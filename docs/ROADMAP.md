@@ -99,7 +99,9 @@ plus the highest-value experiments:
 - [ ] **Fine-tuned checkpoint in the browser.** Upload the merged HF
   weights (notebook cell 11), export ONNX, and point the client-side
   demo at it — the free Static Space would then demo the *fine-tuned*
-  model with zero hosting cost
+  model with zero hosting cost. Measured incentive: under the v3 decode
+  stack the fine-tune runs 3.8 WER points ahead of the untuned small the
+  demo loads today (66.2% vs 70.0%, benchmarks/README.md)
 - [ ] Extend the benchmark fixture beyond 12 clips (issue #29, target:
   200 clips stratified by age/gender and accent bands) so WER deltas
   stop being noise-limited

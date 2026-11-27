@@ -218,7 +218,7 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `REDIS_URL` | `redis://localhost:6379/0` | broker/backend سِلِری |
 | `CELERY_ENABLED` | `true` | `false` یعنی کارها درون‌فرآیندی (بدون Redis) |
 | `DATA_DIR` | `./data` | محل ذخیرهٔ صداهای آپلودشده |
-| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | tiny/base/small/medium/large-v3-turbo/large-v3 |
+| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | هر اندازهٔ faster-whisper یا شناسهٔ Hub — مثلاً `medium`، `large-v3`، یا `Abol0pati/whisper-small-fa-sokhan` |
 | `WHISPER_HOTWORDS` | `` | فهرست واژهٔ داغ برای اسم‌ها/برندها/اصطلاحات |
 | `WHISPER_DEVICE` | `cpu` | یا `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | روی GPU: `float16` |
@@ -299,21 +299,22 @@ site/        لندینگ‌پیج GitHub Pages (دیپلوی خودکار)
 ## وضعیت پروژه و محدودیت‌های صادقانه
 
 - دقت: اندازه‌گیری‌شده روی نمونهٔ ثابت عمومی — ۱۲ کلیپ واقعی Common Voice
-  (فارسی)، ۶۱ ثانیه صدا، مرجعِ تأییدشدهٔ انسانی. پشتهٔ دقت v2 (پرامپت ارتوگرافی
-  فارسی + پست‌پروسس `fa_polish`، هر دو در [benchmarks/](benchmarks/README.md)
-  اندازه‌گیری شده) فیکسچر را از **WER 80.5% به 75.0% روی `small`** می‌رساند و
-  **موتور پیش‌فرض حالا `large-v3-turbo` است: WER 43.8% / CER 15.9%** —
-  یعنی ۱۲٫۴ واحد بهتر از `medium` (۵۶٫۲٪ / ۱۸٫۵٪) با ~۱٫۲ برابر زمانِ
-  پردازش آن روی همان ماشین ۲ هسته‌ای (~۰٫۶۹× در برابر ۰٫۸۳× بلادرنگ،
-  هم‌کلاس حافظه؛ برای حالت
-  متعادل `WHISPER_MODEL_SIZE=medium` و برای سرعت‌محور `small` بگذارید).
-  دموی مرورگری هم همین موتور turbo را به‌صورت اختیاری روی WebGPU ارائه
-  می‌دهد. اولین فاین‌تیون GPU — LoRA روی
-  `whisper-small`، ۵۰۰ کلیپ، T4 رایگان Colab — با همان هارنس v2 عدد
-  **WER 75.0% / CER 31.0%** می‌گیرد
+  (فارسی)، ۶۱ ثانیه صدا، مرجعِ تأییدشدهٔ انسانی؛ همهٔ عددهای زیر از
+  [benchmarks/](benchmarks/README.md) بازتولیدشدنی‌اند. **پشتهٔ decode v3**
+  (فیلتر VAD پیش‌فرض، بدون پرامپت به‌صورت پیش‌فرض، و نگهبانِ رانشِ زبان)
+  روی `small` عدد **WER 70.0% / CER 25.0%** می‌دهد و **موتور پیش‌فرض
+  `large-v3-turbo` است: WER 37.5% / CER 9.9%** — یعنی ۱۱٫۳ واحد بهتر از
+  پروفایل `medium` (۴۸٫۸٪ / ۱۵٫۴٪) در همان کلاس حافظه
+  (`WHISPER_MODEL_SIZE=medium` برای حالت متعادل). دموی مرورگری هم همین
+  موتور turbo را به‌صورت اختیاری روی WebGPU ارائه می‌دهد. فاین‌تیون GPU —
+  LoRA روی `whisper-small`، ۵۰۰ کلیپ، T4 رایگان Colab — زیر پشتهٔ v3 عدد
+  **WER 66.2% / CER 22.9%** می‌گیرد
   ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan))
-  — یعنی بهتر از smallِ ریزتنظیم‌نشده نیست؛ برای همین امروز بارِ دقت روی
-  موتورهای بزرگ‌تر است، نه آن فاین‌تیون.
+  و حالا **۳٫۸ واحد از smallِ ریزتنظیم‌نشده بهتر است**: برای ماشین‌هایی که
+  رمِ `medium`/turbo ندارند،
+  `WHISPER_MODEL_SIZE=Abol0pati/whisper-small-fa-sokhan` بهترین موتور
+  اندازه‌گیری‌شدهٔ کلاس small است (faster-whisper شناسهٔ Hub را مستقیماً
+  لود می‌کند؛ تغییر دیگری لازم نیست).
   این عددها همچنان به‌خاطر عامیانه و پرنویز بودن Common Voice فارسی بالاست؛
   گفتار بازخوانی خیلی ساده‌تر است. روش کامل و خروجیِ هر کلیپ:
   [benchmarks/README.md](benchmarks/README.md).

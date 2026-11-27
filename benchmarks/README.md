@@ -27,13 +27,17 @@ VAD forced on) and the more-Persian result wins.
 | Model | Params | WER (v3) | CER (v3) | Wall time | vs v2 |
 | --- | --- | --- | --- | --- | --- |
 | small | 244 M | 70.0% | 25.0% | 24.7 s | −5.0 |
+| Abol0pati/whisper-small-fa-sokhan (fine-tuned) | 244 M | 66.2% | 22.9% | 23.0 s | −8.8 |
 | medium | 769 M | 48.8% | 15.4% | 68.2 s | −7.4 |
 | **large-v3-turbo (default)** | 809 M | **37.5%** | **9.9%** | 84.5 s | −6.3 |
 
 Every guarded model improved — the v2 orthography prompt was actively
 hurting the modern decode configs, and the drift guard recovers a clip
 that Whisper decoded as **Icelandic** (`در هر حال اینکارو کردی` →
-`Er hær hálf einhver kjærði?`, retried → `ار هر حال انکار کردی`).
+`Er hær hálf einhver kjærði?`, retried → `ار هر حال انکار کردی`). The
+fine-tuned row is measured in [the fine-tuned section below](#the-fine-tuned-checkpoint-under-the-v3-stack-measured-2026-11-27)
+— under the stack the product actually ships, the LoRA checkpoint now
+beats untuned `small` by 3.8 WER points.
 
 The v4 sweep (`--quick`-style probes over beam 3/8, best_of+patience,
 temperature 0, `condition_on_previous_text`) moved nothing else: beam 5
@@ -45,6 +49,48 @@ Why not `large-v3`? It measured well in isolation but **needs >3.4 GB RAM
 just to load** (int8), which OOMs on small VPS boxes — the turbo default
 keeps the same memory class as `medium`. On a GPU host it remains one
 environment variable away: `WHISPER_MODEL_SIZE=large-v3`.
+
+## The fine-tuned checkpoint under the v3 stack (measured, 2026-11-27)
+
+The LoRA fine-tune of `whisper-small` (500 clips, free Colab T4) was
+previously measured under the v1 harness only, where it beat untuned
+`small` by 1.2 WER points (79.3% vs 80.5%) and tied it under v2 (75.0%).
+Re-measured with the v3 decode stack — beam 5, VAD on, no prompt, drift
+guard, the exact product engine — it moves to **WER 66.2% / CER 22.9%**,
+now **3.8 points better than untuned `small` (70.0%)**. The stack's
+improvements compound on the fine-tuned weights; the full per-clip output
+lives in
+[results/archive/20261127-131850-Abol0pati_whisper-small-fa-sokhan.json](results/archive/20261127-131850-Abol0pati_whisper-small-fa-sokhan.json).
+
+Practical consequences, both measured and honest:
+
+- **Small-RAM deployments get a better engine today, with no code
+  change.** faster-whisper loads the Hub repo id directly, so
+  `WHISPER_MODEL_SIZE=Abol0pati/whisper-small-fa-sokhan` replaces
+  `small` on boxes that cannot fit `medium`/turbo RAM.
+- **The browser demo keeps `Xenova/whisper-small` for now.** The
+  fine-tuned checkpoint is published as a CTranslate2 build only
+  (`model.bin`); transformers.js needs ONNX exports the repo does not
+  carry yet. Publishing the merged PyTorch checkpoint (or running
+  [training/export_web_onnx.py](../training/export_web_onnx.py) against
+  it) unlocks a −3.8-point demo upgrade — tracked on the roadmap.
+
+## Does the browser demo need beam search? (measured: no)
+
+The demo decodes greedily (transformers.js default) while the backend
+engine runs beam 5 — an apparent gap worth measuring rather than
+assuming. On this fixture, with the same `small` model and the product
+protocol, beam search moves nothing: **beam 1 (greedy) 70.0% WER, beam 2
+71.2%, beam 5 70.0%** (v2 normalization, VAD on, drift guard). The repo's
+own sweep harness agrees under its v1-style normalization:
+
+    python benchmarks/tune_decode.py --models small --beams 1 5
+
+measures 79.3% for both beam widths. Greedy stays the demo's decode: it
+matches beam-5 accuracy at ~10–15% less wall time, which on a 2-core
+browser tab is the difference visitors feel. If a future fixture ever
+shows a gap, wiring `num_beams` into `space/worker.js` is a one-line
+change.
 
 ## Previous sessions
 
@@ -146,6 +192,10 @@ Honest caveats, per project policy:
 ```bash
 python benchmarks/benchmark_wer.py --models small Abol0pati/whisper-small-fa-sokhan
 ```
+
+Update 2026-11-27: re-measured under the v3 decode stack this checkpoint
+moves to WER 66.2% / CER 22.9% — now clearly ahead of untuned `small`.
+See [the fine-tuned section above](#the-fine-tuned-checkpoint-under-the-v3-stack-measured-2026-11-27).
 
 Next run on the same notebook: `MAX_SAMPLES = 0` (the full 10-hour
 manifest) — roughly 1.5–2 h on a free T4 — should turn this small gain

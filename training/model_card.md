@@ -52,14 +52,22 @@ on CPU int8 — the same config the
 Every number below comes from a reproducible run
 (`benchmarks/benchmark_wer.py`): 12 real Common Voice (fa) clips with
 human-verified references, beam_size=5, the same Persian normalization
-applied to reference and hypothesis. Session 2026-11-18,
-faster-whisper 1.2.1 / CTranslate2 4.9.0, CPU int8.
+applied to reference and hypothesis. Sessions 2026-11-18 (v1/v2 harness,
+faster-whisper 1.2.1 / CTranslate2 4.9.0) and 2026-11-27 (v3 stack,
+CTranslate2 4.9.1), CPU int8.
 
-| model | WER (v1 harness) | WER (v2 harness: orthography prompt + polish) |
-| --- | --- | --- |
-| openai whisper-small (baseline) | 80.5% | 75.0% |
-| **whisper-small-fa-sokhan** | **79.3%** | **75.0%** |
-| openai whisper-medium (untuned, for scale) | — | 56.2% |
+| model | WER (v1 harness) | WER (v2 harness) | WER (v3 stack: VAD + drift guard, no prompt) |
+| --- | --- | --- | --- |
+| openai whisper-small (baseline) | 80.5% | 75.0% | 70.0% |
+| **whisper-small-fa-sokhan** | **79.3%** | **75.0%** | **66.2%** |
+| openai whisper-medium (untuned, for scale) | — | 56.2% | 48.8% |
+
+The v3 column (per-clip session archived at
+`benchmarks/results/archive/20261127-131850-Abol0pati_whisper-small-fa-sokhan.json`)
+flips the earlier tie: under the stack the product actually ships, this
+checkpoint runs **3.8 WER points ahead of the untuned baseline** —
+the stack's VAD + drift-guard improvements compound on the fine-tuned
+weights.
 
 In-training held-out eval (10 clips): WER 85.1% → 81.6%; training loss
 3.63 → 1.75. With a Persian orthography initial prompt alone (no polish),
@@ -70,8 +78,8 @@ this checkpoint measures 72.0% vs 76.8% without — the prompt is worth
 noise floor; the direction matches the in-training eval but the ceiling
 is unknown until the same notebook runs over the full ~10-hour manifest
 (`MAX_SAMPLES=0`, ~2 h on a free T4) — and the measured untuned
-small-vs-medium gap (75.0% vs 56.2%) says the next fine-tune should
-target `whisper-medium`, not more data on `small`. Common Voice fa is
+small-vs-medium gap (70.0% vs 48.8% under v3) says the next fine-tune
+should target `whisper-medium`, not more data on `small`. Common Voice fa is
 colloquial and noisy — these WER numbers are much higher than typical
 read-speech benchmarks. Do not cite this model as production-ready
 Persian ASR yet.

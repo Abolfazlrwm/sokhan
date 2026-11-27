@@ -9,11 +9,12 @@ anyone transcribe the same clip through the fine-tuned model and the
 untuned baseline, which is the honest way to hear what 500 fine-tune clips
 change.
 
-Numbers first: the fine-tuned checkpoint measures WER 79.3% vs 80.5% for
-the baseline on the 12-clip Common Voice (fa) fixture
-(benchmarks/README.md). Persian Common Voice is colloquial and noisy, so
-both models make plenty of mistakes — this demo exists so people can try
-the engine without self-hosting anything.
+Numbers first: under the current v3 decode stack the fine-tuned
+checkpoint measures WER 66.2% vs 70.0% for the untuned baseline on the
+12-clip Common Voice (fa) fixture (benchmarks/README.md). Persian Common
+Voice is colloquial and noisy, so both models make plenty of mistakes —
+this demo exists so people can try the engine without self-hosting
+anything.
 """
 
 from __future__ import annotations
@@ -85,8 +86,9 @@ DESCRIPTION = """
 روی CPU سرو می‌شود، اینجا با چک‌پوینت ریزتنظیم‌شده با LoRA روی ۵۰۰ کلیپ
 Common Voice فارسی (آموزش رایگان روی T4 کولب).
 
-مدل ریزتنظیم‌شده در اندازه‌گیری ثابت پروژه به **WER 79.3%** رسیده
-(پایه: 80.5%) — اما داده‌ی آموزش کم است و Common Voice فارسی محاوره‌ای و
+مدل ریزتنظیم‌شده در اندازه‌گیری ثابت پروژه زیر پشتهٔ decode v3 به **WER
+66.2%** رسیده (پایهٔ ریزتنظیم‌نشده: 70.0%) — اما داده‌ی آموزش کم است و
+Common Voice فارسی محاوره‌ای و
 پرنویز است؛ هر دو مدل اشتباه می‌کنند. برای مقایسه، همان صدا را با هر دو
 مدل اجرا کنید.
 کد کامل: [github.com/Abolfazlrwm/sokhan](https://github.com/Abolfazlrwm/sokhan)

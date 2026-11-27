@@ -21,14 +21,16 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
 
     # Whisper
-    # Accuracy-first default: `large-v3-turbo` measured 43.8% WER on the
-    # Persian fixture vs 56.2% for `medium` and 75.0% for `small` (CPU int8,
-    # beam 5, fa_polish; benchmarks/benchmark_wer.py). The accuracy jump
-    # costs ~1.2x decode time on the same 2-core box (turbo ran ~0.69x
-    # realtime vs ~0.83x for medium) at the same memory class. Note that
-    # `large-v3` measured even better in the past but needs >3.4 GB RAM just
-    # to load, which rules out small VPS boxes; turbo stays the default.
-    # Speed profiles: WHISPER_MODEL_SIZE=medium (balanced) or small (fast).
+    # Accuracy-first default: `large-v3-turbo` measured 37.5% WER on the
+    # Persian fixture vs 48.8% for `medium` and 70.0% for `small` (CPU
+    # int8, beam 5, VAD on, no prompt; benchmarks/benchmark_wer.py) at the
+    # same memory class as medium. Note that `large-v3` measured even
+    # better in the past but needs >3.4 GB RAM just to load, which rules
+    # out small VPS boxes; turbo stays the default.
+    # Speed profiles: WHISPER_MODEL_SIZE=medium (balanced) or
+    # Abol0pati/whisper-small-fa-sokhan (fast; the LoRA fine-tune measures
+    # 66.2% WER — 3.8 points better than untuned small, see
+    # benchmarks/README.md).
     whisper_model_size: str = "large-v3-turbo"
     whisper_device: str = "cpu"
     whisper_compute_type: str = "int8"

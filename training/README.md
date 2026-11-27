@@ -123,13 +123,16 @@ current ML stack surfaced and are fixed:
 - The GPU-scale run exists (2026-11-18, free Colab T4): `whisper-small` +
   LoRA on 500 clips / ≈45 minutes of speech, 3 epochs in ~7 minutes —
   under the v1 harness that was fixture WER 80.5% → 79.3%; re-measured
-  under the v2 harness (orthography prompt + polish, see
-  `benchmarks/README.md`) it lands at 75.0%. Real, but small; the same
-  notebook at `MAX_SAMPLES = 0` (the full 10-hour manifest, ~1.5–2 h on a
+  under the v2 harness (orthography prompt + polish) it lands at 75.0%,
+  and under the current v3 decode stack (VAD filter + drift guard, see
+  `benchmarks/README.md`) it measures **66.2% — now 3.8 WER points ahead
+  of untuned `small` (70.0%)**, the first checkpoint that clearly wins
+  its weight class. The same notebook at `MAX_SAMPLES = 0` (the full
+  10-hour manifest, ~1.5–2 h on a
   T4) is the next run, ideally paired with a larger speaker-disjoint
   hold-out than the default 2% eval split.
 - **Next-level run (recommended): LoRA on `whisper-medium`.** The measured
-  untuned gap (small 75.0% vs medium 56.2% WER under v2) shows the base
+  untuned gap (small 70.0% vs medium 48.8% WER under v3) shows the base
   model is the bottleneck, not the adapter size. The same notebook with
   `MODEL_NAME = "openai/whisper-medium"` fits a free T4 (~1.5 GB LoRA
   state in int8 bf16); even 2–3 hours of Persian speech there should

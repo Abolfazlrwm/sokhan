@@ -217,7 +217,7 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `REDIS_URL` | `redis://localhost:6379/0` | Celery broker/backend |
 | `CELERY_ENABLED` | `true` | `false` runs jobs inline (no Redis) |
 | `DATA_DIR` | `./data` | Uploaded audio storage |
-| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | tiny/base/small/medium/large-v3-turbo/large-v3 |
+| `WHISPER_MODEL_SIZE` | `large-v3-turbo` | any faster-whisper size or Hub id — e.g. `medium`, `large-v3`, or `Abol0pati/whisper-small-fa-sokhan` |
 | `WHISPER_HOTWORDS` | `` | decoder hotword list for names/brands/jargon |
 | `WHISPER_DEVICE` | `cpu` | or `cuda` |
 | `WHISPER_COMPUTE_TYPE` | `int8` | `float16` on GPU |
@@ -298,22 +298,22 @@ explicit instead of implied:
 ## Project status and honest limits
 
 - Accuracy: measured on a fixed public sample — 12 real Common Voice (fa)
-  clips, 61 s of audio, human-verified references. The v2 accuracy stack
-  (Persian orthography initial prompt + `fa_polish` post-processing, both
-  measured in [benchmarks/](benchmarks/README.md)) lifts the fixture from
-  **WER 80.5% → 75.0% on `small`**, and the **default engine is now
-  `large-v3-turbo`: WER 43.8% / CER 15.9%** — a −12.4-point jump over
-  `medium` (56.2% / 18.5%) at ~1.2x its decode time on the same 2-core
-  machine (~0.69x vs 0.83x realtime, same memory class; set
-  `WHISPER_MODEL_SIZE=medium` for the
-  balanced profile or `small` for the speed-first one). The browser demo
-  offers the same turbo engine as an opt-in on WebGPU. The first GPU
-  fine-tune — LoRA on `whisper-small`,
-  500 clips, free Colab T4 — measures **WER 75.0% / CER 31.0%** under the
-  same v2 harness
-  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan))
-  — i.e. no better than untuned `small`, which is why bigger engines, not
-  that fine-tune, carry the accuracy today.
+  clips, 61 s of audio, human-verified references; every number below is
+  reproducible from [benchmarks/](benchmarks/README.md). The **v3 decode
+  stack** (VAD filter on by default, no initial prompt by default, and a
+  language-drift guard) measures **WER 70.0% / CER 25.0% on `small`**, and
+  the **default engine is `large-v3-turbo`: WER 37.5% / CER 9.9%** —
+  −11.3 points vs the `medium` profile (48.8% / 15.4%) in the same memory
+  class (set `WHISPER_MODEL_SIZE=medium` for the balanced profile). The
+  browser demo offers the same turbo engine as an opt-in on WebGPU. The
+  GPU fine-tune — LoRA on `whisper-small`, 500 clips, free Colab T4 —
+  re-measured under the v3 stack at **WER 66.2% / CER 22.9%**
+  ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)),
+  now **3.8 WER points better than untuned `small`**: for boxes without
+  the RAM for `medium`/turbo,
+  `WHISPER_MODEL_SIZE=Abol0pati/whisper-small-fa-sokhan` is the
+  measured-best small-class engine (faster-whisper loads the Hub id
+  directly; no other change needed).
   These numbers are still high because Common Voice fa is colloquial and
   noisy; read speech is far easier. Full methodology and per-clip output:
   [benchmarks/README.md](benchmarks/README.md).

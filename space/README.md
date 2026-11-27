@@ -33,16 +33,20 @@ Three models are selectable: untuned **base** and **small** so anyone can
 hear the difference, plus an opt-in **large-v3-turbo**
 ([`onnx-community/whisper-large-v3-turbo`](https://huggingface.co/onnx-community/whisper-large-v3-turbo),
 fp16 encoder + q4 decoder, ~1.5 GB download) that runs only on WebGPU and
-measured WER 43.8% on the Persian fixture — the same engine the
+measured WER 37.5% on the Persian fixture — the same engine the
 self-hosted backend runs by default. The **fine-tuned** checkpoint
 ([`Abol0pati/whisper-small-fa-sokhan`](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan),
-LoRA on 500 Common Voice fa clips, measured WER 79.3% vs 80.5% baseline)
+LoRA on 500 Common Voice fa clips, measured WER 66.2% vs 70.0% untuned
+under the v3 decode stack)
 is served by the same engine Sokhan runs in production — the app for that
 lives in [`space/gradio/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio)
 for self-hosting, because HF's 2026 pricing gates hosted Gradio/Docker
 Spaces behind a PRO subscription and only **static** Spaces (like this
 page) remain free. Porting the fine-tune to ONNX for the browser is on
-the roadmap ([docs/ROADMAP.md](https://github.com/Abolfazlrwm/sokhan/blob/main/docs/ROADMAP.md)).
+the roadmap ([docs/ROADMAP.md](https://github.com/Abolfazlrwm/sokhan/blob/main/docs/ROADMAP.md)),
+and `training/export_web_onnx.py` already automates the merge → ONNX →
+quantize → Hub pipeline; it only needs the merged PyTorch checkpoint
+from a notebook run.
 
 Persian Common Voice is colloquial and noisy — expect real mistakes, from
 every Whisper size.
