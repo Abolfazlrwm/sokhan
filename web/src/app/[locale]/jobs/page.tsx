@@ -24,6 +24,8 @@ function formatDate(iso: string, locale: string): string {
   }
 }
 
+const REFRESH_INTERVAL_MS = 3000;
+
 export default function JobsPage() {
   const t = useTranslations("jobs");
   const tc = useTranslations("common");
@@ -35,6 +37,8 @@ export default function JobsPage() {
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<JobListItem[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
+  // Bumped to re-fetch the list while any job is still queued or processing.
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     if (!getToken()) router.replace("/login");
@@ -72,7 +76,15 @@ export default function JobsPage() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, refreshTick]);
+
+  const hasRunningJobs =
+    items?.some((job) => job.status === "queued" || job.status === "processing") ?? false;
+  useEffect(() => {
+    if (!hasRunningJobs) return;
+    const timer = setTimeout(() => setRefreshTick((tick) => tick + 1), REFRESH_INTERVAL_MS);
+    return () => clearTimeout(timer);
+  }, [hasRunningJobs, items]);
 
   const hasQuery = query.trim().length > 0;
 
@@ -169,13 +181,15 @@ export default function JobsPage() {
                     <StatusBadge status={job.status} />
                   </div>
                 </div>
-                {job.status === "processing" ? (
+                {job.status === "queued" || job.status === "processing" ? (
                   <div className="mt-4">
                     <ProgressBar value={job.progress} label={t("progressLabel")} />
                     <p className="mt-1.5 text-xs text-stone-500">
-                      {t("percent", {
-                        value: nf.format(Math.min(100, Math.max(0, job.progress))),
-                      })}
+                      {job.progress > 0
+                        ? t("percent", {
+                            value: nf.format(Math.min(100, Math.round(job.progress))),
+                          })
+                        : t("preparing")}
                     </p>
                   </div>
                 ) : null}

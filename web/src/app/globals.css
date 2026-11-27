@@ -5,6 +5,16 @@
 @theme {
   --font-vazir: var(--font-vazirmatn, Vazirmatn), var(--font-inter, Inter), ui-sans-serif,
     system-ui, sans-serif;
+  --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
+
+  @keyframes progress-indeterminate {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(250%);
+    }
+  }
 }
 
 body {

@@ -34,8 +34,14 @@ export function StatusBadge({ status }: { status: JobStatus }) {
   );
 }
 
+/**
+ * Determinate bar once the worker reports progress. While nothing has been
+ * reported yet (queued, model loading, first seconds of decoding) it shows
+ * a moving bar instead of an empty track that looks stuck.
+ */
 export function ProgressBar({ value, label }: { value: number; label?: string }) {
   const clamped = Math.min(100, Math.max(0, value));
+  const indeterminate = clamped <= 0;
 
   return (
     <div
@@ -43,13 +49,18 @@ export function ProgressBar({ value, label }: { value: number; label?: string })
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(clamped)}
+      aria-valuenow={indeterminate ? undefined : Math.round(clamped)}
+      aria-busy={indeterminate || undefined}
       aria-label={label}
     >
-      <div
-        className="h-full rounded-full bg-teal-700 transition-[width] duration-500 ease-out"
-        style={{ width: `${clamped}%` }}
-      />
+      {indeterminate ? (
+        <div className="h-full w-2/5 rounded-full bg-teal-700/70 animate-progress-indeterminate motion-reduce:w-full motion-reduce:animate-pulse" />
+      ) : (
+        <div
+          className="h-full rounded-full bg-teal-700 transition-[width] duration-500 ease-out"
+          style={{ width: `${clamped}%` }}
+        />
+      )}
     </div>
   );
 }

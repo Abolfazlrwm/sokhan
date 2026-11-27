@@ -102,6 +102,7 @@
     "statusFailed": "ناموفق",
     "progressLabel": "پیشرفت پردازش",
     "percent": "{value}٪",
+    "preparing": "در حال آماده‌سازی…",
     "emptyTitle": "هنوز رونویسی‌ای نداری",
     "emptyDesc": "اولین فایل را بارگذاری کن تا همین‌جا فهرست شود.",
     "emptyCta": "رونویسی تازه",

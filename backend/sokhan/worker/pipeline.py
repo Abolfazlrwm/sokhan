@@ -19,6 +19,7 @@ never hold a transaction open.
 """
 
 import logging
+import time
 from collections.abc import Iterator
 from dataclasses import replace
 from typing import Any
@@ -41,13 +42,18 @@ from sokhan.core.persian import normalize_for_search
 from sokhan.core.punctuation import restore_punctuation
 from sokhan.core.quota import record_usage
 from sokhan.core.summary import Summarizer, get_summarizer
-from sokhan.core.transcribe import Transcriber, get_transcriber
+from sokhan.core.transcribe import Transcriber, get_transcriber, reports_progress
 from sokhan.core.webhooks import build_payload, fire_job_callback
 from sokhan.db import session_scope
 from sokhan.diarization import Diarizer, SpeakerTurn, get_diarizer, label_segments
 from sokhan.models import Job, JobStatus, Segment, utcnow
 
 logger = logging.getLogger(__name__)
+
+
+# Clock for throttling progress writes; a module attribute so tests can
+# swap it without patching the process-wide `time.monotonic`.
+_progress_clock = time.monotonic
 
 
 def process_job(
@@ -123,11 +129,38 @@ def process_job(
 
             chunk_segments = []
             chunk_starts = []
+            last_saved_at = float("-inf")
+
+            def save_progress(value: float) -> None:
+                """Persist mid-chunk progress: monotonic, below 100, ~1/s."""
+                nonlocal last_saved_at
+                value = min(99.0, round(value, 1))
+                now = _progress_clock()
+                if value <= (job.progress or 0.0) or now - last_saved_at < 1.0:
+                    return
+                job.progress = value
+                session.commit()
+                last_saved_at = now
+
             for position, chunk in enumerate(chunk_source, start=1):
                 chunk_starts.append(chunk.start)
-                chunk_segments.append(
-                    engine.transcribe(chunk.samples, SAMPLE_RATE, job.language)
-                )
+
+                def chunk_progress(
+                    fraction: float, position: int = position, chunk: Chunk = chunk
+                ) -> None:
+                    if chunk_total is not None:
+                        save_progress((position - 1 + fraction) / chunk_total * 100.0)
+                    elif estimated_duration:
+                        done = chunk.start + fraction * (chunk.end - chunk.start)
+                        save_progress(done / estimated_duration * 99.0)
+
+                if reports_progress(engine):
+                    segments = engine.transcribe(  # type: ignore[call-arg]
+                        chunk.samples, SAMPLE_RATE, job.language, on_progress=chunk_progress
+                    )
+                else:
+                    segments = engine.transcribe(chunk.samples, SAMPLE_RATE, job.language)
+                chunk_segments.append(segments)
                 if chunk_total is not None:
                     job.progress = round(position / chunk_total * 100.0, 1)
                 elif estimated_duration:
