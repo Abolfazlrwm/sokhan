@@ -1,6 +1,6 @@
 {
   "name": "sokhan-web",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "private": true,
   "description": "Persian-first RTL web dashboard for Sokhan speech-to-text",
   "license": "PolyForm-Noncommercial-1.0.0",

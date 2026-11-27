@@ -3,7 +3,7 @@
 All notable changes to Sokhan are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the project versions with [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.5.0] - 2026-11-27
 
 ### Security
 

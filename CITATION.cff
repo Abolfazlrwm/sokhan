@@ -6,8 +6,8 @@ authors:
   - family-names: Ranjbaran
     given-names: Abolfazl
     email: 206173650+Abolfazlrwm@users.noreply.github.com
-version: "1.4.1"
-date-released: "2026-11-26"
+version: "1.5.0"
+date-released: "2026-11-27"
 license: PolyForm-Noncommercial-1.0.0
 repository-code: "https://github.com/Abolfazlrwm/sokhan"
 url: "https://abolfazlrwm.github.io/sokhan/"
