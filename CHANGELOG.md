@@ -57,6 +57,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   `space/check_demo_ui.js` — a dependency-free node harness that stubs
   the DOM/Worker and asserts the WER helpers plus all five auto-pick
   branches (`node space/check_demo_ui.js`).
+- **The demo's model picker carries the fine-tuned ONNX build**
+  (`Abol0pati/whisper-small-fa-sokhan-web`, int8, ~250 MB on WASM;
+  WebGPU pairs the fp32 encoder with a q8 decoder because the export
+  ships no q4 files). It goes live the moment the notebook's cell-11
+  upload publishes the repo on the Hub; `space/check_demo_ui.js` now
+  pins the option, the load profile and the restore behavior.
 - **Per-run accuracy on the bundled sample.** After the sample clip is
   transcribed, the demo computes its word error rate against the
   human-verified reference client-side (same polish normalization

@@ -44,6 +44,14 @@ const MODEL_PROFILES = {
     webgpu: { encoder_model: "fp16", decoder_model_merged: "q4" },
     webgpuFallback: { encoder_model: "fp32", decoder_model_merged: "q4" },
   },
+  // The fine-tuned Sokhan checkpoint ships as an int8 ONNX build from
+  // training/export_web_onnx.py: the repo carries fp32 and _quantized (q8)
+  // files only, so WebGPU pairs the fp32 encoder with a q8 decoder — a q4
+  // request would 404 against files that do not exist there.
+  "Abol0pati/whisper-small-fa-sokhan-web": {
+    webgpu: { encoder_model: "fp32", decoder_model_merged: "q8" },
+    webgpuFallback: { encoder_model: "fp32", decoder_model_merged: "q8" },
+  },
 };
 const DEFAULT_WEBGPU = { encoder_model: "fp32", decoder_model_merged: "q4" };
 const DEFAULT_WASM = { encoder_model: "q8", decoder_model_merged: "q8" };

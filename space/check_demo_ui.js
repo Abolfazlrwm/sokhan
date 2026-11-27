@@ -61,6 +61,7 @@ async function pick(storedPick, hasGpu) {
   el.options = [
     { value: "onnx-community/whisper-large-v3-turbo" },
     { value: "Xenova/whisper-small" },
+    { value: "Abol0pati/whisper-small-fa-sokhan-web" },
     { value: "Xenova/whisper-base" },
   ];
   globalThis.__els["model-hint"].textContent = "";
@@ -91,6 +92,16 @@ assert.ok(r.hint.includes("WebGPU"), "fallback hint explains itself");
 r = await pick("onnx-community/whisper-large-v3-turbo", true);
 assert.strictEqual(r.value, "onnx-community/whisper-large-v3-turbo",
   "stored turbo pick restores where WebGPU exists");
+
+// ---- 3. the fine-tuned ONNX option is wired end to end ----
+const FINETUNED = "Abol0pati/whisper-small-fa-sokhan-web";
+assert.ok(INDEX_HTML.includes('value="' + FINETUNED + '"'),
+  "index.html lists the fine-tuned repo as an <option>");
+assert.ok(WORKER_SOURCE.includes('"' + FINETUNED + '"'),
+  "worker.js carries the fine-tuned load profile");
+r = await pick(FINETUNED, false);
+assert.strictEqual(r.value, FINETUNED,
+  "stored fine-tuned pick restores on a WebGPU-less browser");
 
 // change listener persists the pick and clears the hint
 let persisted = null;
@@ -129,6 +140,10 @@ function makeEl(value) {
 `;
 
 const harness = `
+// the space files are read here, in the CommonJS host, and injected as
+// string literals — the assembled temp module must stay dependency-free
+const INDEX_HTML = ${JSON.stringify(fs.readFileSync(path.join(__dirname, "index.html"), "utf8"))};
+const WORKER_SOURCE = ${JSON.stringify(fs.readFileSync(path.join(__dirname, "worker.js"), "utf8"))};
 globalThis.__run = async () => {
 ${tests.trim()}
 };
