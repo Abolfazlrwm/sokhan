@@ -51,7 +51,7 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
         license_info={
-            "name": "MIT",
+            "name": "PolyForm Noncommercial 1.0.0",
             "url": "https://github.com/Abolfazlrwm/sokhan/blob/main/LICENSE",
         },
     )
