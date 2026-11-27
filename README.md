@@ -21,8 +21,9 @@
 **Try it in the browser first:** the public demo at
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
 runs Whisper entirely client-side (transformers.js, ONNX) — mic or file
-upload, small/base selectable plus an opt-in **large-v3-turbo** on WebGPU,
-nothing to install, nothing uploaded. The
+upload; WebGPU browsers auto-select **large-v3-turbo**, the best-measured
+engine, while small/base stay selectable for lighter runs — nothing to
+install, nothing uploaded. The
 **fine-tuned** checkpoint ships as a self-hostable Gradio app
 ([space/gradio/](space/gradio/)); HF's 2026 pricing gates hosted Gradio
 Spaces behind PRO, so the free Space is the static page. A one-page
@@ -305,7 +306,8 @@ explicit instead of implied:
   the **default engine is `large-v3-turbo`: WER 37.5% / CER 9.9%** —
   −11.3 points vs the `medium` profile (48.8% / 15.4%) in the same memory
   class (set `WHISPER_MODEL_SIZE=medium` for the balanced profile). The
-  browser demo offers the same turbo engine as an opt-in on WebGPU. The
+  browser demo auto-selects the same turbo engine on WebGPU browsers
+  (small stays the default elsewhere). The
   GPU fine-tune — LoRA on `whisper-small`, 500 clips, free Colab T4 —
   re-measured under the v3 stack at **WER 66.2% / CER 22.9%**
   ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan)),

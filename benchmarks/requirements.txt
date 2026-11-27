@@ -4,3 +4,7 @@ jiwer>=3.0
 # faster-whisper's decoder relies on PyAV APIs removed in newer majors
 # (same pin as backend/pyproject.toml)
 av>=11,<14
+# benchmarks/extend_fixture.py reads the Common Voice mirror's parquet
+# shards and writes candidate wavs (issue #29)
+pyarrow>=14
+soundfile>=0.12

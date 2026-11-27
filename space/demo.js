@@ -17,6 +17,13 @@ const SAMPLE_URL =
 // comparison after the sample is transcribed.
 const SAMPLE_REFERENCE = "معلومه حسابی قاطی کردی";
 
+// Best-accuracy engine (measured 37.5% WER on the Persian server fixture vs
+// 70.0% for small — benchmarks/README.md). Auto-selected on WebGPU browsers;
+// small stays the default everywhere else. The user's manual pick is
+// remembered, but only ever restored when the browser can still run it.
+const TURBO_MODEL = "onnx-community/whisper-large-v3-turbo";
+const MODEL_STORE_KEY = "sokhan-model";
+
 const SAMPLE_RATE = 16000;
 const FILE_CAP_MB = 60; // pre-decode guard; protects RAM on giant uploads
 const ABS_MAX_SECONDS = 1800; // hard ceiling even on WebGPU (30 min)
@@ -24,6 +31,7 @@ const DECODE_TIMEOUT_MS = 45000; // watchdog: decodeAudioData must resolve
 
 const $ = (id) => document.getElementById(id);
 const modelSel = $("model");
+const modelHint = $("model-hint");
 const micBtn = $("mic");
 const sampleBtn = $("sample");
 const fileInput = $("file");
@@ -261,6 +269,91 @@ function restorePunctuationParagraph(text) {
     .join("\n");
 }
 
+// ---------- model auto-pick ----------
+// WebGPU browsers get the best-measured engine by default; everyone else
+// keeps small. An explicit choice (localStorage) wins, but a stored turbo
+// pick is only restored when this browser still supports WebGPU.
+
+async function gpuAvailable() {
+  try {
+    if (!navigator.gpu) return false;
+    const adapter = await navigator.gpu.requestAdapter();
+    return !!adapter;
+  } catch {
+    return false;
+  }
+}
+
+async function applyDefaultModel() {
+  const stored = localStorage.getItem(MODEL_STORE_KEY);
+  const valid = [...modelSel.options].some((o) => o.value === stored);
+  const gpu = await gpuAvailable();
+  if (stored && valid && (stored !== TURBO_MODEL || gpu)) {
+    modelSel.value = stored;
+    modelHint.textContent =
+      stored === TURBO_MODEL
+        ? "انتخاب قبلی شما (حداکثر دقت) بازیابی شد."
+        : "انتخاب قبلی شما بازیابی شد.";
+    return;
+  }
+  if (gpu) {
+    modelSel.value = TURBO_MODEL;
+    modelHint.textContent =
+      "WebGPU شناسایی شد — دقیق‌ترین مدل (بهترین عدد بنچمارک فارسی) خودکار انتخاب شد؛ مدل سبک‌تر را می‌توانید از فهرست برگزینید.";
+  } else if (stored === TURBO_MODEL) {
+    // A turbo pick carried over from a WebGPU browser cannot run here.
+    modelHint.textContent =
+      "انتخاب قبلی شما فقط روی WebGPU اجرا می‌شود؛ روی این مرورگر مدل کوچک پیش‌فرض شد.";
+  }
+}
+
+modelSel.addEventListener("change", () => {
+  localStorage.setItem(MODEL_STORE_KEY, modelSel.value);
+  modelHint.textContent = "";
+});
+
+// ---------- sample WER (one clip, approximate) ----------
+// The bundled sample has a human-verified reference, so after it is
+// transcribed we can show an honest per-run word error rate. Both sides go
+// through the same polish pass, punctuation is ignored — the same
+// normalization philosophy as benchmarks/benchmark_wer.py, minus jiwer.
+
+const WER_PUNCT = /[،؛:.!?؟…«»()"'،\-–—,]/g;
+
+function werWords(text) {
+  return polishTranscript(text)
+    .replace(WER_PUNCT, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function wordLev(a, b) {
+  // DP edit distance over word lists (both tiny: <= 30 words).
+  const prev = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const above = prev[j];
+      prev[j] = Math.min(
+        prev[j] + 1,
+        prev[j - 1] + 1,
+        diag + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+      diag = above;
+    }
+  }
+  return prev[b.length];
+}
+
+function sampleWer(hypText) {
+  const ref = werWords(SAMPLE_REFERENCE);
+  const hyp = werWords(hypText);
+  if (!ref.length || !hyp.length) return null;
+  return Math.round((wordLev(ref, hyp) / ref.length) * 100);
+}
+
 // ---------- small formatting helpers ----------
 
 const FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
@@ -293,6 +386,7 @@ let tickerHandle = null;
 let baseStatus = "";
 let lastAudioSeconds = 0;
 let lastResult = null; // { text, segments } for the timestamp toggle
+let isSampleRun = false; // the bundled sample has a reference -> show WER
 
 const downloads = new Map(); // file -> { loaded, total }
 
@@ -395,6 +489,7 @@ function startWork(message) {
   metaEl.textContent = "";
   copyBtn.style.display = "none";
   lastResult = null;
+  isSampleRun = false;
   barEl.style.display = "none";
   barFill.style.width = "0%";
   cancelBtn.style.display = "inline-block";
@@ -430,6 +525,19 @@ function finish(payload) {
     (payload.windows > 1 ? ` در ${faDigits(payload.windows)} قطعه` : "") +
     (device ? ` روی ${device}` : "") +
     " — کاملاً روی دستگاه شما.";
+  if (isSampleRun) {
+    // startWork hid the reference box while processing; bring it back so the
+    // human transcript AND the per-run WER are both visible at the end.
+    refEl.style.display = "block";
+    const wer = sampleWer(lastResult.text);
+    isSampleRun = false;
+    if (wer !== null) {
+      const cls = wer <= 20 ? "var(--ok)" : wer >= 60 ? "var(--err)" : "inherit";
+      refEl.innerHTML +=
+        `<br>خطای واژه‌ای این اجرا روی همان کلیپ: <b style="color:${cls}">` +
+        `${faDigits(wer)}٪</b> (کمتر بهتر — یک کلیپ، تقریبی)`;
+    }
+  }
   copyBtn.style.display = "inline-block";
 }
 
@@ -558,6 +666,7 @@ sampleBtn.onclick = async () => {
   if (busy) return;
   const id = ++runId;
   busy = true;
+  isSampleRun = true; // finish() will report the sample's word error rate
   lock();
   downloads.clear();
   refEl.style.display = "none";
@@ -663,3 +772,4 @@ copyBtn.onclick = async () => {
 stampChk.onchange = renderTranscript;
 
 spawnWorker();
+applyDefaultModel();

@@ -30,11 +30,11 @@ model-index:
           type: mozilla-foundation/common_voice_17_0
         metrics:
           - type: wer
-            value: 0.793
-            name: WER (fixture, CPU int8)
+            value: 0.662
+            name: WER (fixture, CPU int8, v3 decode stack)
           - type: cer
-            value: 0.249
-            name: CER (fixture, CPU int8)
+            value: 0.229
+            name: CER (fixture, CPU int8, v3 decode stack)
 ---
 
 # whisper-small-fa-sokhan
@@ -97,8 +97,9 @@ print(" ".join(s.text.strip() for s in segments))
 
 A free in-browser demo runs at
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
-— Whisper executes entirely client-side there (transformers.js, ONNX q8,
-nothing uploaded), with the untuned base/small checkpoints selectable.
+— Whisper executes entirely client-side there (transformers.js, ONNX,
+nothing uploaded); WebGPU browsers auto-select `large-v3-turbo`, the
+best-measured engine, and small/base stay selectable for lighter runs.
 Serving **this fine-tuned checkpoint** needs a real engine: the Gradio app
 in [`space/gradio/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio)
 runs it with the same faster-whisper config as production, self-hosted or

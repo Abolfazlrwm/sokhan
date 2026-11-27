@@ -1,0 +1,142 @@
+{
+  "dataset": "Mozilla Common Voice (fa), clean subset, CC-0",
+  "manifest": "benchmarks/data/manifest.csv",
+  "normalization": "v2: polish + normalize_persian applied to both reference and hypothesis",
+  "decoding": "beam_size=5, VAD filter on, no initial prompt, language-drift guard (mirrors the product engine), CPU int8",
+  "total_audio_seconds": 61.1,
+  "runs": [
+    {
+      "model": "tiny",
+      "params": "39 M",
+      "compute_type": "int8",
+      "language": "fa",
+      "clips": 12,
+      "audio_seconds": 61.1,
+      "wall_time_seconds": 15.77,
+      "wer": 0.9375,
+      "cer": 0.4271,
+      "per_clip": [
+        {
+          "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
+          "reference": "بسیار خوب، این عالیه.",
+          "hypothesis": "بسیر خوگن الیر",
+          "raw_hypothesis": "بسیر خوگن آلیر",
+          "wer": 1.0,
+          "cer": 0.4286,
+          "ref_words": 4,
+          "hyp_words": 3
+        },
+        {
+          "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
+          "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
+          "hypothesis": "بغام برامی پیراها نظورد میگی بیپش بیبین اندزت هست",
+          "raw_hypothesis": "بغام برامی پیراها نظورد میگی بیپش بیبین اندزت هست",
+          "wer": 0.9,
+          "cer": 0.2353,
+          "ref_words": 10,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00007969_95940e721b24.wav",
+          "reference": "پلیس حق و حساب بگیر",
+          "hypothesis": "پولی سرح کنسا بگیر",
+          "raw_hypothesis": "پولی سرح کنسا بگیر",
+          "wer": 0.8,
+          "cer": 0.4211,
+          "ref_words": 5,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
+          "reference": "تو من رو ممنوع میکنی؟",
+          "hypothesis": "تومان رمام نومی کونی",
+          "raw_hypothesis": "تومان رمام نومی کونی",
+          "wer": 1.0,
+          "cer": 0.4762,
+          "ref_words": 5,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
+          "reference": "تو از دشتای دور و جادههای پر غبار",
+          "hypothesis": "تو از داشتای دورو جادهای فرقوار",
+          "raw_hypothesis": "تو از داشتای دورو جادهای فرقوار",
+          "wer": 0.75,
+          "cer": 0.2121,
+          "ref_words": 8,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
+          "reference": "نمردیمو معنی عدالتم فهمیدیم",
+          "hypothesis": "نمورتی ممینی جالتهم فیمیدی",
+          "raw_hypothesis": "نمورتی ممینی جالتهم فیمیدی",
+          "wer": 1.0,
+          "cer": 0.4074,
+          "ref_words": 4,
+          "hyp_words": 4
+        },
+        {
+          "audio": "clips/cv_fa_00012223_8556160f538d.wav",
+          "reference": "پروانههای کپی لفت را به وجود اورد",
+          "hypothesis": "پر واناهای کو پیلیفت رو پو جو دعویت",
+          "raw_hypothesis": "پر وانا های کو پیلیفت رو پو جو دعویت",
+          "wer": 1.1429,
+          "cer": 0.4545,
+          "ref_words": 7,
+          "hyp_words": 8
+        },
+        {
+          "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
+          "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
+          "hypothesis": "جاری اچنا فزاد زندگانی گوزراد میکزار تیجوز پشادمانی گوزراد.",
+          "raw_hypothesis": "جاری اچنا فزاد زندگانی گوزراد میکزار تیجوز پشادمانی گوزراد.",
+          "wer": 0.9167,
+          "cer": 0.5283,
+          "ref_words": 12,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
+          "reference": "در هر حال اینکارو کردی",
+          "hypothesis": "ارهر انکار چردی",
+          "raw_hypothesis": "ارهر انکار چردی",
+          "wer": 1.0,
+          "cer": 0.4091,
+          "ref_words": 5,
+          "hyp_words": 3
+        },
+        {
+          "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
+          "reference": "شما نگران زن و بچه این نباش.",
+          "hypothesis": "شوانه گرنزانه با چین نباش",
+          "raw_hypothesis": "شوانه گرنزانه با چین نباش",
+          "wer": 1.0,
+          "cer": 0.4643,
+          "ref_words": 7,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001501_39aee6016733.wav",
+          "reference": "معلومه حسابی قاطی کردی",
+          "hypothesis": "ما دمین سو بیف پوٹی کلتی",
+          "raw_hypothesis": "ما دمین سو بیف پوٹی کلتی",
+          "wer": 1.5,
+          "cer": 0.6364,
+          "ref_words": 4,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00011690_2f37cb3fc74b.wav",
+          "reference": "او همیشه طرفدار پر وپا قرص فرانسه بوده است.",
+          "hypothesis": "و حمی شهد تلافد کل برد قرصف درم",
+          "raw_hypothesis": "و حمی شهد تلافد كل برد قرصف درم",
+          "wer": 1.0,
+          "cer": 0.6512,
+          "ref_words": 9,
+          "hyp_words": 8
+        }
+      ]
+    }
+  ]
+}

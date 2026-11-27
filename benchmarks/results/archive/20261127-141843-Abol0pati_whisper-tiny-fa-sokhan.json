@@ -1,0 +1,142 @@
+{
+  "dataset": "Mozilla Common Voice (fa), clean subset, CC-0",
+  "manifest": "benchmarks/data/manifest.csv",
+  "normalization": "v2: polish + normalize_persian applied to both reference and hypothesis",
+  "decoding": "beam_size=5, VAD filter on, no initial prompt, language-drift guard (mirrors the product engine), CPU int8",
+  "total_audio_seconds": 61.1,
+  "runs": [
+    {
+      "model": "Abol0pati/whisper-tiny-fa-sokhan",
+      "params": "39 M",
+      "compute_type": "int8",
+      "language": "fa",
+      "clips": 12,
+      "audio_seconds": 61.1,
+      "wall_time_seconds": 6.14,
+      "wer": 0.95,
+      "cer": 0.388,
+      "per_clip": [
+        {
+          "audio": "clips/cv_fa_00007121_a8da49db59cb.wav",
+          "reference": "بسیار خوب، این عالیه.",
+          "hypothesis": "ویسیر خوگن الیر.",
+          "raw_hypothesis": "ویسیر خوگن آلیر.",
+          "wer": 1.0,
+          "cer": 0.4762,
+          "ref_words": 4,
+          "hyp_words": 3
+        },
+        {
+          "audio": "clips/cv_fa_00003825_86d2cc17a454.wav",
+          "reference": "بابام برام یک پیراهن اورد میگه بپوش ببین اندازت هست",
+          "hypothesis": "بغام برامی پیراها نظور، میگی بپوش بیبین اندازت هست،",
+          "raw_hypothesis": "بغام برامی پیراها نظور، میگی بی پوش بیبین اندازت هست،",
+          "wer": 0.8,
+          "cer": 0.2157,
+          "ref_words": 10,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00007969_95940e721b24.wav",
+          "reference": "پلیس حق و حساب بگیر",
+          "hypothesis": "پولی سر حقونی ساب بگیر",
+          "raw_hypothesis": "پولی سر حقونی ساب بگیر",
+          "wer": 0.8,
+          "cer": 0.3684,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00016707_bff9237eba8a.wav",
+          "reference": "تو من رو ممنوع میکنی؟",
+          "hypothesis": "تومان رو مرم نومی کانی؟",
+          "raw_hypothesis": "تومان رو مرم نومی کانی؟",
+          "wer": 1.0,
+          "cer": 0.381,
+          "ref_words": 5,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001387_ba84495d158f.wav",
+          "reference": "تو از دشتای دور و جادههای پر غبار",
+          "hypothesis": "تو از داشتا ی دورو جاده ای فرقو بار",
+          "raw_hypothesis": "تو از داشتا ی دورو جاده آی فرقو بار",
+          "wer": 0.875,
+          "cer": 0.2424,
+          "ref_words": 8,
+          "hyp_words": 9
+        },
+        {
+          "audio": "clips/cv_fa_00001721_0b33935f80c9.wav",
+          "reference": "نمردیمو معنی عدالتم فهمیدیم",
+          "hypothesis": "نماردی مماینی از الت هم فیمیدی",
+          "raw_hypothesis": "نماردی مماینی از آلت هم فیمیدی",
+          "wer": 1.5,
+          "cer": 0.4815,
+          "ref_words": 4,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00012223_8556160f538d.wav",
+          "reference": "پروانههای کپی لفت را به وجود اورد",
+          "hypothesis": "پروانهای که پیلی افتراب اوجود مدر",
+          "raw_hypothesis": "پروان های که پیلی افتراب اوجود مدر",
+          "wer": 1.0,
+          "cer": 0.3939,
+          "ref_words": 7,
+          "hyp_words": 6
+        },
+        {
+          "audio": "clips/cv_fa_00001895_8f5a5a9f0759.wav",
+          "reference": "گر یک نفست ز زندگانی گذرد مگذار که جز به شادمانی گذرد",
+          "hypothesis": "دری ایک نفتزت زندگانی گوزرد میکزار تیجوز پشار دمانی گوزرد.",
+          "raw_hypothesis": "دری ایک نفتزت زندگانی گوزرد میکزار تیجوز پشار دمانی گوزرد.",
+          "wer": 0.9167,
+          "cer": 0.434,
+          "ref_words": 12,
+          "hyp_words": 10
+        },
+        {
+          "audio": "clips/cv_fa_00007356_1d4e57125c6c.wav",
+          "reference": "در هر حال اینکارو کردی",
+          "hypothesis": "ار هر هر هر هر دین کاری چردی.",
+          "raw_hypothesis": "ار هر هر هر هر دین کاری چردی.",
+          "wer": 1.4,
+          "cer": 0.6364,
+          "ref_words": 5,
+          "hyp_words": 8
+        },
+        {
+          "audio": "clips/cv_fa_00013597_38f0a9579a81.wav",
+          "reference": "شما نگران زن و بچه این نباش.",
+          "hypothesis": "شما نگیر نزانه باتچین نباشی",
+          "raw_hypothesis": "شما نگیر نزانه باتچین نباشی",
+          "wer": 0.8571,
+          "cer": 0.3929,
+          "ref_words": 7,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00001501_39aee6016733.wav",
+          "reference": "معلومه حسابی قاطی کردی",
+          "hypothesis": "معلومی سابی قاطی که ردی",
+          "raw_hypothesis": "معلومی سابی قاطی که ردی",
+          "wer": 1.0,
+          "cer": 0.1818,
+          "ref_words": 4,
+          "hyp_words": 5
+        },
+        {
+          "audio": "clips/cv_fa_00011690_2f37cb3fc74b.wav",
+          "reference": "او همیشه طرفدار پر وپا قرص فرانسه بوده است.",
+          "hypothesis": "بو حمیشی ترافدار پر اپر اپر اپه برسی فرام کسی او درست",
+          "raw_hypothesis": "بو حمیشی ترافدار پر اپر اپر اپه برسی فرام کسی او درست",
+          "wer": 1.2222,
+          "cer": 0.6279,
+          "ref_words": 9,
+          "hyp_words": 12
+        }
+      ]
+    }
+  ]
+}

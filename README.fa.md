@@ -21,8 +21,9 @@
 **اول در مرورگر امتحانش کنید:** دموی عمومی در
 [hf.co/spaces/Abol0pati/sokhan-fa-demo](https://huggingface.co/spaces/Abol0pati/sokhan-fa-demo)
 مدل Whisper را کاملاً سمتِ مرورگر اجرا می‌کند (transformers.js، ONNX) —
-ضبط با میکروفون یا آپلود فایل، انتخاب بین مدل small/base به‌علاوهٔ یک
-**large-v3-turbo اختیاری** روی WebGPU، بدون هیچ نصبی و
+ضبط با میکروفون یا آپلود فایل؛ مرورگرهای WebGPU خودکار **large-v3-turbo**
+(دقیق‌ترین موتور اندازه‌گیری‌شده) را انتخاب می‌کنند و small/base برای اجرای
+سبک‌تر قابل انتخاب‌اند — بدون هیچ نصبی و
 بدون آپلود شدنِ هیچ صدایی. چک‌پوینتِ **فاین‌تیون‌شده** هم به‌صورت اپ Gradio
 قابل سلف‌هاست منتشر شده ([space/gradio/](space/gradio/))؛ قیمت‌گذاری ۲۰۲۶
 هاگینگ‌فیس، Spaceهای Gradio را پشت اشتراک PRO قفل کرده، برای همین Space
@@ -305,8 +306,9 @@ site/        لندینگ‌پیج GitHub Pages (دیپلوی خودکار)
   روی `small` عدد **WER 70.0% / CER 25.0%** می‌دهد و **موتور پیش‌فرض
   `large-v3-turbo` است: WER 37.5% / CER 9.9%** — یعنی ۱۱٫۳ واحد بهتر از
   پروفایل `medium` (۴۸٫۸٪ / ۱۵٫۴٪) در همان کلاس حافظه
-  (`WHISPER_MODEL_SIZE=medium` برای حالت متعادل). دموی مرورگری هم همین
-  موتور turbo را به‌صورت اختیاری روی WebGPU ارائه می‌دهد. فاین‌تیون GPU —
+  (`WHISPER_MODEL_SIZE=medium` برای حالت متعادل). دموی مرورگری هم روی
+  مرورگرهای WebGPU همان موتور turbo را خودکار انتخاب می‌کند (در بقیهٔ
+  مرورگرها small پیش‌فرض می‌ماند). فاین‌تیون GPU —
   LoRA روی `whisper-small`، ۵۰۰ کلیپ، T4 رایگان Colab — زیر پشتهٔ v3 عدد
   **WER 66.2% / CER 22.9%** می‌گیرد
   ([Abol0pati/whisper-small-fa-sokhan](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan))

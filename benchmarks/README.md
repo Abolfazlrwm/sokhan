@@ -26,6 +26,8 @@ VAD forced on) and the more-Persian result wins.
 
 | Model | Params | WER (v3) | CER (v3) | Wall time | vs v2 |
 | --- | --- | --- | --- | --- | --- |
+| tiny | 39 M | 93.8% | 42.7% | 15.8 s | +1.1 |
+| Abol0pati/whisper-tiny-fa-sokhan (fine-tuned) | 39 M | 95.0% | 38.8% | 6.1 s | −8.7 |
 | small | 244 M | 70.0% | 25.0% | 24.7 s | −5.0 |
 | Abol0pati/whisper-small-fa-sokhan (fine-tuned) | 244 M | 66.2% | 22.9% | 23.0 s | −8.8 |
 | medium | 769 M | 48.8% | 15.4% | 68.2 s | −7.4 |
@@ -37,7 +39,12 @@ that Whisper decoded as **Icelandic** (`در هر حال اینکارو کردی
 `Er hær hálf einhver kjærði?`, retried → `ار هر حال انکار کردی`). The
 fine-tuned row is measured in [the fine-tuned section below](#the-fine-tuned-checkpoint-under-the-v3-stack-measured-2026-11-27)
 — under the stack the product actually ships, the LoRA checkpoint now
-beats untuned `small` by 3.8 WER points.
+beats untuned `small` by 3.8 WER points. The tiny class is measured for
+completeness (both rows, 2026-11-27 sessions archived under
+`results/archive/`): the v3 stack narrows most of the fine-tuned tiny's
+v1 gap (103.7% → 95.0%) and cuts its CER below untuned tiny (38.8% vs
+42.7%), but tiny-scale LoRA still does not win on WER — the honest
+tiny-class conclusion in the model card stands.
 
 The v4 sweep (`--quick`-style probes over beam 3/8, best_of+patience,
 temperature 0, `condition_on_previous_text`) moved nothing else: beam 5
@@ -91,6 +98,29 @@ matches beam-5 accuracy at ~10–15% less wall time, which on a 2-core
 browser tab is the difference visitors feel. If a future fixture ever
 shows a gap, wiring `num_beams` into `space/worker.js` is a one-line
 change.
+
+## Extending the fixture (issue #29)
+
+Twelve clips put a ~1 WER-point difference near the noise floor; issue #29
+wants 30+ verified clips so deltas become solid. The fixture's whole value
+is that its references are **human-verified** — listening cannot be
+automated, so [extend_fixture.py](extend_fixture.py) automates everything
+around it and keeps the promotion a human step:
+
+    pip install -r benchmarks/requirements.txt   # adds pyarrow + soundfile
+    python benchmarks/extend_fixture.py --count 20
+
+It samples clips from the mirror's held-out `test` split (the same CC-0
+corpus the training pipeline uses — and a split the fine-tune never saw),
+filters to the fixture's duration/word band, dedupes against the existing
+references, then runs each candidate through two independent engines under
+the v3 protocol and records both transcripts + their agreement WER in
+`data/candidates/candidates.csv` (agreement ≤ 25% is pre-flagged
+`keep=yes`; disagreement flags noisy clips worth skipping). It never
+touches `manifest.csv` — the human listens, corrects, appends verified
+rows, commits, and re-runs the benchmark session. The default engine pair
+is the best-measured one (`large-v3-turbo` + `medium`); pass
+`--engines tiny base` for a cheap smoke run.
 
 ## Previous sessions
 

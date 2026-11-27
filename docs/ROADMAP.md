@@ -96,18 +96,32 @@ plus the highest-value experiments:
   ~2 h on a free T4) is the single highest-value experiment left in the
   training kit. After it: re-benchmark, update the model card, publish
   the new checkpoint — then the 500-clip run becomes the ablation row
-- [ ] **Fine-tuned checkpoint in the browser.** Upload the merged HF
-  weights (notebook cell 11), export ONNX, and point the client-side
-  demo at it — the free Static Space would then demo the *fine-tuned*
-  model with zero hosting cost. Measured incentive: under the v3 decode
+- [ ] **Fine-tuned checkpoint in the browser.** The pipeline is ready and
+  rehearsed: notebook cell 11 now publishes the merged weights AND the
+  ONNX export (`training/export_web_onnx.py --merged --push`) in one
+  run — the next free-GPU session produces the `-web` repo
+  transformers.js loads; the demo's worker takes any Xenova-format ONNX
+  repo as a one-line `<option>`. Measured incentive: under the v3 decode
   stack the fine-tune runs 3.8 WER points ahead of the untuned small the
-  demo loads today (66.2% vs 70.0%, benchmarks/README.md)
+  demo falls back to (66.2% vs 70.0%, benchmarks/README.md). In the
+  meantime the demo already auto-selects `large-v3-turbo` on WebGPU
+  browsers — the best-measured engine (37.5% WER) — so the accuracy
+  jump shipped without the fine-tune
 - [ ] Extend the benchmark fixture beyond 12 clips (issue #29, target:
   200 clips stratified by age/gender and accent bands) so WER deltas
-  stop being noise-limited
-- [ ] Punctuation post-pass: cover the edge cases the fixture exposes
-  (issue #30)
-- [ ] Translate CONTRIBUTING.md to Persian (issue #31)
+  stop being noise-limited. `benchmarks/extend_fixture.py` now
+  automates everything except the listening step: held-out-split
+  sampling, two-engine agreement under the v3 protocol, candidate CSV
+  with a human-verify column — promotion into `manifest.csv` stays a
+  human decision
+- [x] Punctuation post-pass edge cases pinned and covered (issue #30,
+  closed): date slash-groups (`۱۴۰۴/۰۹/۰۲`, `2026/11/23`), Latin digits
+  mixed into Persian sentences, abbreviations ending in a Latin dot, and
+  ellipsis/repeated marks each have tests that pin current behavior in
+  `backend/tests/test_punctuation.py`
+- [x] Translate CONTRIBUTING.md to Persian (issue #31, closed):
+  `CONTRIBUTING.fa.md` ships, both files link each other, commands stay
+  copy-pasteable
 
 ## v2.0 — direction candidates (decide by measurement, not vibes)
 

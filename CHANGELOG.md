@@ -47,6 +47,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   honest message when a browser cannot run it). The live progress bar,
   cancel and caps all work unchanged; the honesty note names turbo as
   the most accurate choice.
+- **The demo now picks the best-measured engine per device.** WebGPU
+  browsers default to `large-v3-turbo` (37.5% WER server-measured vs
+  70.0% for `small`) instead of making visitors opt in; small stays the
+  default on WASM-only browsers, the visitor's explicit pick is
+  remembered in `localStorage`, and a stored turbo pick only restores on
+  a browser that still supports WebGPU (with a hint explaining why).
+- **Per-run accuracy on the bundled sample.** After the sample clip is
+  transcribed, the demo computes its word error rate against the
+  human-verified reference client-side (same polish normalization
+  philosophy as the benchmark, punctuation-insensitive) and shows it
+  under the reference — an honest number instead of a vibe. This also
+  fixes the reference box being invisible: the shared processing start
+  hid `#ref` and nothing restored it, so the human transcript never
+  came back after a sample run.
 
 - **Live progress in the Telegram bot.** The receipt message for a sent
   voice file now carries the job id and a live bar that the notifier edits
@@ -68,6 +82,34 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   no CSRF token and is unchanged.
 
 ### Changed
+
+- **The tiny fine-tune is re-measured under the v3 stack** (12-clip
+  fixture, CPU int8): `Abol0pati/whisper-tiny-fa-sokhan` moves from
+  103.7% (v1 harness) to **95.0% WER / 38.8% CER** — the VAD + drift
+  guard narrow most of the v1 gap and put its CER below untuned tiny
+  (42.7%), but untuned `tiny` still wins on WER (93.8%), so the honest
+  tiny-class conclusion stands and the card now says so with both
+  sessions (`training/model_card_tiny.md`; both rows added to the
+  benchmarks table, sessions archived under `benchmarks/results/archive/`).
+- **The notebook's browser-upgrade path is now one cell, not a wish.**
+  Cell 11 of `training/finetune_fa_colab.ipynb` publishes the merged
+  weights AND runs `training/export_web_onnx.py --merged --push` in the
+  same run, producing the `-web` ONNX repo transformers.js loads — the
+  fine-tuned browser demo is one free-GPU session away. The export
+  script itself gained a `--merged` input and fail-fast adapter
+  validation: the previously-documented default adapter (the published
+  fine-tune repo) is a CTranslate2 build no ONNX export can read, and
+  the script now says exactly that — plus where a real adapter lives —
+  instead of dying inside peft.
+- **Fixture extension for issue #29 got its accelerator:**
+  `benchmarks/extend_fixture.py` samples held-out-split candidates from
+  the CC-0 Common Voice mirror (duration/word band, dedupe against the
+  verified references), runs each through two independent engines under
+  the v3 protocol and records the agreement WER in
+  `benchmarks/data/candidates/candidates.csv` — everything except the
+  listening step, which stays human by design. Documented in
+  `benchmarks/README.md`; `pyarrow` + `soundfile` join
+  `benchmarks/requirements.txt`.
 
 - **Decode stack re-measured and hardened — every engine got more accurate
   for free** (same 12-clip Common Voice fa fixture, CPU int8, beam 5,
