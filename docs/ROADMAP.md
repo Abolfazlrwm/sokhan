@@ -96,17 +96,19 @@ plus the highest-value experiments:
   ~2 h on a free T4) is the single highest-value experiment left in the
   training kit. After it: re-benchmark, update the model card, publish
   the new checkpoint — then the 500-clip run becomes the ablation row
-- [ ] **Fine-tuned checkpoint in the browser.** The pipeline is ready and
-  rehearsed: notebook cell 11 now publishes the merged weights AND the
-  ONNX export (`training/export_web_onnx.py --merged --push`) in one
-  run — the next free-GPU session produces the `-web` repo
-  transformers.js loads; the demo's worker takes any Xenova-format ONNX
-  repo as a one-line `<option>`. Measured incentive: under the v3 decode
-  stack the fine-tune runs 3.8 WER points ahead of the untuned small the
-  demo falls back to (66.2% vs 70.0%, benchmarks/README.md). In the
-  meantime the demo already auto-selects `large-v3-turbo` on WebGPU
-  browsers — the best-measured engine (37.5% WER) — so the accuracy
-  jump shipped without the fine-tune
+- [ ] **Fine-tuned checkpoint in the browser.** The wiring is merged: the
+  demo ships the `Abol0pati/whisper-small-fa-sokhan-web` `<option>` and
+  its load profile (fp32 encoder + q8 decoder on WebGPU — the int8 export
+  carries no q4 files), pinned by `space/check_demo_ui.js`. What remains
+  is one notebook step: run cell 11 in the next free-GPU session — it
+  publishes the merged weights AND the ONNX export
+  (`training/export_web_onnx.py --merged --push`) in one run, creating
+  the `-web` repo transformers.js loads. Measured incentive: under the
+  v3 decode stack the fine-tune runs 3.8 WER points ahead of the
+  untuned small the demo falls back to (66.2% vs 70.0%,
+  benchmarks/README.md). In the meantime the demo already auto-selects
+  `large-v3-turbo` on WebGPU browsers — the best-measured engine (37.5%
+  WER) — so the accuracy jump shipped without the fine-tune
 - [ ] Extend the benchmark fixture beyond 12 clips (issue #29, target:
   200 clips stratified by age/gender and accent bands) so WER deltas
   stop being noise-limited. `benchmarks/extend_fixture.py` now

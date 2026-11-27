@@ -75,12 +75,12 @@ Practical consequences, both measured and honest:
   change.** faster-whisper loads the Hub repo id directly, so
   `WHISPER_MODEL_SIZE=Abol0pati/whisper-small-fa-sokhan` replaces
   `small` on boxes that cannot fit `medium`/turbo RAM.
-- **The browser demo keeps `Xenova/whisper-small` for now.** The
-  fine-tuned checkpoint is published as a CTranslate2 build only
-  (`model.bin`); transformers.js needs ONNX exports the repo does not
-  carry yet. Publishing the merged PyTorch checkpoint (or running
-  [training/export_web_onnx.py](../training/export_web_onnx.py) against
-  it) unlocks a −3.8-point demo upgrade — tracked on the roadmap.
+- **The browser demo offers the fine-tuned ONNX build.** The ONNX export
+  (`Abol0pati/whisper-small-fa-sokhan-web`, produced by
+  [training/export_web_onnx.py](../training/export_web_onnx.py)) is wired
+  into the demo's model picker next to untuned `small` — the −3.8-point
+  demo upgrade, gated only on publishing that repo from a notebook
+  session (the CTranslate2 build alone cannot feed transformers.js).
 
 ## Does the browser demo need beam search? (measured: no)
 

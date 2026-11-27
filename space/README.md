@@ -29,24 +29,27 @@ button that terminates the worker. Audio is decoded at the context's
 natural rate and resampled offline to 16 kHz, avoiding a Chromium hang
 on opus/webm inputs.
 
-Three models are selectable: untuned **base** and **small** so anyone can
-hear the difference, plus an opt-in **large-v3-turbo**
+Four models are selectable: untuned **base** and **small** so anyone can
+hear the difference, the **fine-tuned** Sokhan checkpoint
+([`Abol0pati/whisper-small-fa-sokhan-web`](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan-web),
+LoRA on 500 Common Voice fa clips, measured WER 66.2% vs 70.0% untuned
+under the v3 decode stack, int8 ONNX from
+[`training/export_web_onnx.py`](https://github.com/Abolfazlrwm/sokhan/blob/main/training/export_web_onnx.py) —
+~250 MB on WASM), and an opt-in **large-v3-turbo**
 ([`onnx-community/whisper-large-v3-turbo`](https://huggingface.co/onnx-community/whisper-large-v3-turbo),
 fp16 encoder + q4 decoder, ~1.5 GB download) that runs only on WebGPU and
 measured WER 37.5% on the Persian fixture — the same engine the
-self-hosted backend runs by default. The **fine-tuned** checkpoint
-([`Abol0pati/whisper-small-fa-sokhan`](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan),
-LoRA on 500 Common Voice fa clips, measured WER 66.2% vs 70.0% untuned
-under the v3 decode stack)
-is served by the same engine Sokhan runs in production — the app for that
-lives in [`space/gradio/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio)
-for self-hosting, because HF's 2026 pricing gates hosted Gradio/Docker
+self-hosted backend runs by default. The fine-tuned weights also drive
+the production engine as the CTranslate2 build
+[`Abol0pati/whisper-small-fa-sokhan`](https://huggingface.co/Abol0pati/whisper-small-fa-sokhan);
+the Gradio app for self-hosting them lives in
+[`space/gradio/`](https://github.com/Abolfazlrwm/sokhan/tree/main/space/gradio),
+because HF's 2026 pricing gates hosted Gradio/Docker
 Spaces behind a PRO subscription and only **static** Spaces (like this
-page) remain free. Porting the fine-tune to ONNX for the browser is on
-the roadmap ([docs/ROADMAP.md](https://github.com/Abolfazlrwm/sokhan/blob/main/docs/ROADMAP.md)),
-and `training/export_web_onnx.py` already automates the merge → ONNX →
-quantize → Hub pipeline; it only needs the merged PyTorch checkpoint
-from a notebook run.
+page) remain free. Re-exporting the fine-tune after a new training run
+is one command — `python training/export_web_onnx.py --merged <checkpoint>
+--push` — the tool automates the merge → ONNX → quantize → Hub pipeline
+and its docstring carries the full recipe.
 
 Persian Common Voice is colloquial and noisy — expect real mistakes, from
 every Whisper size.
