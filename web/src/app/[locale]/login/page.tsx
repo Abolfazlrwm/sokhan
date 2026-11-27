@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { ApiError, login, register, setToken, tokenLogin } from "@/lib/api";
+import { useSession } from "@/lib/session";
 
 type Mode = "login" | "register" | "code";
 
@@ -13,6 +14,12 @@ export default function LoginPage() {
   const t = useTranslations("login");
   const te = useTranslations("errors");
   const router = useRouter();
+  const { ready, signedIn } = useSession();
+
+  // Already signed in: the login form has nothing to offer.
+  useEffect(() => {
+    if (ready && signedIn) router.replace("/new");
+  }, [ready, signedIn, router]);
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -71,8 +78,7 @@ export default function LoginPage() {
           : mode === "register"
             ? await register(email.trim(), password)
             : await tokenLogin(code.trim());
-      setToken(result.api_token);
-      router.push("/new");
+      setToken(result.api_token, result.email);
     } catch (error) {
       setPending(false);
       if (error instanceof ApiError) {

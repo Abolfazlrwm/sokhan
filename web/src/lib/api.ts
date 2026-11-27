@@ -5,6 +5,9 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export const TOKEN_STORAGE_KEY = "sokhan_token";
+export const EMAIL_STORAGE_KEY = "sokhan_email";
+/** Fired on this tab whenever the stored session changes (sign-in or out). */
+export const SESSION_CHANGE_EVENT = "sokhan:session-change";
 
 export type JobStatus = "queued" | "processing" | "completed" | "failed";
 export type TranscriptFormat = "txt" | "srt" | "vtt" | "json" | "docx";
@@ -97,14 +100,48 @@ export function getToken(): string | null {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
-export function setToken(token: string): void {
+export function getEmail(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(EMAIL_STORAGE_KEY);
+}
+
+function notifySessionChange(): void {
+  window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));
+}
+
+export function setToken(token: string, email?: string): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  if (email) window.localStorage.setItem(EMAIL_STORAGE_KEY, email);
+  else window.localStorage.removeItem(EMAIL_STORAGE_KEY);
+  notifySessionChange();
 }
 
 export function clearToken(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(EMAIL_STORAGE_KEY);
+  notifySessionChange();
+}
+
+/**
+ * Revoke the token on the server, then forget it locally. The local
+ * session is cleared even when the API is unreachable or already rejects
+ * the token, so signing out always works from the user's point of view.
+ */
+export async function logout(): Promise<void> {
+  const token = getToken();
+  if (token) {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      // Offline or API down: the local sign-out below still happens.
+    }
+  }
+  clearToken();
 }
 
 function redirectToLogin(): void {

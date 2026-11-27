@@ -7,16 +7,17 @@ Deliberately lightweight for v1:
 - POST /auth/telegram lets the bot create or resume an account per Telegram id
 - POST /auth/token-login lets a user paste the connect code shown by the bot
   to link their browser session
+- POST /auth/logout revokes the caller's token
 """
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from sokhan.api.deps import require_bot
+from sokhan.api.deps import get_current_user, require_bot
 from sokhan.auth import generate_token, hash_password, token_hash, verify_password
 from sokhan.config import get_settings
 from sokhan.core.throttle import FailureThrottle
@@ -130,6 +131,20 @@ def token_login(payload: TokenLogin, session: Session = Depends(get_db)) -> Auth
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid connect code")
     return AuthResponse(id=user.id, email=user.email, api_token=payload.api_token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(user: User = Depends(get_current_user), session: Session = Depends(get_db)) -> Response:
+    """Revoke the caller's token so it stops working everywhere.
+
+    An account has a single active token, so this signs out every client
+    that holds it: other browsers, API scripts and, for Telegram accounts,
+    the bot (which re-registers on its next request). The new token is
+    never returned; signing in again issues a fresh one.
+    """
+    user.token_hash = token_hash(generate_token())
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/telegram", response_model=AuthResponse, dependencies=[Depends(require_bot)])

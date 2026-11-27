@@ -92,3 +92,40 @@ def test_telegram_login_is_disabled_without_a_configured_secret(client):
 def test_jobs_require_token(client):
     response = client.get("/jobs")
     assert response.status_code == 401
+
+
+def _bearer(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_logout_revokes_the_token(client):
+    token = client.post("/auth/register", json=REGISTER).json()["api_token"]
+    assert client.get("/quota", headers=_bearer(token)).status_code == 200
+
+    response = client.post("/auth/logout", headers=_bearer(token))
+
+    assert response.status_code == 204
+    assert client.get("/quota", headers=_bearer(token)).status_code == 401
+    # The revoked token is no longer a valid connect code either.
+    assert client.post("/auth/token-login", json={"api_token": token}).status_code == 401
+
+
+def test_logout_twice_with_the_same_token_is_rejected(client):
+    token = client.post("/auth/register", json=REGISTER).json()["api_token"]
+    client.post("/auth/logout", headers=_bearer(token))
+
+    assert client.post("/auth/logout", headers=_bearer(token)).status_code == 401
+
+
+def test_logout_requires_a_token(client):
+    assert client.post("/auth/logout").status_code == 401
+
+
+def test_signing_in_after_logout_issues_a_working_token(client):
+    first = client.post("/auth/register", json=REGISTER).json()["api_token"]
+    client.post("/auth/logout", headers=_bearer(first))
+
+    second = client.post("/auth/login", json=REGISTER).json()["api_token"]
+
+    assert second != first
+    assert client.get("/quota", headers=_bearer(second)).status_code == 200

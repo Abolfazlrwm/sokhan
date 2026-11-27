@@ -3,6 +3,8 @@
 import io
 import logging
 import time
+from collections.abc import Callable
+from typing import TypeVar
 
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandObject, CommandStart
@@ -11,16 +13,25 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    User,
 )
 
 from sokhan_bot import texts
-from sokhan_bot.client import BackendError, FileTooLongError, QuotaError, SokhanClient
+from sokhan_bot.client import (
+    AuthError,
+    BackendError,
+    FileTooLongError,
+    QuotaError,
+    SokhanClient,
+)
 from sokhan_bot.split import split_message
 from sokhan_bot.store import TokenStore
 
 logger = logging.getLogger(__name__)
 
 _RATE_LIMIT_SECONDS = 10.0
+
+T = TypeVar("T")
 
 
 def _job_keyboard(job_id: str, web_base_url: str) -> InlineKeyboardMarkup:
@@ -82,10 +93,35 @@ class Handlers:
         self.store.set(message.chat.id, token)
         return token
 
+    def _authed(self, chat_id: int, user: User, call: Callable[[str], T]) -> T:
+        """Run `call(token)`, re-registering once if the API revoked the token.
+
+        A web logout or a newer sign-in revokes the token cached for this
+        chat; without the retry every later request would fail. Raises
+        BackendError when the backend is unreachable or rejects again.
+        """
+        token = self.store.get(chat_id)
+        if token:
+            try:
+                return call(token)
+            except AuthError:
+                logger.info("token for chat %s was revoked; re-registering", chat_id)
+                self.store.forget(chat_id)
+        token = self.client.register_telegram(user.id, user.username)
+        self.store.set(chat_id, token)
+        return call(token)
+
     async def start(self, message: Message) -> None:
         token = await self._ensure_token(message)
         if not token:
             return
+        # The cached token doubles as the connect code, so make sure it still
+        # works before showing it; a backend outage keeps the cached one.
+        try:
+            self._authed(message.chat.id, message.from_user, self.client.get_quota)
+        except BackendError:
+            pass
+        token = self.store.get(message.chat.id) or token
         await message.answer(texts.WELCOME.format(connect_code=token))
 
     async def quota(self, message: Message) -> None:
@@ -93,7 +129,7 @@ class Handlers:
         if not token:
             return
         try:
-            info = self.client.get_quota(token)
+            info = self._authed(message.chat.id, message.from_user, self.client.get_quota)
         except BackendError:
             await message.answer(texts.SERVER_UNREACHABLE)
             return
@@ -137,7 +173,9 @@ class Handlers:
             await message.answer("شناسهٔ پردازش را بنویس، مثلاً: /track 3f2a…")
             return
         try:
-            job = self.client.get_job(token, job_id)
+            job = self._authed(
+                message.chat.id, message.from_user, lambda t: self.client.get_job(t, job_id)
+            )
         except BackendError:
             await message.answer(texts.UNKNOWN_JOB)
             return
@@ -196,7 +234,11 @@ class Handlers:
             return
 
         try:
-            job_id = self.client.upload_audio(token, filename, content)
+            job_id = self._authed(
+                message.chat.id,
+                message.from_user,
+                lambda t: self.client.upload_audio(t, filename, content),
+            )
         except FileTooLongError as exc:
             await message.answer(
                 texts.FILE_TOO_LONG.format(
@@ -229,7 +271,11 @@ class Handlers:
 
         job_id = callback.data.split(":", 1)[1]
         try:
-            job = self.client.get_job(token, job_id)
+            job = self._authed(
+                callback.message.chat.id,
+                callback.from_user,
+                lambda t: self.client.get_job(t, job_id),
+            )
         except BackendError:
             await callback.answer(texts.UNKNOWN_JOB, show_alert=True)
             return

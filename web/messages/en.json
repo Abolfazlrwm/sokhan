@@ -17,7 +17,11 @@
     "switchToEn": "English",
     "switchToFa": "فارسی",
     "themeToDark": "Switch to dark theme",
-    "themeToLight": "Switch to light theme"
+    "themeToLight": "Switch to light theme",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {email}",
+    "signOutOf": "Sign out of {email}"
   },
   "landing": {
     "headline": "From speech to text, in moments",

@@ -47,3 +47,15 @@ def test_legacy_token_file_is_migrated(tmp_path):
     reloaded = TokenStore(str(path))
     assert reloaded.get(123) == "legacy-token"
     assert [job_id for job_id, _, _ in reloaded.tracked()] == ["job-x"]
+
+
+def test_forget_drops_a_token_and_persists(tmp_path):
+    path = str(tmp_path / "store.json")
+    store = TokenStore(path)
+    store.set(42, "old-token")
+
+    store.forget(42)
+    store.forget(99)  # unknown chats are a no-op
+
+    assert store.get(42) is None
+    assert TokenStore(path).get(42) is None

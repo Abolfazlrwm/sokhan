@@ -43,6 +43,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   `deploy/.env`; the missing-password error names that path too. Copying it to
   the repo root left `POSTGRES_PASSWORD` unset for compose.
 
+- An upload the API cannot store (unwritable `DATA_DIR`, full disk,
+  read-only volume) now answers **503** with a short message on `POST /jobs`
+  and `POST /v1/audio/transcriptions`, instead of a 500 with a traceback in
+  the log. The real `OSError` is logged server-side, a partially written
+  file is removed, and the API logs an error at startup when `DATA_DIR`
+  is not writable.
+- The punctuation post-pass no longer splits numbers written with a
+  thousands separator: `1,000` stayed `1، 000` (Persian comma plus a
+  space). A comma between digits followed by exactly three digits is now
+  kept as is; a comma in a list of numbers (`4090,4080`) still becomes `،`.
+  The edge cases from #30 (slash dates, Latin digits in Persian sentences,
+  abbreviations, ellipses, repeated marks) are pinned by tests.
+- Job progress now moves while a chunk is being transcribed, not only
+  between 30-second chunks. A clip shorter than 30 s is a single chunk, so
+  its progress sat at 0% for the whole job and then jumped to 100%. The
+  Whisper engine reports how far into the chunk it is as each segment is
+  decoded; the worker saves that at most once a second.
+- The archive page refreshes itself while any job is queued or processing;
+  its progress bars never moved before. A job with no progress reported yet
+  shows a moving bar and "Getting ready" instead of an empty, stuck-looking
+  bar at 0%, and the job page shows the percentage with the right sign in
+  English.
+- The Telegram bot recovers when the API revokes the token it cached for a
+  chat (a newer sign-in or a logout of the same account). Every request
+  used to fail from then on; the bot now drops the token, re-registers
+  once and retries, and `/start` only shows a connect code that works.
+
 ### Added
 
 - **Persian accuracy stack (v2)** — measured on the 12-clip Common Voice
@@ -98,6 +125,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 - `CONTRIBUTING.fa.md`: a Persian translation of the contribution guide,
   with a language switcher in both files like the READMEs (#31).
 
+- `POST /auth/logout` revokes the caller's token (204). An account has a
+  single active token, so it signs out every client holding it.
+
+- The dashboard header shows the sign-in state: a **Sign in** button when
+  signed out, the account email and **Sign out** when signed in. Sign out
+  revokes the token on the server and works even when the API is
+  unreachable. The landing page's sign-in button is hidden and the login
+  page redirects to the upload page for a signed-in user.
+
 ### Changed
 
 - **Demo hang fix**: audio was decoded inside an `AudioContext` forced to
@@ -119,31 +155,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
   under it. Applied across LICENSE, both READMEs, CITATION.cff, both
   pyproject.toml files, web/package.json, the landing site copy, the demo
   Space metadata and the fine-tuned model card.
-
-### Fixed
-
-- An upload the API cannot store (unwritable `DATA_DIR`, full disk,
-  read-only volume) now answers **503** with a short message on `POST /jobs`
-  and `POST /v1/audio/transcriptions`, instead of a 500 with a traceback in
-  the log. The real `OSError` is logged server-side, a partially written
-  file is removed, and the API logs an error at startup when `DATA_DIR`
-  is not writable.
-- The punctuation post-pass no longer splits numbers written with a
-  thousands separator: `1,000` stayed `1، 000` (Persian comma plus a
-  space). A comma between digits followed by exactly three digits is now
-  kept as is; a comma in a list of numbers (`4090,4080`) still becomes `،`.
-  The edge cases from #30 (slash dates, Latin digits in Persian sentences,
-  abbreviations, ellipses, repeated marks) are pinned by tests.
-- Job progress now moves while a chunk is being transcribed, not only
-  between 30-second chunks. A clip shorter than 30 s is a single chunk, so
-  its progress sat at 0% for the whole job and then jumped to 100%. The
-  Whisper engine reports how far into the chunk it is as each segment is
-  decoded; the worker saves that at most once a second.
-- The archive page refreshes itself while any job is queued or processing;
-  its progress bars never moved before. A job with no progress reported yet
-  shows a moving bar and "Getting ready" instead of an empty, stuck-looking
-  bar at 0%, and the job page shows the percentage with the right sign in
-  English.
 
 ## [1.4.1] - 2026-11-26
 

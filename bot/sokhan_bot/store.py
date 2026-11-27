@@ -42,6 +42,12 @@ class TokenStore:
             self._tokens[str(chat_id)] = token
             self._save()
 
+    def forget(self, chat_id: int) -> None:
+        """Drop a chat's token, e.g. after the API revoked it."""
+        with self._lock:
+            if self._tokens.pop(str(chat_id), None) is not None:
+                self._save()
+
     def track(self, job_id: str, chat_id: int) -> None:
         """Watch a job so the notifier can push its transcript when it finishes."""
         with self._lock:

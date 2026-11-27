@@ -9,6 +9,10 @@ class BackendError(Exception):
     pass
 
 
+class AuthError(BackendError):
+    """The API rejected the token (401): revoked by a logout or a newer sign-in."""
+
+
 class QuotaError(BackendError):
     """The user's monthly allowance is exhausted (402, code=quota_exceeded)."""
 
@@ -46,6 +50,11 @@ class SokhanClient:
     def _headers(self, token: str) -> dict[str, str]:
         return {"Authorization": f"Bearer {token}"}
 
+    @staticmethod
+    def _raise_for_auth(response: httpx.Response) -> None:
+        if response.status_code == 401:
+            raise AuthError("token rejected")
+
     def register_telegram(self, telegram_id: int, username: str | None) -> str:
         response = self._client.post(
             f"{self.settings.api_base_url}/auth/telegram",
@@ -65,6 +74,7 @@ class SokhanClient:
             files={"file": (filename, content)},
             headers=self._headers(token),
         )
+        self._raise_for_auth(response)
         if response.status_code == 402:
             detail = response.json().get("detail", {})
             if detail.get("code") == "file_too_long":
@@ -82,6 +92,7 @@ class SokhanClient:
             f"{self.settings.api_base_url}/jobs/{job_id}",
             headers=self._headers(token),
         )
+        self._raise_for_auth(response)
         if response.status_code != 200:
             raise BackendError(f"job fetch failed with status {response.status_code}")
         return response.json()
@@ -91,6 +102,7 @@ class SokhanClient:
             f"{self.settings.api_base_url}/quota",
             headers=self._headers(token),
         )
+        self._raise_for_auth(response)
         if response.status_code != 200:
             raise BackendError(f"quota fetch failed with status {response.status_code}")
         return response.json()

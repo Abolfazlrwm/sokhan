@@ -17,7 +17,11 @@
     "switchToEn": "English",
     "switchToFa": "فارسی",
     "themeToDark": "تم تیره",
-    "themeToLight": "تم روشن"
+    "themeToLight": "تم روشن",
+    "signIn": "ورود",
+    "signOut": "خروج",
+    "signedInAs": "واردشده با {email}",
+    "signOutOf": "خروج از حساب {email}"
   },
   "landing": {
     "headline": "از گفتار به متن، در چند لحظه",
