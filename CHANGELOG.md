@@ -5,6 +5,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Fixed
+
+- Compose: the Whisper model cache now lives on the `sokhan-data` volume
+  (`HF_HOME=/data/huggingface`). Previously it sat in the container's own
+  filesystem, so every recreate (`down`/`up`, `--build`, a new image)
+  re-downloaded the weights — and transcription failed outright where the
+  Hugging Face Hub is unreachable.
+- Compose: the postgres healthcheck probes the configured `POSTGRES_USER` and
+  `POSTGRES_DB` instead of a hardcoded `sokhan`.
+- Quickstart (both READMEs) and `.env.example` now say to copy the env file to
+  `deploy/.env`; the missing-password error names that path too. Copying it to
+  the repo root left `POSTGRES_PASSWORD` unset for compose.
+
 ### Added
 
 - **Persian accuracy stack (v2)** — measured on the 12-clip Common Voice

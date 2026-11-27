@@ -5,12 +5,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-sokhan}
       # Required on purpose: shipping a default credential means every
       # deployment that forgets the .env runs an open database.
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (see .env.example)}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (cp .env.example deploy/.env and edit it)}
       POSTGRES_DB: ${POSTGRES_DB:-sokhan}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sokhan"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -33,10 +33,11 @@ services:
     build:
       context: ../backend
     environment: &backend-env
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-sokhan}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (see .env.example)}@postgres:5432/${POSTGRES_DB:-sokhan}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-sokhan}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set (cp .env.example deploy/.env and edit it)}@postgres:5432/${POSTGRES_DB:-sokhan}
       REDIS_URL: redis://redis:6379/0
       CELERY_ENABLED: "true"
       DATA_DIR: /data
+      HF_HOME: /data/huggingface
       SOKHAN_CORS_ORIGINS: ${SOKHAN_CORS_ORIGINS:-}
       WHISPER_MODEL_SIZE: ${WHISPER_MODEL_SIZE:-medium}
       WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}

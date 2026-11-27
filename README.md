@@ -143,6 +143,8 @@ default — a GPU is not required.
 ```bash
 git clone https://github.com/Abolfazlrwm/sokhan.git
 cd sokhan
+cp .env.example deploy/.env   # compose reads the .env next to the compose file
+# edit deploy/.env and set POSTGRES_PASSWORD to a long random value
 docker compose -f deploy/docker-compose.yml up -d --build
 ```
 
@@ -150,7 +152,9 @@ docker compose -f deploy/docker-compose.yml up -d --build
 - API and docs: http://localhost:8000/docs
 
 The worker downloads the configured Whisper model on first transcription
-(`WHISPER_MODEL_SIZE`, default `small`). To enable summaries, set
+(`WHISPER_MODEL_SIZE`, default `small`) and caches it on the `sokhan-data`
+volume (`HF_HOME=/data/huggingface`), so recreating the containers does not
+download it again. To enable summaries, set
 `SUMMARY_ENABLED=true` and your LLM variables in a `.env` file next to
 `docker-compose.yml`. To apply schema migrations manually:
 
