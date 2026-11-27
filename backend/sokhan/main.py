@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from sokhan import __version__
+from sokhan.api.body_limit import MULTIPART_OVERHEAD_BYTES, BodySizeLimitMiddleware
 from sokhan.config import get_settings
 from sokhan.db import configure, create_all
 
@@ -52,6 +53,10 @@ def create_app() -> FastAPI:
         for origin in os.getenv("SOKHAN_CORS_ORIGINS", "").split(",")
         if origin.strip()
     ] or ["http://localhost:3000", "http://127.0.0.1:3000"]
+    app.add_middleware(
+        BodySizeLimitMiddleware,
+        max_body_bytes=settings.max_upload_mb * 1024 * 1024 + MULTIPART_OVERHEAD_BYTES,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,

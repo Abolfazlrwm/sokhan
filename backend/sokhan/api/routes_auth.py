@@ -11,12 +11,15 @@ Deliberately lightweight for v1:
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from sokhan.api.deps import require_bot
 from sokhan.auth import generate_token, hash_password, token_hash, verify_password
+from sokhan.config import get_settings
+from sokhan.core.throttle import FailureThrottle
 from sokhan.db import get_db
 from sokhan.models import User
 from sokhan.schemas import AuthResponse
@@ -76,12 +79,44 @@ def register(payload: Credentials, session: Session = Depends(get_db)) -> AuthRe
     return AuthResponse(id=user.id, email=user.email, api_token=token)
 
 
+_login_throttle: FailureThrottle | None = None
+
+
+def get_login_throttle() -> FailureThrottle:
+    global _login_throttle
+    if _login_throttle is None:
+        settings = get_settings()
+        _login_throttle = FailureThrottle(
+            settings.login_max_failures, settings.login_failure_window_seconds
+        )
+    return _login_throttle
+
+
+def reset_login_throttle() -> None:
+    global _login_throttle
+    _login_throttle = None
+
+
 @router.post("/login", response_model=AuthResponse)
-def login(payload: Credentials, session: Session = Depends(get_db)) -> AuthResponse:
+def login(
+    payload: Credentials, request: Request, session: Session = Depends(get_db)
+) -> AuthResponse:
     email = payload.email.strip().lower()
+    throttle = get_login_throttle()
+    key = (request.client.host if request.client else "", email)
+    wait_seconds = throttle.retry_after(key)
+    if wait_seconds:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "too many failed login attempts, try again later",
+            headers={"Retry-After": str(wait_seconds)},
+        )
+
     user = session.scalar(select(User).where(User.email == email))
     if user is None or not verify_password(payload.password, user.password_hash):
+        throttle.record_failure(key)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid credentials")
+    throttle.reset(key)
 
     token = generate_token()
     user.token_hash = token_hash(token)
@@ -97,7 +132,7 @@ def token_login(payload: TokenLogin, session: Session = Depends(get_db)) -> Auth
     return AuthResponse(id=user.id, email=user.email, api_token=payload.api_token)
 
 
-@router.post("/telegram", response_model=AuthResponse)
+@router.post("/telegram", response_model=AuthResponse, dependencies=[Depends(require_bot)])
 def telegram_login(payload: TelegramLogin, session: Session = Depends(get_db)) -> AuthResponse:
     """Register-or-login used by the Telegram bot.
 

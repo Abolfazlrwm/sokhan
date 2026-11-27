@@ -21,13 +21,17 @@ transport so tests need no network.
 
 import hashlib
 import hmac
+import http.client
+import ipaddress
 import json
 import logging
+import socket
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import urlsplit
 
 from sokhan.config import get_settings
 
@@ -89,6 +93,99 @@ def verify_signature(
     return hmac.compare_digest(mac.hexdigest(), provided)
 
 
+class BlockedTargetError(OSError):
+    pass
+
+
+def is_public_address(address: str) -> bool:
+    ip = ipaddress.ip_address(address.split("%", 1)[0])
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+        ip = ip.ipv4_mapped
+    return ip.is_global and not ip.is_multicast
+
+
+def callback_url_problem(url: str, allow_private: bool) -> str | None:
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname
+        parts.port  # noqa: B018
+    except ValueError:
+        return "callback_url is not a valid URL"
+    if parts.scheme.lower() not in ("http", "https") or not host:
+        return "callback_url must be an http(s) URL with a host"
+    if allow_private:
+        return None
+    if host == "localhost" or host.endswith(".localhost"):
+        return "callback_url must point to a public address"
+    try:
+        if not is_public_address(host):
+            return "callback_url must point to a public address"
+    except ValueError:
+        pass
+    return None
+
+
+def _guarded_create_connection(
+    address: tuple[str, int],
+    timeout: float | object = socket._GLOBAL_DEFAULT_TIMEOUT,  # type: ignore[attr-defined]
+    source_address: tuple[str, int] | None = None,
+    *args: object,
+    **kwargs: object,
+) -> socket.socket:
+    host, port = address
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    if not infos:
+        raise BlockedTargetError(f"{host} did not resolve")
+    for info in infos:
+        if not is_public_address(str(info[4][0])):
+            raise BlockedTargetError(f"{host} resolves to non-public address {info[4][0]}")
+    last_error: OSError | None = None
+    for info in infos:
+        try:
+            return socket.create_connection(
+                (str(info[4][0]), port), timeout, source_address  # type: ignore[arg-type]
+            )
+        except OSError as exc:
+            last_error = exc
+    raise last_error or BlockedTargetError(f"could not connect to {host}")
+
+
+class _GuardedHTTPConnection(http.client.HTTPConnection):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._create_connection = _guarded_create_connection  # type: ignore[assignment]
+
+
+class _GuardedHTTPSConnection(http.client.HTTPSConnection):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._create_connection = _guarded_create_connection  # type: ignore[assignment]
+
+
+class _GuardedHTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req: urllib.request.Request) -> http.client.HTTPResponse:
+        return self.do_open(_GuardedHTTPConnection, req)
+
+
+class _GuardedHTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req: urllib.request.Request) -> http.client.HTTPResponse:
+        return self.do_open(_GuardedHTTPSConnection, req, context=self._context)  # type: ignore[attr-defined]
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+def _public_only_opener() -> urllib.request.OpenerDirector:
+    return urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _GuardedHTTPHandler(),
+        _GuardedHTTPSHandler(),
+        _NoRedirectHandler(),
+    )
+
+
 def _default_post(url: str, body: bytes, headers: dict[str, str], timeout: float) -> None:
     request = urllib.request.Request(
         url,
@@ -96,7 +193,11 @@ def _default_post(url: str, body: bytes, headers: dict[str, str], timeout: float
         headers={"Content-Type": "application/json", **headers},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    if get_settings().webhook_allow_private_targets:
+        opener = urllib.request.build_opener()
+    else:
+        opener = _public_only_opener()
+    with opener.open(request, timeout=timeout) as response:
         response.read()
 
 

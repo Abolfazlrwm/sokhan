@@ -5,6 +5,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 ## [Unreleased]
 
+### Security
+
+- **`POST /auth/telegram` could be used to take over any Telegram user's
+  account.** It minted a fresh API token for whatever `telegram_id` the
+  caller sent, with no proof the caller was the bot. It now requires the
+  `X-Bot-Secret` header to match the new `BOT_API_SECRET` (constant-time
+  compare; 403 on mismatch, 503 while unset). **Breaking for deployments
+  with the bot:** set the same `BOT_API_SECRET` on the API and the bot; the
+  bot refuses to start without it.
+- Request bodies above `MAX_UPLOAD_MB` (plus 1 MiB multipart allowance) are
+  now refused with 413 by a middleware, up front from `Content-Length` or
+  mid-stream for chunked uploads. Before, the size check ran only after the
+  whole body had been spooled to disk and read into memory, so one
+  multi-gigabyte upload could exhaust the API container's disk or RAM.
+- Webhook `callback_url`s can no longer target internal addresses. Any
+  user could point the worker at loopback, private, link-local (cloud
+  metadata) or LAN hosts. Literal private hosts are now rejected at upload
+  (422), every resolved address is checked again at connect time (defeating
+  DNS rebinding), redirects are not followed and proxy env vars are ignored.
+  **Breaking for receivers on private addresses:** set
+  `WEBHOOK_ALLOW_PRIVATE_TARGETS=true` on trusted single-tenant installs.
+- `POST /auth/login` is throttled: after `LOGIN_MAX_FAILURES` (10) failures
+  per client address and email within `LOGIN_FAILURE_WINDOW_SECONDS` (900)
+  it answers 429 with `Retry-After`; a successful login clears the count.
+
 ### Fixed
 
 - Compose: the Whisper model cache now lives on the `sokhan-data` volume

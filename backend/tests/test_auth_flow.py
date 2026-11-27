@@ -1,3 +1,4 @@
+import pytest
 
 REGISTER = {"email": "amin@example.com", "password": "parool-1234"}
 
@@ -51,12 +52,41 @@ def test_token_login_rejects_bad_code(client):
     assert response.status_code == 401
 
 
-def test_telegram_register_or_login(client):
-    first = client.post("/auth/telegram", json={"telegram_id": 12345, "username": "amin"})
+BOT_SECRET = "bot-shared-secret"
+
+
+@pytest.fixture()
+def bot_secret(monkeypatch):
+    from sokhan.config import get_settings
+
+    monkeypatch.setenv("BOT_API_SECRET", BOT_SECRET)
+    get_settings.cache_clear()
+    yield {"X-Bot-Secret": BOT_SECRET}
+    get_settings.cache_clear()
+
+
+def test_telegram_register_or_login(client, bot_secret):
+    body = {"telegram_id": 12345, "username": "amin"}
+    first = client.post("/auth/telegram", json=body, headers=bot_secret)
     assert first.status_code == 200
-    second = client.post("/auth/telegram", json={"telegram_id": 12345, "username": "amin"})
+    second = client.post("/auth/telegram", json=body, headers=bot_secret)
     assert second.status_code == 200
     assert first.json()["id"] == second.json()["id"]
+
+
+def test_telegram_login_rejects_callers_without_the_bot_secret(client, bot_secret):
+    body = {"telegram_id": 12345}
+    missing = client.post("/auth/telegram", json=body)
+    wrong = client.post("/auth/telegram", json=body, headers={"X-Bot-Secret": "guess"})
+    assert missing.status_code == 403
+    assert wrong.status_code == 403
+
+
+def test_telegram_login_is_disabled_without_a_configured_secret(client):
+    response = client.post(
+        "/auth/telegram", json={"telegram_id": 12345}, headers={"X-Bot-Secret": ""}
+    )
+    assert response.status_code == 503
 
 
 def test_jobs_require_token(client):

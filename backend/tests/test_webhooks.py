@@ -341,3 +341,53 @@ def test_dead_endpoint_does_not_fail_the_job(
     detail = wait_for_job(client, auth, response.json()["id"])
     assert detail["status"] == "completed"
     assert "سلام بر تو" in detail["text"]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://127.0.0.1:6379/",
+        "http://localhost:8000/admin",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://10.0.0.5/hook",
+        "http://[::1]/hook",
+        "http://[::ffff:192.168.1.1]/hook",
+        "https://",
+    ],
+)
+def test_callback_url_to_private_targets_is_rejected(client, auth, wav_bytes, url):
+    response = _upload(client, auth, wav_bytes, callback_url=url)
+    assert response.status_code == 422
+
+
+def test_private_callback_url_allowed_when_opted_in(
+    client, auth, wav_bytes, monkeypatch, fake_engine, wait_for_job
+):
+    from sokhan.config import get_settings
+    from sokhan.core import webhooks
+
+    monkeypatch.setenv("WEBHOOK_ALLOW_PRIVATE_TARGETS", "true")
+    get_settings.cache_clear()
+    delivered: list[str] = []
+    monkeypatch.setattr(webhooks, "_default_post", lambda url, *rest: delivered.append(url))
+
+    response = _upload(client, auth, wav_bytes, callback_url="http://10.0.0.5/hook")
+    assert response.status_code == 201
+    wait_for_job(client, auth, response.json()["id"])
+    get_settings.cache_clear()
+    assert delivered == ["http://10.0.0.5/hook"]
+
+
+def test_delivery_refuses_hosts_that_resolve_privately(monkeypatch):
+    import socket
+    import urllib.error
+
+    from sokhan.core import webhooks
+
+    def fake_getaddrinfo(host, port, *args, **kwargs):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", port))]
+
+    monkeypatch.setattr(webhooks.socket, "getaddrinfo", fake_getaddrinfo)
+    with pytest.raises(urllib.error.URLError) as caught:
+        webhooks._default_post("http://hooks.example/sokhan", b"{}", {}, 1.0)
+    assert isinstance(caught.value.reason, webhooks.BlockedTargetError)

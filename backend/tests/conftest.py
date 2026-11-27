@@ -29,15 +29,18 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setenv("PLAN_PRO_MAX_FILE_MINUTES", "180")
     monkeypatch.setenv("PLAN_PRO_MONTHLY_MINUTES", "1200")
 
+    from sokhan.api.routes_auth import reset_login_throttle
     from sokhan.config import get_settings
 
     get_settings.cache_clear()
+    reset_login_throttle()
     db.reset()
     db.configure(f"sqlite:///{tmp_path / 'test.sqlite3'}")
     db.create_all()
     yield create_app()
     db.reset()
     get_settings.cache_clear()
+    reset_login_throttle()
 
 
 @pytest.fixture()

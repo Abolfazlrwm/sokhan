@@ -229,9 +229,12 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | اطمینان سگمنت زیرِ این مقدار پرچم بازبینی می‌گیرد |
 | `STREAMING_DECODE` | `true` | خواندن بلاک‌به‌بلاک صدا (حافظهٔ اوج ∝ پنجره، نه طول فایل) |
 | `WEBHOOK_SIGNING_SECRET` | خالی | رمز HMAC برای کال‌بک‌های پایان کار (`X-Sokhan-Signature`)؛ خالی یعنی بدون امضا |
+| `WEBHOOK_ALLOW_PRIVATE_TARGETS` | `false` | اجازهٔ کال‌بک به نشانی‌های خصوصی/لوکال (فقط برای نصب تک‌کاربرهٔ مورد اعتماد) |
+| `LOGIN_MAX_FAILURES` / `LOGIN_FAILURE_WINDOW_SECONDS` | `10` / `900` | تعداد ورود ناموفق برای هر نشانی و ایمیل پیش از `429`؛ `0` یعنی غیرفعال |
 | `SUMMARY_ENABLED` | `false` | فلگ امکان خلاصه‌سازی با LLM |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | خالی | endpoint سازگار با OpenAI |
 | `TELEGRAM_BOT_TOKEN` | خالی | فعال‌سازی فرایند ربات |
+| `BOT_API_SECRET` | خالی | رمز مشترکی که ربات به `POST /auth/telegram` می‌فرستد؛ روی API و ربات یک مقدار بگذارید، خالی یعنی ورود تلگرامی غیرفعال |
 | `WEB_BASE_URL` | `http://localhost:3000` | لینک‌هایی که ربات می‌فرستد |
 | `API_BASE_URL` | `http://localhost:8000` | آدرس API که ربات صدا می‌زند |
 | `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | آدرس API که اپ وب صدا می‌زند (زمان build) |

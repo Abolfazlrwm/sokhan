@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     # Leave empty to disable the admin endpoints entirely.
     admin_api_key: str = ""
 
+    bot_api_secret: str = ""
+
     # LLM summaries (optional, behind a feature flag)
     summary_enabled: bool = False
     llm_api_base: str = ""
@@ -91,6 +93,10 @@ class Settings(BaseSettings):
     webhook_signing_secret: str = ""
     webhook_timeout_seconds: float = 4.0
     webhook_attempts: int = 2
+    webhook_allow_private_targets: bool = False
+
+    login_max_failures: int = 10
+    login_failure_window_seconds: int = 900
 
 
 @lru_cache(maxsize=1)

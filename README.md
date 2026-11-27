@@ -228,9 +228,12 @@ SOKHAN_REAL_MODEL_TEST=1 pytest backend/tests/test_real_model.py
 | `LOW_CONFIDENCE_THRESHOLD` | `0.5` | segment confidence below which review flags apply |
 | `STREAMING_DECODE` | `true` | decode audio block-by-block (peak RAM ∝ window, not file length) |
 | `WEBHOOK_SIGNING_SECRET` | empty | HMAC secret for job-completion callbacks (`X-Sokhan-Signature`); empty sends them unsigned |
+| `WEBHOOK_ALLOW_PRIVATE_TARGETS` | `false` | allow callbacks to private/loopback addresses (trusted single-tenant installs only) |
+| `LOGIN_MAX_FAILURES` / `LOGIN_FAILURE_WINDOW_SECONDS` | `10` / `900` | failed logins per client address and email before `429`; `0` disables |
 | `SUMMARY_ENABLED` | `false` | LLM summaries feature flag |
 | `LLM_API_BASE` / `LLM_API_KEY` / `LLM_MODEL` | empty | OpenAI-compatible endpoint |
 | `TELEGRAM_BOT_TOKEN` | empty | enables the bot process |
+| `BOT_API_SECRET` | empty | shared secret the bot sends to `POST /auth/telegram`; set the same value on the API and the bot, empty disables Telegram login |
 | `WEB_BASE_URL` | `http://localhost:3000` | links the bot sends |
 | `API_BASE_URL` | `http://localhost:8000` | API address the bot calls |
 | `NEXT_PUBLIC_API_BASE` | `http://localhost:8000` | API address the web app calls (build-time) |
