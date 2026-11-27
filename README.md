@@ -111,7 +111,8 @@ built for Persian speakers from the first commit:
   and filenames (pg_trgm on Postgres, ILIKE elsewhere)
 - **Web dashboard** — landing, login/registration + connect-code entry,
   upload with in-browser recording, live progress, searchable archive
-- **Telegram bot** — send a voice message, receive the transcript; `/quota`,
+- **Telegram bot** — send a voice message, receive the transcript; a live
+  progress bar (▓▓▓░░ 30%) edited in place until the text lands; `/quota`,
   `/upgrade` (plan catalogue), `/track`, summary button, and a connect code
   that links your web account; voices longer than the plan's per-file cap
   are refused before upload with a Persian explanation
