@@ -14,14 +14,22 @@ What it does:
    (`merge_and_unload`), or by taking an already-merged checkpoint folder
    (notebook cell 6/7 leaves one at training/runs/whisper-small-fa-lora/merged),
 2. exports the merged model to ONNX the way transformers.js expects
-   (encoder + decoder-merged, no monolith),
-3. quantizes to int8/q4 files for the browser dtypes,
+   (encoder + decoder_model_merged with the `use_cache_branch` KV-cache If,
+   attention outputs for return_timestamps) via optimum's Python API,
+3. quantizes to int8/q8 files for the browser dtypes (EnableSubgraph so the
+   merged decoder's branch subgraphs are quantized too),
 4. uploads the finished model repo to the Hugging Face Hub.
+
+Environment note: optimum's classic ONNX exporter requires torch <= 2.8
+(torch 2.9+ removed the private onnx symbols it imports) and optimum < 2
+(optimum 2.x deleted the exporter). The notebook cell 11 installs the
+right pins; on any machine run:
+
+    pip install "torch==2.8.0" --index-url https://download.pytorch.org/whl/cpu \
+        "optimum==1.27.*" "transformers>=4.55" peft onnx onnxruntime
 
 Usage (Colab / any machine with ~4 GB RAM):
 
-    pip install transformers peft torch optimum onnxruntime "av<14" \
-        "huggingface_hub>=0.26" onnx
     export HF_TOKEN=hf_...          # a write token for the target repo
 
     # path A — from the LoRA adapter (local dir or Hub repo carrying
@@ -48,7 +56,6 @@ from __future__ import annotations
 
 import argparse
 import shutil
-import subprocess
 import tempfile
 from pathlib import Path
 
@@ -140,17 +147,33 @@ def load_merged(merged: str, out_dir: Path) -> None:
     ]
     if "preprocessor_config.json" in missing and (out_dir / "processor_config.json").is_file():
         # transformers v5's ProcessorMixin.save_pretrained writes
-        # processor_config.json and no longer emits preprocessor_config.json,
-        # which older tooling (optimum export, transformers.js) still expects.
-        # Re-derive the feature-extractor config from the staged processor.
+        # processor_config.json (feature-extractor kwargs nested under
+        # "feature_extractor") and no longer emits preprocessor_config.json,
+        # which optimum export and transformers.js still expect. Re-derive
+        # the feature-extractor config from the staged processor file.
         try:
-            from transformers import AutoProcessor
+            import json as _json
 
-            processor = AutoProcessor.from_pretrained(out_dir)
-            processor.feature_extractor.save_pretrained(out_dir)
-            if (out_dir / "preprocessor_config.json").is_file():
-                missing.remove("preprocessor_config.json")
-                print("      derived preprocessor_config.json (transformers v5 layout)")
+            pcfg = _json.loads((out_dir / "processor_config.json").read_text())
+            fe_kwargs = dict(pcfg.get("feature_extractor") or pcfg)
+            fe_kwargs.pop("feature_extractor_type", None)
+            fe_kwargs.pop("processor_class", None)
+            if fe_kwargs.get("feature_size"):
+                try:
+                    from transformers import WhisperFeatureExtractor
+
+                    WhisperFeatureExtractor(**fe_kwargs).save_pretrained(out_dir)
+                except Exception:
+                    (out_dir / "preprocessor_config.json").write_text(
+                        _json.dumps(dict(pcfg.get("feature_extractor") or pcfg),
+                                    indent=2, sort_keys=True) + "\n"
+                    )
+                if (out_dir / "preprocessor_config.json").is_file():
+                    missing.remove("preprocessor_config.json")
+                    print(
+                        "      derived preprocessor_config.json from processor_config.json"
+                        " (transformers v5 layout)"
+                    )
         except Exception as err:  # repair is best-effort; guidance below if it fails
             print(f"      could not derive preprocessor_config.json automatically ({err})")
     if missing:
@@ -164,30 +187,151 @@ def load_merged(merged: str, out_dir: Path) -> None:
         )
 
 
+def _whisper_web_onnx_config_class():
+    """optimum whisper config that emits the attention outputs transformers.js
+    needs for `return_timestamps` (cross_attentions feed the alignment heads).
+    Mirrors transformers.js v2's scripts/extra/whisper.py."""
+    from optimum.exporters.onnx.base import ConfigBehavior
+    from optimum.exporters.onnx.model_configs import WhisperOnnxConfig
+
+    class WhisperWebOnnxConfig(WhisperOnnxConfig):
+        @property
+        def outputs(self):
+            common_outputs = super().outputs
+            if self._behavior is ConfigBehavior.ENCODER:
+                for i in range(self._config.encoder_layers):
+                    common_outputs[f"encoder_attentions.{i}"] = {0: "batch_size"}
+            elif self._behavior is ConfigBehavior.DECODER:
+                for i in range(self._config.decoder_layers):
+                    common_outputs[f"decoder_attentions.{i}"] = {
+                        0: "batch_size",
+                        2: "decoder_sequence_length",
+                        3: "past_decoder_sequence_length + 1",
+                    }
+                for i in range(self._config.decoder_layers):
+                    common_outputs[f"cross_attentions.{i}"] = {
+                        0: "batch_size",
+                        2: "decoder_sequence_length",
+                        3: "encoder_sequence_length_out",
+                    }
+            return common_outputs
+
+        @property
+        def values_override(self):
+            # both decoder variants must run with the KV cache enabled so the
+            # no-past trace really produces the present.* tensors the merge
+            # needs, and with output_attentions so the traced graphs carry the
+            # attention outputs transformers.js reads for return_timestamps.
+            # Only the merged file ships to the browser.
+            return {"use_cache": True, "output_attentions": True,
+                    "_attn_implementation": "eager"}
+
+        @property
+        def torch_to_onnx_output_map(self):
+            if self._behavior is ConfigBehavior.ENCODER:
+                # the encoder export returns the key "attentions"
+                return {"attentions": "encoder_attentions"}
+            return {}
+
+    return WhisperWebOnnxConfig
+
+
 def export_onnx(model_dir: Path, onnx_dir: Path) -> None:
-    print("[3/4] exporting ONNX (encoder + decoder-merged)")
-    subprocess.run(
-        [
-            "optimum-cli", "export", "onnx",
-            "--model", str(model_dir),
-            "--task", "automatic-speech-recognition",
-            "--monolith", "false",
-            "--device", "cpu",
-            str(onnx_dir),
-        ],
-        check=True,
+    print("[3/4] exporting ONNX via optimum (encoder + decoder_model_merged)")
+    import torch  # noqa: F401  (import checked below)
+    from optimum.exporters.onnx import main_export
+
+    if tuple(int(p) for p in torch.__version__.split(".")[:2]) > (2, 8):
+        raise ExportInputError(
+            f"torch {torch.__version__} is too new for optimum's ONNX exporter "
+            "(it needs torch.onnx private symbols removed in 2.9). Install the "
+            "CPU build: pip install 'torch==2.8.0' "
+            "--index-url https://download.pytorch.org/whl/cpu"
+        )
+
+    cfg_cls = _whisper_web_onnx_config_class()
+    from transformers import AutoConfig
+
+    config = AutoConfig.from_pretrained(str(model_dir))
+    cfg = cfg_cls(config=config, task="automatic-speech-recognition")
+    # use_past=True mirrors optimum's own whisper-with-past flow: it emits the
+    # present.* outputs while use_past_in_inputs=False keeps the past tensors
+    # out of the no-past decoder's inputs.
+    custom_onnx_configs = {
+        "encoder_model": cfg.with_behavior("encoder"),
+        "decoder_model": cfg.with_behavior(
+            "decoder", use_past=True, use_past_in_inputs=False
+        ),
+        "decoder_with_past_model": cfg.with_behavior(
+            "decoder", use_past=True, use_past_in_inputs=True
+        ),
+    }
+
+    # The generic seq2seq merge path (config.py's post-process) merges with
+    # strict=True, but the with-past decoder drops the constant cross-attention
+    # presents, so the output counts differ. strict=False is exactly what
+    # optimum's own whisper-with-past path (model_configs.py) uses; the added
+    # constant branch outputs are never consumed by transformers.js, which
+    # re-uses its step-1 cross-attention cache instead.
+    import optimum.onnx as _oonnx
+    from optimum.onnx.graph_transformations import merge_decoders as _orig_merge
+
+    def _merge_decoders_lenient(decoder, decoder_with_past, **kwargs):
+        kwargs["strict"] = False
+        return _orig_merge(decoder, decoder_with_past, **kwargs)
+
+    _oonnx.merge_decoders = _merge_decoders_lenient
+
+    main_export(
+        model_name_or_path=str(model_dir),
+        output=str(onnx_dir),
+        task="automatic-speech-recognition-with-past",
+        custom_onnx_configs=custom_onnx_configs,
+        model_kwargs={"output_attentions": True},
+        monolith=False,
+        device="cpu",
+        do_validation=False,
+        library_name="transformers",
     )
-    # int8 quantization for the wasm/q8 dtype path
+
+    merged_path = onnx_dir / "decoder_model_merged.onnx"
+    if not merged_path.is_file():
+        raise ExportInputError(
+            "optimum did not produce decoder_model_merged.onnx — the browser "
+            "demo cannot load this export. Check the optimum/torch pins "
+            "(optimum==1.27.*, torch==2.8.0)."
+        )
+
+    # int8 quantization for the wasm/q8 dtype path. EnableSubgraph is what
+    # quantizes the merged decoder's If-branch subgraphs (same recipe the
+    # transformers.js v2 converter used).
+    import onnx
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
-    for onnx_file in list(onnx_dir.rglob("*.onnx")):
+    for onnx_file in sorted(onnx_dir.glob("*.onnx")):
         if "_quantized" in onnx_file.stem or "_q4" in onnx_file.stem:
             continue
-        quantize_dynamic(
-            str(onnx_file),
-            str(onnx_file.with_name(onnx_file.stem + "_quantized.onnx")),
-            weight_type=QuantType.QInt8,
-        )
+        loaded = onnx.load(str(onnx_file), load_external_data=True)
+        op_types = {n.op_type for n in loaded.graph.node}
+        weight_type = QuantType.QUInt8 if "Conv" in op_types else QuantType.QInt8
+        quantize_kwargs = {"extra_options": {"EnableSubgraph": True}}
+        try:
+            quantize_dynamic(
+                model_input=str(onnx_file),
+                model_output=str(onnx_file.with_name(onnx_file.stem + "_quantized.onnx")),
+                weight_type=weight_type,
+                **quantize_kwargs,
+            )
+        except TypeError:
+            # older onnxruntime needs optimize_model=False (no pre-processing)
+            quantize_dynamic(
+                model_input=str(onnx_file),
+                model_output=str(onnx_file.with_name(onnx_file.stem + "_quantized.onnx")),
+                weight_type=weight_type,
+                optimize_model=False,
+                **quantize_kwargs,
+            )
+
     # tokenizer/processing configs ride along for transformers.js
     for name in (
         "config.json", "generation_config.json", "preprocessor_config.json",
@@ -197,6 +341,13 @@ def export_onnx(model_dir: Path, onnx_dir: Path) -> None:
         src = model_dir / name
         if src.exists():
             shutil.copy(src, onnx_dir / name)
+    # transformers.js only loads the encoder and the merged decoder; the two
+    # intermediate decoder files are merge fodder, not shipping cargo
+    for spare in ("decoder_model.onnx", "decoder_with_past_model.onnx"):
+        for variant in (onnx_dir / spare, onnx_dir / spare.replace(".onnx", "_quantized.onnx")):
+            if variant.is_file():
+                variant.unlink()
+
     (onnx_dir / "onnx").mkdir(exist_ok=True)
     for onnx_file in list(onnx_dir.glob("*.onnx")):
         shutil.move(str(onnx_file), onnx_dir / "onnx" / onnx_file.name)
