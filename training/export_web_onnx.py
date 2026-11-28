@@ -138,11 +138,29 @@ def load_merged(merged: str, out_dir: Path) -> None:
         for name in ("tokenizer_config.json", "preprocessor_config.json")
         if not (out_dir / name).is_file()
     ]
+    if "preprocessor_config.json" in missing and (out_dir / "processor_config.json").is_file():
+        # transformers v5's ProcessorMixin.save_pretrained writes
+        # processor_config.json and no longer emits preprocessor_config.json,
+        # which older tooling (optimum export, transformers.js) still expects.
+        # Re-derive the feature-extractor config from the staged processor.
+        try:
+            from transformers import AutoProcessor
+
+            processor = AutoProcessor.from_pretrained(out_dir)
+            processor.feature_extractor.save_pretrained(out_dir)
+            if (out_dir / "preprocessor_config.json").is_file():
+                missing.remove("preprocessor_config.json")
+                print("      derived preprocessor_config.json from processor_config.json (transformers v5 layout)")
+        except Exception as err:  # repair is best-effort; guidance below if it fails
+            print(f"      could not derive preprocessor_config.json automatically ({err})")
     if missing:
         raise ExportInputError(
             f"{src} is missing {', '.join(missing)} — save the tokenizer and "
             "feature extractor next to the merged model (merge_lora does "
-            "this) or re-run the notebook's merge cell."
+            "this) or re-run the notebook's merge cell. On transformers v5, "
+            "run: AutoFeatureExtractor.from_pretrained('openai/whisper-small')"
+            ".save_pretrained(<merged folder>) — processor.save_pretrained "
+            "alone no longer writes preprocessor_config.json."
         )
 
 
@@ -173,7 +191,8 @@ def export_onnx(model_dir: Path, onnx_dir: Path) -> None:
     # tokenizer/processing configs ride along for transformers.js
     for name in (
         "config.json", "generation_config.json", "preprocessor_config.json",
-        "tokenizer_config.json", "tokenizer.json", "special_tokens_map.json",
+        "processor_config.json", "tokenizer_config.json", "tokenizer.json",
+        "special_tokens_map.json",
     ):
         src = model_dir / name
         if src.exists():
