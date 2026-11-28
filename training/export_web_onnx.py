@@ -150,7 +150,7 @@ def load_merged(merged: str, out_dir: Path) -> None:
             processor.feature_extractor.save_pretrained(out_dir)
             if (out_dir / "preprocessor_config.json").is_file():
                 missing.remove("preprocessor_config.json")
-                print("      derived preprocessor_config.json from processor_config.json (transformers v5 layout)")
+                print("      derived preprocessor_config.json (transformers v5 layout)")
         except Exception as err:  # repair is best-effort; guidance below if it fails
             print(f"      could not derive preprocessor_config.json automatically ({err})")
     if missing:
